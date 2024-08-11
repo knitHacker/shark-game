@@ -1,0 +1,9 @@
+{
+    "debug": true,
+    "debugOutlineTexture": false,
+    "debugHitboxes": false,
+    "windowSizeX": 1200,
+    "windowSizeY": 1000,
+    "boardSizeX": 250,
+    "boardSizeY": 250
+}

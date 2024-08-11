@@ -1,0 +1,18 @@
+collect data
+    - what eat
+    - where live
+        - depth
+        - temps
+        - sand / reef / open ocean / migratory
+    - population
+    - how reproduce
+
+collect with
+    - observation
+    - tags
+    - cameras
+    - necropsy?
+    - nets?
+    - fishing?
+
+
