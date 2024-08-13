@@ -21,10 +21,6 @@ import Data.Maybe (catMaybes)
 
 import Paths_shark_game ()
 import Configs
-    ( Configs(textureCfgs, gameCfgs),
-      ConfigsRead,
-      GameConfigs(windowSizeX, windowSizeY, boardSizeX, boardSizeY),
-      TextureCfg(file, sizeX, sizeY) )
 import OutputHandles.Types
     ( OutputHandles(OutputHandles, font, renderer, window),
       OutputRead,
@@ -46,8 +42,8 @@ rendererConfig = SDL.RendererConfig
   }
 
 
-initOutputHandles :: Configs -> IO OutputHandles
-initOutputHandles cfgs = do
+initOutputHandles :: TextureFileMap -> GameConfigs -> IO OutputHandles
+initOutputHandles textCfgs cfgs = do
     fontPath <- getGameFullPath fontFile
     SDL.initialize []
     Font.initialize
@@ -62,8 +58,7 @@ initOutputHandles cfgs = do
     print $ fst <$> M.toList textures
     return $ OutputHandles window r textures font ratioX ratioY
     where
-        textCfgs = textureCfgs cfgs
-        gCfgs = gameCfgs cfgs
+        gCfgs = settingCfgs cfgs
         screenWidth = fromIntegral $ windowSizeX gCfgs
         screenHeight = fromIntegral $ windowSizeY gCfgs
         boardX = fromIntegral $ boardSizeX gCfgs

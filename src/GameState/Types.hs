@@ -59,7 +59,7 @@ instance Show Unique where
 data GameState =
       GameView (Maybe Menu) Menu -- GameView
     | OverlayMenu Menu Menu -- GameView
-    | GameExiting
+    | GameExiting (Maybe GameData)
 
 type OptAction = GameConfigs -> InputState -> OutputHandles -> GameState
 

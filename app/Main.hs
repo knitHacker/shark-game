@@ -15,8 +15,8 @@ import Data.Time.Clock.System
 
 main :: IO ()
 main = do
-    configs <- initConfigs
-    outs <- initOutputHandles configs
-    appEnvData <- initAppEnvData (gameCfgs configs) outs
+    (tm, configs) <- initConfigs
+    outs <- initOutputHandles tm configs
+    appEnvData <- initAppEnvData configs outs
     time <- getSystemTime
     runGame 0 time appEnvData

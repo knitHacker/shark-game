@@ -16,6 +16,8 @@ extra-source-files:
 data-files:
 - data/configs/game.json
 - data/configs/textures.json
+- data/configs/state.json
+- data/configs/shark_game.json
 - assets/images/arrow.png
 - assets/fonts/InsightSansSSi.ttf
 

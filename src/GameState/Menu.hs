@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module GameState.Menu
     ( exitMenuAction
     , updateGameStateInMenu
@@ -28,9 +30,10 @@ decrementMenuCursor m@(Menu _ _ c@(MenuCursor 0 _)) = m
 decrementMenuCursor m@(Menu _ _ c@(MenuCursor p _)) = m { cursor = c { cursorPos = p - 1 }}
 
 exitMenuAction :: GameConfigs -> InputState -> OutputHandles -> GameState
-exitMenuAction _ _ _ = GameExiting
+exitMenuAction _ _ _ = GameExiting Nothing
 
 exitSaveAction :: GameData -> GameConfigs -> InputState -> OutputHandles -> GameState
+exitSaveAction gd _ _ _ = GameExiting (Just gd)
 
 updateGameStateInMenu :: Maybe Menu -> Menu -> GameConfigs -> InputState -> OutputHandles -> GameState
 updateGameStateInMenu mM m cfgs inputs outs =
@@ -70,7 +73,7 @@ pauseMenu m gd = Menu words (MenuOpts 50 120 opts) $ MenuCursor 0 $ CursorRect G
         words = [ TextDisplay "Game Menu" 30 30 120 60 Black
                 ]
         opts = [ MenuAction "Continue" (\_ _ _ -> GameView (Just (pauseMenu m gd)) m)
-               , MenuAction "Exit" (\_ _ _ -> GameExiting)
+               , MenuAction "Exit" (exitSaveAction gd)
                ]
 
 

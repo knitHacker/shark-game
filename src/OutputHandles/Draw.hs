@@ -75,9 +75,10 @@ initWindow r = do
 
 drawAll :: (MonadIO m, OutputRead m, ConfigsRead m) => ToRender -> m ()
 drawAll drawings = do
-    cfgs <- readConfigs
+    topCfgs <- readConfigs
     outs <- getOutputs
-    let drawOutline = debugOutlineTexture cfgs
+    let cfgs = settingCfgs topCfgs
+        drawOutline = debugOutlineTexture cfgs
         drawDbgs = debugHitboxes cfgs
         debugs = renderDebugs drawings
         r = renderer outs

@@ -29,8 +29,12 @@ researchCenterOpt gd _ _ o = GameView (Just (pauseMenu rcM gd)) rcM
 
 initMainMenu :: GameConfigs -> OutputHandles -> IO GameState
 initMainMenu cfgs outs = do
-    gdM <- return Nothing -- todo: try to load old game
     nGame <- startNewGame
+    gdM <- case lastSaveM (stateCfgs cfgs) of
+                Nothing -> return Nothing
+                Just sf -> do
+                    gd <- loadFromFile sf
+                    return $ Just gd
     return $ GameView Nothing $ Menu words (MenuOpts 80 180 (menuOpts nGame gdM)) cursor
 
     where

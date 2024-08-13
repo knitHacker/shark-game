@@ -2,18 +2,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Configs
-    ( Configs(..)
-    , GameConfigs(..)
+    ( GameConfigs(..)
     , initConfigs
     , ConfigsRead(..)
     , TextureCfg(..)
+    , GameEquipment(..)
+    , GameLocation(..)
+    , PlayConfigs(..)
+    , StateConfigs(..)
+    , SettingConfigs(..)
+    , TextureFileMap
+    , updateStateConfigs
     ) where
 
 import Control.Monad ()
 import System.IO ()
 import Paths_shark_game ()
 import GHC.Generics ( Generic )
-import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict )
+import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
 import Data.Either ()
 import Data.Word (Word32)
@@ -25,11 +31,14 @@ import Env.Files    (getGameFullPath)
 configFile :: FilePath
 configFile = "data/configs/game.json"
 
-
 texturesFile :: FilePath
 texturesFile = "data/configs/textures.json"
 
+stateFile :: FilePath
+stateFile = "data/configs/state.json"
 
+sharkFile :: FilePath
+sharkFile = "data/configs/shark_game.json"
 
 data TextureCfg = TextureCfg
     { sizeX :: Int
@@ -50,6 +59,12 @@ instance FromJSON PositionCfg
 instance ToJSON PositionCfg
 
 data GameConfigs = GameConfigs
+    { settingCfgs :: SettingConfigs
+    , stateCfgs :: StateConfigs
+    , sharkCfgs :: PlayConfigs
+    } deriving (Show, Eq)
+
+data SettingConfigs = SettingConfigs
     { debug :: Bool
     , debugOutlineTexture :: Bool
     , debugHitboxes :: Bool
@@ -57,36 +72,83 @@ data GameConfigs = GameConfigs
     , boardSizeY :: Int
     , windowSizeX :: Int
     , windowSizeY :: Int
-    , lastSavePath :: Maybe String
     } deriving (Generic, Show, Eq)
 
 
-instance FromJSON GameConfigs
-instance ToJSON GameConfigs
+instance FromJSON SettingConfigs
+instance ToJSON SettingConfigs
 
+
+data GameEquipment = GameEquip
+    { text :: T.Text
+    , timeAdded :: Int
+    , price :: Int
+    , infoType :: Maybe T.Text
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON GameEquipment
+instance ToJSON GameEquipment
+
+data GameLocation = GameLoc
+    { showText :: T.Text
+    , requiredEquipment :: [T.Text]
+    , allowedEquipment :: [T.Text]
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON GameLocation
+instance ToJSON GameLocation
+
+data PlayConfigs = PlayConfigs
+    { equipment :: M.Map T.Text GameEquipment
+    , siteLocations :: M.Map T.Text GameLocation
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON PlayConfigs
+instance ToJSON PlayConfigs
+
+data StateConfigs = StateConfigs
+    { lastSaveM :: Maybe String
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON StateConfigs
+instance ToJSON StateConfigs
+
+type TextureFileMap = M.Map T.Text TextureCfg
 
 data Configs = Configs
-    { textureCfgs :: M.Map T.Text TextureCfg
-    , gameCfgs :: GameConfigs
+    { textureCfgs :: TextureFileMap
+    , gameCfgs :: SettingConfigs
+    , sCfgs :: StateConfigs
+    , pCfgs :: PlayConfigs
     } deriving (Generic, Show, Eq)
 
 instance FromJSON Configs
 instance ToJSON Configs
 
 
-initConfigs :: IO Configs
+initConfigs :: IO (TextureFileMap, GameConfigs)
 initConfigs = do
     gPath <- getGameFullPath configFile
-    configsM <- eitherDecodeFileStrict gPath
-    case configsM of
-        Left err -> error ("Failed to parse config file: " ++ (show err))
-        Right configs -> do
-            tPath <- getGameFullPath texturesFile
-            texturesM <- eitherDecodeFileStrict tPath
-            case texturesM of
-                Left err -> error ("Failed to parse texture file: " ++ (show err))
-                Right textures -> return $ Configs textures configs
+    configsE <- eitherDecodeFileStrict gPath
+    tPath <- getGameFullPath texturesFile
+    texturesE <- eitherDecodeFileStrict tPath
+    sPath <- getGameFullPath stateFile
+    stateE <- eitherDecodeFileStrict sPath
+    pPath <- getGameFullPath sharkFile
+    playerE <- eitherDecodeFileStrict pPath
+    let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playerE
+    case cfgE of
+        Left err -> error ("Faile to parse game configs: " ++ (show err))
+        Right configs -> return (textureCfgs configs, toGameConfigs configs)
 
+
+toGameConfigs :: Configs -> GameConfigs
+toGameConfigs (Configs _ g s p) = GameConfigs g s p
+
+updateStateConfigs :: StateConfigs -> IO ()
+updateStateConfigs sc = do
+    sPath <- getGameFullPath stateFile
+    encodeFile sPath sc
 
 class Monad m => ConfigsRead m where
     readConfigs :: m GameConfigs
@@ -94,4 +156,5 @@ class Monad m => ConfigsRead m where
     debugMode :: m Bool
     debugMode = do
         cfgs <- readConfigs
-        return $ debug cfgs
+        return $ debug $ settingCfgs cfgs
+

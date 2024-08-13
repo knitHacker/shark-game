@@ -38,7 +38,7 @@ randomPosition width height iW iH = do
     return (xPos, yPos)
 
 isGameExiting :: GameState -> Bool
-isGameExiting GameExiting = True
+isGameExiting (GameExiting _) = True
 isGameExiting _ = False
 
 updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState

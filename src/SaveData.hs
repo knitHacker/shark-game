@@ -13,7 +13,7 @@ module SaveData
 import System.IO ()
 import Paths_shark_game ()
 import GHC.Generics ( Generic )
-import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict )
+import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Text as T
 
@@ -23,6 +23,8 @@ import Control.Monad
 import Control.Monad.ST.Lazy (runST)
 import Data.Vector.Unboxed
 import qualified Data.List as L
+
+import Env.Files (getGameDirectory)
 
 getRandomPercent :: GameData -> (GameData, Int)
 getRandomPercent gd = runST $ do
@@ -39,9 +41,10 @@ data TripInfo = TripInfo
     }
 
 data GameData = GameData
-    { gameDataSeed :: Seed
+    { gameDataSaveFile :: String
+    , gameDataSeed :: Seed
     , gameDataFunds :: Int
-    , gameDateMonth :: Int
+    , gameDataMonth :: Int
     }
 
 
@@ -58,17 +61,22 @@ instance ToJSON GameSaveData
 startNewGame :: IO GameData
 startNewGame = do
     g <- R.create
+    name <- uniform g :: IO Int
+    let dir = "data/saves"
+    path <- getGameDirectory dir
+    let fn = path L.++ "/file" L.++ (show name) L.++ ".save"
+    putStrLn fn
     s <- save g
-    return $ GameData s 0 0
+    return $ GameData fn s 0 0
 
 
-convertSave :: GameSaveData -> GameData
-convertSave gsd = GameData seed (saveFunds gsd) (saveMonth gsd)
+convertSave :: String -> GameSaveData -> GameData
+convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd)
     where
         seed = toSeed $ saveSeed gsd
 
-convertBack :: GameData -> GameSaveData
-convertBack gd = GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd)
+convertBack :: GameData -> (FilePath, GameSaveData)
+convertBack gd = (gameDataSaveFile gd, GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd))
     where
         seedV = fromSeed $ gameDataSeed gd
 
@@ -77,10 +85,14 @@ loadFromFile fp = do
     gsdM <- eitherDecodeFileStrict fp
     case gsdM of
         Left err -> error ("Failed to open save file " L.++ (show err))
-        Right gsd -> return $ convertSave gsd
+        Right gsd -> return $ convertSave fp gsd
 
-saveToFile :: FilePath -> GameData -> IO ()
-saveToFile fp gd = encodeFile fp (convertBack gd)
+saveToFile :: GameData -> IO ()
+saveToFile gd = do
+    putStrLn $ "saving file to: " L.++ fn
+    encodeFile fn gsd
+    where
+        (fn, gsd) = convertBack gd
 
 class Monad m => SaveData m where
     saveData :: m ()
