@@ -20,19 +20,18 @@ import OutputHandles.Types
 
 import GameState.Menu
 import GameState.Types
-    ( MenuCursor(MenuCursor)
-    , Menu(Menu)
-    , MenuAction(..)
-    , MenuOptions(..)
-    , GameState(..)
-    , CursorType(..)
-    )
+
+
+researchCenterOpt :: GameData -> OptAction
+researchCenterOpt gd _ _ o = GameView (Just (pauseMenu rcM gd)) rcM
+    where
+        rcM = initResearchCenterMenu o gd
 
 initMainMenu :: GameConfigs -> OutputHandles -> IO GameState
 initMainMenu cfgs outs = do
     gdM <- return Nothing -- todo: try to load old game
     nGame <- startNewGame
-    return $ StartMenu $ Menu False words (MenuOpts 80 180 (menuOpts nGame gdM)) cursor
+    return $ GameView Nothing $ Menu words (MenuOpts 80 180 (menuOpts nGame gdM)) cursor
 
     where
         arrowEntry = CursorPointer $ textures outs M.! "green_arrow"
@@ -40,8 +39,8 @@ initMainMenu cfgs outs = do
         words = [ TextDisplay "Shark Research" 10 10 200 100 Gray
                 , TextDisplay "Press ENTER to select" 75 150 100 20 White
                 ]
-        newGame ng = MenuAction "New Game" (\_ _ o -> GameMenu (introPage o ng) ng)
-        continueGame cg = MenuAction "Continue" (\_ _ o -> GameMenu (introPage o cg) cg)
+        newGame ng = MenuAction "New Game" (\_ _ o -> GameView Nothing  (introPage o ng))
+        continueGame cg = MenuAction "Continue" (\_ _ o -> GameView Nothing (introPage o cg))
         exitOpt = MenuAction "Exit" exitMenuAction
         menuOpts ng cgM =
             case cgM of
@@ -50,13 +49,14 @@ initMainMenu cfgs outs = do
 
 
 introPage :: OutputHandles -> GameData -> Menu
-introPage outs gd = Menu True words (MenuOpts 80 220 opts) (MenuCursor 0 (CursorRect Gray))
+introPage outs gd = Menu words (MenuOpts 80 220 opts) (MenuCursor 0 (CursorRect Gray))
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
         welcomeText3 = "to issue an initial grant to start your work."
         grantText = "Grant Amount: "
         startMoney = "$2,000"
+        gd' = gd { gameDataFunds = 2000 }
         words = [ TextDisplay "Welcome!" 10 10 175 80 White
                 , TextDisplay welcomeText1 8 100 ((fromIntegral (T.length welcomeText1))*3) 10 White
                 , TextDisplay welcomeText2 8 120 ((fromIntegral (T.length welcomeText2))*3) 10 White
@@ -64,20 +64,35 @@ introPage outs gd = Menu True words (MenuOpts 80 220 opts) (MenuCursor 0 (Cursor
                 , TextDisplay grantText 75 170 80 12 White
                 , TextDisplay startMoney 80 190 60 12 Green
                 ]
-        rCM _ _ o = GameMenu (initResearchCenterMenu o gd) gd
-        opts = [ MenuAction "Start Research" rCM
+        opts = [ MenuAction "Start Research" (researchCenterOpt gd')
                ]
 
 
 
 initResearchCenterMenu :: OutputHandles -> GameData -> Menu
-initResearchCenterMenu outs _ = Menu True words (MenuOpts 15 110 opts) (MenuCursor 0 cursorT)
+initResearchCenterMenu outs gd = Menu words (MenuOpts 15 140 opts) mc
     where
-        --arrowEntry = CursorPointer $ textures outs M.! "green_arrow"
+        funds = gameDataFunds gd
+        mc = MenuCursor 0 cursorT
         cursorT = CursorRect Gray
+        fundTxt = T.append "Current Funds: " (T.pack (show funds))
         words = [ TextDisplay "Research Center" 10 10 200 100 White
+                , TextDisplay fundTxt 75 110 80 12 Green
                 ]
-        opts = [ MenuAction "Plan Research Trip" undefined
+        mm o = mapMenu o gd
+        opts = [ MenuAction "Plan Research Trip" (\_ _ o -> GameView (Just (pauseMenu (mm o) gd)) (mm o))
                , MenuAction "Review Data" undefined
                , MenuAction "Lab Management" undefined
+               ]
+
+mapMenu :: OutputHandles -> GameData -> Menu
+mapMenu outs gd = Menu words (MenuOpts 15 140 opts) mc
+    where
+        mc = MenuCursor 0 $ CursorRect Gray
+        words = [ TextDisplay "Select Trip Destination" 10 10 200 100 White
+               ]
+        opts = [ MenuAction "Reef" undefined
+               , MenuAction "Mangroves" undefined
+               , MenuAction "Open Ocean" undefined
+               , MenuAction "Return to Lab" (researchCenterOpt gd)
                ]

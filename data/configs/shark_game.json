@@ -1,0 +1,58 @@
+{
+    "equipment": {
+        "boat": {
+            "text": "Boat",
+            "timeAdded": 1,
+            "price": 100
+        },
+        "fishingGear": {
+            "text": "Fishing Gear",
+            "timeAdded": 1,
+            "price": 20,
+            "infoType": "caught"
+        },
+        "snorkelGear": {
+            "text": "Snorkel Gear",
+            "timeAdded": 1,
+            "price": 50,
+            "infoType": "observe"
+        },
+        "scubaGear": {
+            "text": "Scuba Gear",
+            "timeAdded": 2,
+            "price": 100
+        }
+    },
+    "siteLocations": {
+        "reef": {
+            "showText": "Reef",
+            "requiredEquipment": ["boat"],
+            "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
+            "sharksFound": {
+                "blackTipReef": {
+                    "caught": 25,
+                    "observe": 0.4
+                }
+            }
+        },
+        "mangroves": {
+            "showText": "Mangroves",
+            "requiredEquipment": ["boat"],
+            "allowedEquipment": ["fishingGear"]
+        },
+        "openOcean": {
+            "showText": "Open Ocean",
+            "requiredEquipment": ["boat"],
+            "allowedEquipment": ["fishingGear", "scubaGear"]
+        }
+    },
+    "sharks": {
+        "blackTipReef": {
+            "research": {
+                "size": {
+                    "caught": 3
+                }
+            }
+        }
+    }
+}

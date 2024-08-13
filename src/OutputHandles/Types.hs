@@ -7,11 +7,17 @@ module OutputHandles.Types
     , Color(..)
     , TextureEntry(..)
     , Draws
-    , ToRender(..)
+    , ToRender
     , TextDisplay(..)
     , TextureMap
     , DrawRectangle(..)
     , DrawTexture(..)
+    , renderEmpty
+    , renderDebugs
+    , renderDraws
+    , addTexture
+    , addRectangle
+    , addText
     ) where
 
 import Foreign.C.Types ( CInt )
@@ -23,30 +29,40 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 -- first number is layer number
--- second number is y position
 -- third number is priority
--- fourth number is x position
-type Position = (Int, CInt, Int, CInt)
+type Position = (Int, Int, Int)
 
 type Draws = M.Map Position Draw
 
 data ToRender = ToRender
-    { draws :: !Draws
-    , drawWords :: ![TextDisplay]
+    { nextId :: Int
+    , draws :: !Draws
     , drawDebugs :: ![(Int, Int, Int, Int)]
     }
 
 instance Monoid ToRender where
     mempty :: ToRender
-    mempty = ToRender M.empty [] []
+    mempty = ToRender 0 M.empty []
 
 instance Semigroup ToRender where
    (<>) :: ToRender -> ToRender -> ToRender
-   (<>) (ToRender m1 l1 d1) (ToRender m2 l2 d2) = ToRender (m1 <> m2) (l1 <> l2) (d1 <> d2)
+   (<>) (ToRender n1 m1 d1) (ToRender n2 m2 d2) = ToRender (n1+n2) (m1 <> m2') (d1 <> d2)
+    where
+        m2' = M.mapKeys (\(a, b, c) -> (a, b, c + n1)) m2
 
 data Color = White | Gray | Black | Red | Blue | Green | Yellow
 
-data Draw = DrawTexture DrawTexture | DrawRectangle DrawRectangle
+data Draw = DrawTexture DrawTexture | DrawRectangle DrawRectangle | DrawTextDisplay TextDisplay
+
+renderEmpty :: ToRender
+renderEmpty = ToRender 0 M.empty []
+
+renderDebugs :: ToRender -> [(Int, Int, Int, Int)]
+renderDebugs = drawDebugs
+
+renderDraws :: ToRender -> [Draw]
+renderDraws rend = M.elems $ draws rend
+
 
 data DrawTexture = DTexture
     { drawTexture :: SDL.Texture
@@ -80,6 +96,21 @@ data TextureEntry = TextureEntry
     , textureHeight :: Int
     , texture :: SDL.Texture
     }
+
+addTexture :: ToRender -> Int -> Int -> DrawTexture -> ToRender
+addTexture (ToRender n ds dbs) depth priority dt = ToRender (n + 1) ds' dbs
+    where
+        ds' = M.insert (depth, priority, n) (DrawTexture dt) ds
+
+addRectangle :: ToRender -> Int -> Int -> DrawRectangle -> ToRender
+addRectangle (ToRender n ds dbs) depth priority dr = ToRender (n + 1) ds' dbs
+    where
+        ds' = M.insert (depth, priority, n) (DrawRectangle dr) ds
+
+addText :: ToRender -> Int -> Int -> TextDisplay -> ToRender
+addText (ToRender n ds dbs) depth priority td = ToRender (n + 1) ds' dbs
+    where
+        ds' = M.insert (depth, priority, n) (DrawTextDisplay td) ds
 
 type TextureMap = M.Map T.Text TextureEntry
 

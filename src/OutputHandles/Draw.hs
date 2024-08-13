@@ -28,7 +28,9 @@ import OutputHandles.Types
     , OutputHandles(renderer, ratioX, ratioY, font)
     , OutputRead(..)
     , TextDisplay(..)
-    , ToRender(draws, drawWords, drawDebugs)
+    , ToRender
+    , renderDebugs
+    , renderDraws
     )
 
 
@@ -77,20 +79,19 @@ drawAll drawings = do
     outs <- getOutputs
     let drawOutline = debugOutlineTexture cfgs
         drawDbgs = debugHitboxes cfgs
-        debugs = drawDebugs drawings
+        debugs = renderDebugs drawings
         r = renderer outs
         ratX = ratioX outs
         ratY = ratioY outs
-        drawings' = scaleDraw ratX ratY <$> draws drawings
-        words' = scaleWords ratX ratY <$> drawWords drawings
+        drawings' = scaleDraw ratX ratY <$> renderDraws drawings
         debugs' = scaleDebugs ratX ratY <$> debugs
     SDL.clear r
     setColor r Red
-    mapM_ (draw drawOutline r) drawings'
+    mapM_ (draw (font outs) drawOutline r) drawings'
     setColor r Yellow
     when drawDbgs $ mapM_ (drawDebug r) debugs'
     setColor r Black
-    mapM_ (drawText r (font outs)) words'
+    -- mapM_ (drawText r (font outs)) words'
     SDL.present r
 
 drawDebug :: MonadIO m => SDL.Renderer -> (Int, Int, Int, Int) -> m ()
@@ -104,9 +105,10 @@ drawText r font wd = do
     SDL.copy r text Nothing (Just (mkRect (wordsPosX wd) (wordsPosY wd) (wordsWidth wd) (wordsHeight wd)))
     SDL.freeSurface surf
 
-draw :: MonadIO m => Bool -> SDL.Renderer -> Draw -> m ()
-draw showRect r (DrawTexture dt) = drawTextureNow showRect r dt
-draw showRect r (DrawRectangle dr) = drawRectangleNow showRect r dr
+draw :: MonadIO m => Font.Font -> Bool -> SDL.Renderer -> Draw -> m ()
+draw _ showRect r (DrawTexture dt) = drawTextureNow showRect r dt
+draw _ showRect r (DrawRectangle dr) = drawRectangleNow showRect r dr
+draw f showRect r (DrawTextDisplay td) = drawText r f td
 
 drawTextureNow :: MonadIO m => Bool -> SDL.Renderer -> DrawTexture -> m ()
 drawTextureNow showRect r d = do
@@ -134,6 +136,7 @@ scale o r = floor (fromIntegral o * r)
 scaleDraw :: Double -> Double -> Draw -> Draw
 scaleDraw rX rY (DrawTexture (DTexture t pX pY w h m)) = DrawTexture $ DTexture t (scale pX rX) (scale pY rY) (scale w rX) (scale h rY) m
 scaleDraw rX rY (DrawRectangle (DRectangle t pX pY w h)) = DrawRectangle $ DRectangle t (scale pX rX) (scale pY rY) (scale w rX) (scale h rY)
+scaleDraw rX rY (DrawTextDisplay (TextDisplay t pX pY w h c)) = DrawTextDisplay $ TextDisplay t (scale pX rX) (scale pY rY) (scale w rX) (scale h rY) c
 
 scaleWords :: Double -> Double -> TextDisplay -> TextDisplay
 scaleWords rX rY (TextDisplay wd pX pY w h c) = TextDisplay wd (scale pX rX) (scale pY rY) (scale w rX) (scale h rY) c

@@ -14,12 +14,6 @@ import InputState
     , InputState(inputRepeat, inputStateDirection)
     )
 import GameState.Types
-    ( GameStateRead(..)
-    , MenuCursor(MenuCursor, cursorPos)
-    , Menu(Menu, cursor, options)
-    , MenuAction(..)
-    , GameState(..)
-    )
 import GameState.Menu.MainMenu ( initMainMenu )
 import OutputHandles.Types ( OutputHandles, OutputRead(..) )
 
@@ -54,7 +48,6 @@ updateGameState = do
     gs <- readGameState
     outs <- getOutputs
     case gs of
-        StartMenu m -> lieftIO $ updateGameStateInMenu m cfgs inputs outs
-        GameMenu m gs -> liftIO $ updateGameStateInMenu m cfgs inputs outs
+        GameView mm m -> return $ updateGameStateInMenu mm m cfgs inputs outs
+        OverlayMenu tm bm -> return $ updateGameStateInOverlay tm bm cfgs inputs outs
         _ -> return gs
-

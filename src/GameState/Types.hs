@@ -12,10 +12,12 @@
 module GameState.Types
     ( GameState(..)
     , GameStateRead(..)
+--    , GameView(..)
     , Menu(..)
     , MenuAction(..)
     , MenuCursor(..)
     , MenuOptions(..)
+    , OptAction
     , CursorType(..)
     ) where
 
@@ -46,15 +48,20 @@ instance Show Unique where
     show:: Unique -> String
     show = show . hashUnique
 
+--data GameView =
+--      GameMenu Menu
+--    | Other
+
 -- Top level game state
 --  Game menu is a menu with different options
 --  Game state is where character walks around
 --  Game exiting is how tell top loop to quit
 data GameState =
-    StartMenu Menu
-    | GameMenu Menu GameData
-    | OverlayMenu Menu Menu GameData
+      GameView (Maybe Menu) Menu -- GameView
+    | OverlayMenu Menu Menu -- GameView
     | GameExiting
+
+type OptAction = GameConfigs -> InputState -> OutputHandles -> GameState
 
 -- Actions that can be done from the Menu
 --  Start makes a new game area
@@ -63,7 +70,7 @@ data GameState =
 --  Start takes you to start menu (currently no saving)
 data MenuAction = MenuAction
     { menuOptionText :: T.Text
-    , menuAction :: GameConfigs -> GameData -> InputState -> OutputHandles -> GameState
+    , menuAction :: OptAction
     }
 
 data MenuOptions = MenuOpts
@@ -77,8 +84,7 @@ data MenuOptions = MenuOpts
 --  Options for actions from this menu
 --  Cursor is the current option that is being pointed to
 data Menu = Menu
-    { canPause :: Bool
-    , texts :: [TextDisplay]
+    { texts :: [TextDisplay]
     , options :: MenuOptions
     , cursor :: MenuCursor
     }
