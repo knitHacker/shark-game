@@ -8,6 +8,9 @@ module SaveData
     , getRandomPercent
     , loadFromFile
     , saveToFile
+    , TripInfo(..)
+    , tripInfo
+    , tripCost
     ) where
 
 import System.IO ()
@@ -16,6 +19,7 @@ import GHC.Generics ( Generic )
 import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Text as T
+import qualified Data.Map as M
 
 import Data.Word
 import System.Random.MWC as R
@@ -24,6 +28,7 @@ import Control.Monad.ST.Lazy (runST)
 import Data.Vector.Unboxed
 import qualified Data.List as L
 
+import Configs
 import Env.Files (getGameDirectory)
 
 getRandomPercent :: GameData -> (GameData, Int)
@@ -36,9 +41,15 @@ getRandomPercent gd = runST $ do
         s = gameDataSeed gd
 
 data TripInfo = TripInfo
-    { tripDestination :: T.Text
-    , tripEquipment :: [T.Text]
+    { tripDestination :: GameLocation
+    , tripEquipment :: [GameEquipment]
     }
+
+tripInfo :: PlayConfigs -> GameLocation -> [T.Text] -> TripInfo
+tripInfo cfg loc eqTxt = TripInfo loc $ (\t -> equipment cfg M.! t) <$> eqTxt
+
+tripCost :: TripInfo -> Int
+tripCost trip = L.sum $ price <$> tripEquipment trip
 
 data GameData = GameData
     { gameDataSaveFile :: String

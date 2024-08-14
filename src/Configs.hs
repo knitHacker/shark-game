@@ -157,4 +157,3 @@ class Monad m => ConfigsRead m where
     debugMode = do
         cfgs <- readConfigs
         return $ debug $ settingCfgs cfgs
-

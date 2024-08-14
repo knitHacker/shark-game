@@ -14,15 +14,18 @@ module GameState.Types
     , GameStateRead(..)
     , Menu(..)
     , MenuAction(..)
-    , MenuCursor(..)
     , MenuOptions(..)
     , OverlayMenu(..)
     , OptAction
     , CursorType(..)
     , OneActionListOptions(..)
     , MultiSelectListOptions(..)
+    , SelectOption(..)
     , activateOption
     , selOneOpts
+    , selMultOpts
+    , optionLength
+    , toggleMultiOption
     ) where
 
 import Control.Lens
@@ -33,6 +36,7 @@ import Data.Unique ( Unique, hashUnique )
 import Data.Word ( Word32 )
 import qualified Data.Text as T
 import InputState
+import Data.Maybe (isJust)
 
 import Configs ( GameConfigs )
 import InputState ( Direction, InputState )
@@ -84,6 +88,7 @@ data MenuAction = MenuAction
 
 data SelectOption = SelectOption
     { selectOptionText :: T.Text
+    , selectKey :: T.Text
     , selectSelected :: Bool
     , changeable :: Bool
     }
@@ -92,14 +97,16 @@ data OneActionListOptions = OALOpts
     { oalXPos :: Int
     , oalYPos :: Int
     , oalOpts :: [MenuAction]
-    , oalCursor :: MenuCursor
+    , oalCursor :: CursorType
     }
 
 data MultiSelectListOptions = MSLOpts
     { mslXPos :: Int
     , mslYPos :: Int
     , mslOpts :: [SelectOption]
-    , mslAction :: [T.Text] -> OptAction
+    , mslAction :: [T.Text] -> Int -> OptAction
+    , mslContinueAction :: [T.Text] -> OptAction
+    , mslBackActionM :: Maybe OptAction
     }
 
 data MenuOptions =
@@ -107,16 +114,36 @@ data MenuOptions =
     | SelMultiListOpts MultiSelectListOptions
     -- todo options at given positions
 
-selOneOpts :: Int -> Int -> [MenuAction] -> MenuCursor -> MenuOptions
+selOneOpts :: Int -> Int -> [MenuAction] -> CursorType -> MenuOptions
 selOneOpts x y opts curs = SelOneListOpts $ OALOpts x y opts curs
 
-activateOption :: MenuOptions -> OptAction
-activateOption (SelOneListOpts opts) = optAction ((oalOpts opts) !! pos)
+selMultOpts :: Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> OptAction) -> ([T.Text] -> OptAction) -> Maybe OptAction -> MenuOptions
+selMultOpts x y opts up act back = SelMultiListOpts $ MSLOpts x y opts up act back
+
+activateOption :: Int -> MenuOptions -> OptAction
+activateOption pos (SelOneListOpts opts) = optAction ((oalOpts opts) !! pos)
+activateOption pos (SelMultiListOpts opts)
+    | pos < len = (mslAction opts) selected pos
+    | len == pos = (mslContinueAction opts) selected
+    | otherwise =
+        case mslBackActionM opts of
+            Nothing -> (mslAction opts) selected pos
+            Just back -> back
     where
-        pos = cursorPos $ oalCursor opts
-activateOption (SelMultiListOpts opts) = (mslAction opts) selected
+        len = length (mslOpts opts)
+        opts' = toggleMultiOption opts pos
+        selected = selectKey <$> filter (\o -> selectSelected o) (mslOpts opts')
+
+optionLength :: MenuOptions -> Int
+optionLength (SelOneListOpts opts) = length $ oalOpts opts
+optionLength (SelMultiListOpts opts) = 1 + (length $ mslOpts opts) + (if isJust (mslBackActionM opts) then 1 else 0)
+
+toggleMultiOption :: MultiSelectListOptions -> Int -> MultiSelectListOptions
+toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle o else o) <$> zip [0..] (mslOpts opt)}
     where
-        selected = selectOptionText <$> filter (\opt -> selectSelected opt) (mslOpts opts)
+        toggle (SelectOption t k True True) = SelectOption t k False True
+        toggle (SelectOption t k False True) = SelectOption t k True True
+        toggle sopt = sopt
 
 -- Menu game state
 --  Texts are the text to show including where to display
@@ -126,18 +153,12 @@ data Menu = Menu
     { texts :: [TextDisplay]
     , imgs :: [(Int, Int, TextureEntry)]
     , options :: MenuOptions
+    , currentPos :: Int
     }
 
 
 data CursorType = CursorPointer TextureEntry | CursorRect Color
 
--- Menu cursor state
---  which option index the cursor is pointing to
---  the texture of the cursor
-data MenuCursor = MenuCursor
-    { cursorPos :: Int
-    , cursorType :: CursorType
-    }
 
 type Barriers = RTree ()
 
