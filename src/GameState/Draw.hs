@@ -61,40 +61,40 @@ updateGameMenu d (Menu words _ opts) = r <> updateMenuOptions d opts
 updateMenuOptions :: Int -> MenuOptions -> ToRender
 updateMenuOptions _ (SelOneListOpts (OALOpts _ _ [] _)) = renderEmpty
 updateMenuOptions _ (SelMultiListOpts (MSLOpts _ _ [] _)) = renderEmpty
-updateMenuOptions d (SelOneListOpts (OALOpts x y ma (MenuCursor pos (CursorPointer tE)))) = r'
+updateMenuOptions d (SelOneListOpts oalOpt) = updateSelOneListOptions d oalOpt
+
+
+updateSelOneListOptions :: Int -> OneActionListOptions -> ToRender
+updateSelOneListOptions _ (OALOpts _ _ [] _) = renderEmpty
+updateSelOneListOptions d (OALOpts x y ma (MenuCursor pos curs)) = r'
     where
-        r = addTexture renderEmpty d 0 (DTexture t xPos' yPos' w h Nothing)
-        r' = foldl (\rend td -> addText rend d 1 td) r $ updateMenuOptions' ma oX oY
+        r = updateListCursor d x yPos' cL curs
+        r' = foldl (\rend td -> addText rend d 1 td) r $ updateMenuListOptions ma oX oY
+        yPos = y + (20 * pos)
+        yPos' = fromIntegral yPos
+        oX = fromIntegral x
+        oY = fromIntegral y
+        opt = ma !! pos
+        cL = T.length $ menuOptionText opt
+
+updateListCursor :: Int -> Int -> CInt -> Int -> CursorType -> ToRender
+updateListCursor d x y _ (CursorPointer tE) = addTexture renderEmpty d 0 $ DTexture t x' y w h Nothing
+    where
+        x' = fromIntegral $ x - 20
         t = texture tE
         tW = textureWidth tE
         tH = textureHeight tE
         w = fromIntegral tW
         h = fromIntegral tH
-        xPos = x - 20
-        yPos = y + (20 * pos)
-        xPos' = fromIntegral xPos
-        yPos' = fromIntegral yPos
-        bottom = yPos' + h
-        oX = fromIntegral x
-        oY = fromIntegral y
-updateMenuOptions d (SelOneListOpts (OALOpts x y ma (MenuCursor pos (CursorRect c)))) = r'
+updateListCursor d x y tl (CursorRect c) = addRectangle renderEmpty d 0 $ DRectangle c x' (y - 3) w 20
     where
-        r = addRectangle renderEmpty d 0 (DRectangle c xPos' yPos' w h)
-        r' = foldl (\rend td -> addText rend d 1 td) r $ updateMenuOptions' ma oX oY
-        xPos = x - 5
-        yPos = y + (20 * pos) - 3
-        xPos' = fromIntegral xPos
-        yPos' = fromIntegral yPos
-        opt = ma !! pos
-        h = 20
-        bottom = yPos' + h
-        w = fromIntegral $ (T.length (menuOptionText opt) * 5) + 10
-        oX = fromIntegral x
-        oY = fromIntegral y
+        x' = fromIntegral $ x - 5
+        w = fromIntegral $ tl * 5 + 10
 
-updateMenuOptions' :: [MenuAction] -> CInt -> CInt -> [TextDisplay]
-updateMenuOptions' [] _ _ = []
-updateMenuOptions' (h:tl) x y = dis : updateMenuOptions' tl x newY
+
+updateMenuListOptions :: [MenuAction] -> CInt -> CInt -> [TextDisplay]
+updateMenuListOptions [] _ _ = []
+updateMenuListOptions (h:tl) x y = dis : updateMenuListOptions tl x newY
     where
         newY = y + 20
         dis = TextDisplay str x y w 15 Blue
