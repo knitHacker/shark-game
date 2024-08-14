@@ -45,7 +45,7 @@ initMainMenu cfgs outs = do
                 , TextDisplay "Press ENTER to select" 75 150 100 20 White
                 ]
         newGame ng = MenuAction "New Game" (\_ _ o -> GameView Nothing  (introPage o ng))
-        continueGame cg = MenuAction "Continue" (\_ _ o -> GameView Nothing (introPage o cg))
+        continueGame cg = MenuAction "Continue" (\_ _ o -> GameView Nothing (initResearchCenterMenu o cg))
         exitOpt = MenuAction "Exit" exitMenuAction
         menuOpts ng cgM =
             case cgM of
