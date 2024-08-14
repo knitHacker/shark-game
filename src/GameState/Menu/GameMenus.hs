@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module GameState.Menu.MainMenu
+module GameState.Menu.GameMenus
     ( initMainMenu
     , initResearchCenterMenu
     ) where

@@ -14,7 +14,7 @@ import InputState
     , InputState(inputRepeat, inputStateDirection)
     )
 import GameState.Types
-import GameState.Menu.MainMenu ( initMainMenu )
+import GameState.Menu.GameMenus ( initMainMenu )
 import OutputHandles.Types ( OutputHandles, OutputRead(..) )
 
 import qualified Data.Text as T
