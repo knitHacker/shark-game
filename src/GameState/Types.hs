@@ -12,13 +12,17 @@
 module GameState.Types
     ( GameState(..)
     , GameStateRead(..)
---    , GameView(..)
     , Menu(..)
     , MenuAction(..)
     , MenuCursor(..)
     , MenuOptions(..)
+    , OverlayMenu(..)
     , OptAction
     , CursorType(..)
+    , OneActionListOptions(..)
+    , MultiSelectListOptions(..)
+    , activateOption
+    , selOneOpts
     ) where
 
 import Control.Lens
@@ -48,20 +52,25 @@ instance Show Unique where
     show:: Unique -> String
     show = show . hashUnique
 
---data GameView =
---      GameMenu Menu
---    | Other
-
 -- Top level game state
 --  Game menu is a menu with different options
 --  Game state is where character walks around
 --  Game exiting is how tell top loop to quit
 data GameState =
-      GameView (Maybe Menu) Menu -- GameView
-    | OverlayMenu Menu Menu -- GameView
+      GameView (Maybe OverlayMenu) Menu
+    | OverlayMenu OverlayMenu Menu
     | GameExiting (Maybe GameData)
 
 type OptAction = GameConfigs -> InputState -> OutputHandles -> GameState
+
+data OverlayMenu = Overlay
+    { bgXPos :: Int
+    , bgYPos :: Int
+    , bgWidth :: Int
+    , bgHeight :: Int
+    , bgColor :: Color
+    , overlayMenu :: Menu
+    }
 
 -- Actions that can be done from the Menu
 --  Start makes a new game area
@@ -70,14 +79,44 @@ type OptAction = GameConfigs -> InputState -> OutputHandles -> GameState
 --  Start takes you to start menu (currently no saving)
 data MenuAction = MenuAction
     { menuOptionText :: T.Text
-    , menuAction :: OptAction
+    , optAction :: OptAction
     }
 
-data MenuOptions = MenuOpts
-    { optionXPos :: Int
-    , optionYPos :: Int
-    , menuOpts :: [MenuAction]
+data SelectOption = SelectOption
+    { selectOptionText :: T.Text
+    , selectSelected :: Bool
+    , changeable :: Bool
     }
+
+data OneActionListOptions = OALOpts
+    { oalXPos :: Int
+    , oalYPos :: Int
+    , oalOpts :: [MenuAction]
+    , oalCursor :: MenuCursor
+    }
+
+data MultiSelectListOptions = MSLOpts
+    { mslXPos :: Int
+    , mslYPos :: Int
+    , mslOpts :: [SelectOption]
+    , mslAction :: [T.Text] -> OptAction
+    }
+
+data MenuOptions =
+      SelOneListOpts OneActionListOptions
+    | SelMultiListOpts MultiSelectListOptions
+    -- todo options at given positions
+
+selOneOpts :: Int -> Int -> [MenuAction] -> MenuCursor -> MenuOptions
+selOneOpts x y opts curs = SelOneListOpts $ OALOpts x y opts curs
+
+activateOption :: MenuOptions -> OptAction
+activateOption (SelOneListOpts opts) = optAction ((oalOpts opts) !! pos)
+    where
+        pos = cursorPos $ oalCursor opts
+activateOption (SelMultiListOpts opts) = (mslAction opts) selected
+    where
+        selected = selectOptionText <$> filter (\opt -> selectSelected opt) (mslOpts opts)
 
 -- Menu game state
 --  Texts are the text to show including where to display
@@ -85,9 +124,10 @@ data MenuOptions = MenuOpts
 --  Cursor is the current option that is being pointed to
 data Menu = Menu
     { texts :: [TextDisplay]
+    , imgs :: [(Int, Int, TextureEntry)]
     , options :: MenuOptions
-    , cursor :: MenuCursor
     }
+
 
 data CursorType = CursorPointer TextureEntry | CursorRect Color
 

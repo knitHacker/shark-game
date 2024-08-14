@@ -35,9 +35,10 @@ initMainMenu cfgs outs = do
                 Just sf -> do
                     gd <- loadFromFile sf
                     return $ Just gd
-    return $ GameView Nothing $ Menu words (MenuOpts 80 180 (menuOpts nGame gdM)) cursor
+    return $ GameView Nothing $ Menu words [] $ optEntry nGame gdM
 
     where
+        optEntry nGame gdM = selOneOpts 80 180 (menuOpts nGame gdM) cursor
         arrowEntry = CursorPointer $ textures outs M.! "green_arrow"
         cursor = MenuCursor 0 arrowEntry
         words = [ TextDisplay "Shark Research" 10 10 200 100 Gray
@@ -53,7 +54,7 @@ initMainMenu cfgs outs = do
 
 
 introPage :: OutputHandles -> GameData -> Menu
-introPage outs gd = Menu words (MenuOpts 80 220 opts) (MenuCursor 0 (CursorRect Gray))
+introPage outs gd = Menu words [] $ selOneOpts 80 220 opts $ MenuCursor 0 $ CursorRect Gray
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -74,29 +75,30 @@ introPage outs gd = Menu words (MenuOpts 80 220 opts) (MenuCursor 0 (CursorRect 
 
 
 initResearchCenterMenu :: OutputHandles -> GameData -> Menu
-initResearchCenterMenu outs gd = Menu words (MenuOpts 15 140 opts) mc
+initResearchCenterMenu outs gd = Menu words [] $ selOneOpts 15 140 opts mc
     where
         funds = gameDataFunds gd
         mc = MenuCursor 0 cursorT
         cursorT = CursorRect Gray
-        fundTxt = T.append "Current Funds: " (T.pack (show funds))
+        fundTxt = T.append "Current Funds: $" (T.pack (show funds))
         words = [ TextDisplay "Research Center" 10 10 200 100 White
                 , TextDisplay fundTxt 75 110 80 12 Green
                 ]
-        mm o = mapMenu o gd
-        opts = [ MenuAction "Plan Research Trip" (\_ _ o -> GameView (Just (pauseMenu (mm o) gd)) (mm o))
+        mm c = mapMenu c gd
+        opts = [ MenuAction "Plan Research Trip" (\c _ _ -> GameView (Just (pauseMenu (mm c) gd)) (mm c))
                , MenuAction "Review Data" undefined
                , MenuAction "Lab Management" undefined
                ]
 
-mapMenu :: OutputHandles -> GameData -> Menu
-mapMenu outs gd = Menu words (MenuOpts 15 140 opts) mc
+mapMenu :: GameConfigs -> GameData -> Menu
+mapMenu cfgs gd = Menu words [] $ selOneOpts 15 140 opts' mc
     where
+        locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> (M.assocs $ siteLocations $ sharkCfgs cfgs)
         mc = MenuCursor 0 $ CursorRect Gray
         words = [ TextDisplay "Select Trip Destination" 10 10 200 100 White
                ]
-        opts = [ MenuAction "Reef" undefined
-               , MenuAction "Mangroves" undefined
-               , MenuAction "Open Ocean" undefined
-               , MenuAction "Return to Lab" (researchCenterOpt gd)
-               ]
+        opts = (\(loc, txt) -> MenuAction txt undefined) <$> locs
+        rtOpt = MenuAction "Return to Lab" (researchCenterOpt gd)
+        opts' = opts ++ [rtOpt]
+
+-- equipmentPickMenu
