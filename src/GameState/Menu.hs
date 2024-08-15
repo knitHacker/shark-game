@@ -5,6 +5,7 @@ module GameState.Menu
     , updateGameStateInMenu
     , updateGameStateInOverlay
     , pauseMenu
+    , exitSaveAction
     )
     where
 
@@ -13,13 +14,12 @@ import InputState
 import Configs
 import OutputHandles.Types
 import GameState.Types
-
 import SaveData
-
 
 import Data.Maybe (isJust)
 
 import Debug.Trace
+
 
 incrementMenuCursor :: Menu -> Menu
 incrementMenuCursor m@(Menu _ _ opts p)
@@ -77,6 +77,9 @@ pauseMenu m gd = Overlay 20 20 150 200 Yellow menu
         words = [ TextDisplay "Game Menu" 30 30 120 60 Black
                 ]
         opts = [ MenuAction "Continue" (\_ _ _ -> GameView (Just (pauseMenu m gd)) m)
+                -- TODO: should be able to go back to the main menu and start a new game but right now
+                -- actions don't allow IO actions. surprisingly first time we ran into this
+               -- , MenuAction "Main Menu" (\c _ o -> GameView Nothing (mainMenu (Just gd)
                , MenuAction "Exit" (exitSaveAction gd)
                ]
 

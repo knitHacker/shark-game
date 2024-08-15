@@ -24,11 +24,6 @@ import GameState.Types
 import Debug.Trace
 
 
-researchCenterOpt :: GameData -> OptAction
-researchCenterOpt gd _ _ o = GameView (Just (pauseMenu rcM gd)) rcM
-    where
-        rcM = initResearchCenterMenu o gd
-
 initMainMenu :: GameConfigs -> OutputHandles -> IO GameState
 initMainMenu cfgs outs = do
     nGame <- startNewGame
@@ -37,22 +32,29 @@ initMainMenu cfgs outs = do
                 Just sf -> do
                     gd <- loadFromFile sf
                     return $ Just gd
-    return $ GameView Nothing $ Menu words [] (optEntry nGame gdM) 0
+    return $ mainMenu gdM nGame cfgs outs
 
+mainMenu :: Maybe GameData -> GameData -> GameConfigs -> OutputHandles -> GameState
+mainMenu gdM ng cfgs outs = GameView Nothing $ Menu words [] optEntry 0
     where
-        optEntry nGame gdM = selOneOpts 80 180 (menuOpts nGame gdM) cursor
+        optEntry = selOneOpts 80 180 menuOpts cursor
         cursor = CursorPointer $ textures outs M.! "green_arrow"
         words = [ TextDisplay "Shark Research" 10 10 200 100 Gray
                 , TextDisplay "Press ENTER to select" 75 150 100 20 White
                 ]
-        newGame ng = MenuAction "New Game" (\_ _ o -> GameView Nothing  (introPage o ng))
+        newGame = MenuAction "New Game" (\_ _ o -> GameView Nothing  (introPage o ng))
         continueGame cg = MenuAction "Continue" $ researchCenterOpt cg
         exitOpt = MenuAction "Exit" exitMenuAction
-        menuOpts ng cgM =
-            case cgM of
-                Nothing -> [newGame ng, exitOpt]
-                Just cg -> [continueGame cg, newGame ng, exitOpt]
+        menuOpts =
+            case gdM of
+                Nothing -> [newGame, exitOpt]
+                Just cg -> [continueGame cg, newGame, exitOpt]
 
+
+researchCenterOpt :: GameData -> OptAction
+researchCenterOpt gd _ _ o = GameView (Just (pauseMenu rcM gd)) rcM
+    where
+        rcM = initResearchCenterMenu o gd
 
 introPage :: OutputHandles -> GameData -> Menu
 introPage outs gd = Menu words [] (selOneOpts 80 220 opts (CursorRect Gray)) 0
@@ -95,7 +97,7 @@ mapMenu cfgs gd = Menu words [] (selOneOpts 15 140 opts' mc) 0
     where
         locs = (\(loc, lCfg) -> (lCfg, showText lCfg)) <$> (M.assocs $ siteLocations $ sharkCfgs cfgs)
         mc = CursorRect Gray
-        words = [ TextDisplay "Select Trip Destination" 10 10 200 100 White
+        words = [ TextDisplay "Select Trip Destination" 10 10 220 80 White
                 ]
         eMenu loc c = equipmentPickMenu loc [] 0 c gd
         opts = (\(loc, txt) -> MenuAction txt (\c _ _ -> GameView (Just (pauseMenu (eMenu loc c) gd)) (eMenu loc c))) <$> locs
@@ -103,7 +105,7 @@ mapMenu cfgs gd = Menu words [] (selOneOpts 15 140 opts' mc) 0
         opts' = opts ++ [rtOpt]
 
 equipmentPickMenu :: GameLocation -> [T.Text] -> Int -> GameConfigs -> GameData -> Menu
-equipmentPickMenu loc chsn pos cfgs gd = Menu words [] (selMultOpts 15 140 opts' update act (Just back)) pos
+equipmentPickMenu loc chsn pos cfgs gd = Menu words [] (selMultOpts 15 120 opts' update act (Just back)) pos
     where
         eq = equipment $ sharkCfgs cfgs
         rEs = requiredEquipment loc
@@ -113,7 +115,10 @@ equipmentPickMenu loc chsn pos cfgs gd = Menu words [] (selMultOpts 15 140 opts'
             in (et, T.append (T.append (text eqEntry) " - $") (T.pack (show (price eqEntry))))
         rEs' = lupE <$> rEs
         aEs' = lupE <$> aEs
-        words = [ TextDisplay "Select Trip Equipment" 10 10 200 100 White
+        cost = foldl (\s opt -> if selectSelected opt then s + price (eq M.! (selectKey opt)) else s) 0 opts'
+        costTxt = T.append "Trip Current Cost: $" (T.pack (show cost))
+        words = [ TextDisplay "Select Trip Equipment" 10 10 220 80 White
+                , TextDisplay costTxt 10 90 100 15 White
                 ]
         rOpts = (\(k, t) -> SelectOption t k True False) <$> rEs'
         wasChsn t = elem t chsn
@@ -137,15 +142,20 @@ reviewTripMenu loc eqs cfgs gd = Menu words [] (selOneOpts 80 180 opts (CursorRe
         fundTxt = T.append "Current Funds: $" (T.pack (show funds))
         tripTxt = T.append "Trip Cost: $" (T.pack (show tc))
         afterTxt = T.append "After Trip: $" (T.pack (show (funds - tc)))
-        -- todo list loction and equipments
-        words = [ TextDisplay "Review Trip Details" 10 10 200 100 White
-                , TextDisplay fundTxt 75 110 80 12 Green
-                , TextDisplay tripTxt 75 130 80 12 Red
-                , TextDisplay afterTxt 75 150 80 12 (if enoughFunds then Green else Red)
+        tripLenTxt = T.append (T.append "Trip Length: " (T.pack (show (tripLength trip)))) " month(s)"
+        words = [ TextDisplay "Review Trip Details" 10 10 220 80 White
+                , TextDisplay fundTxt 25 95 85 12 Green
+                , TextDisplay tripTxt 25 115 80 12 Red
+                , TextDisplay afterTxt 25 135 80 12 (if enoughFunds then Green else Red)
+                , TextDisplay tripLenTxt 120 95 80 12 White
                 ]
-        gd' = gd { gameDataFunds = funds - tc }
+        gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
         bMenu c = equipmentPickMenu loc eqs 0 c gd
-        opts = [ MenuAction "Start Trip" (researchCenterOpt gd')
+        rMenu c = reviewTripMenu loc eqs c gd
+        rGV c _ _ = GameView (Just (pauseMenu (rMenu c) gd)) (rMenu c)
+        opts = [ MenuAction "Start Trip" (if enoughFunds then researchCenterOpt gd' else rGV)
                , MenuAction "Back to equipment" (\c _ _ -> GameView (Just (pauseMenu (bMenu c) gd)) (bMenu c))
                , MenuAction "Abort Trip" (researchCenterOpt gd)
                ]
+
+

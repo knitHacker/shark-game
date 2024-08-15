@@ -3,24 +3,30 @@
         "boat": {
             "text": "Boat",
             "timeAdded": 1,
-            "price": 100
+            "price": 100,
+            "infoType": "observe",
+            "effectiveness": 5
         },
         "fishingGear": {
             "text": "Fishing Gear",
             "timeAdded": 1,
             "price": 20,
-            "infoType": "caught"
+            "infoType": "caught",
+            "effectiveness": 30
         },
         "snorkelGear": {
             "text": "Snorkel Gear",
             "timeAdded": 1,
             "price": 50,
-            "infoType": "observe"
+            "infoType": "observe",
+            "effectiveness": 50
         },
         "scubaGear": {
             "text": "Scuba Gear",
             "timeAdded": 2,
-            "price": 100
+            "price": 100,
+            "infoType": "observe",
+            "effectiveness": 70
         }
     },
     "siteLocations": {
@@ -31,7 +37,7 @@
             "sharksFound": {
                 "blackTipReef": {
                     "caught": 25,
-                    "observe": 0.4
+                    "observe": 40
                 }
             }
         },

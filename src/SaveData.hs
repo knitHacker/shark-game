@@ -11,6 +11,7 @@ module SaveData
     , TripInfo(..)
     , tripInfo
     , tripCost
+    , tripLength
     ) where
 
 import System.IO ()
@@ -50,6 +51,9 @@ tripInfo cfg loc eqTxt = TripInfo loc $ (\t -> equipment cfg M.! t) <$> eqTxt
 
 tripCost :: TripInfo -> Int
 tripCost trip = L.sum $ price <$> tripEquipment trip
+
+tripLength :: TripInfo -> Int
+tripLength trip = L.sum $ timeAdded <$> tripEquipment trip
 
 data GameData = GameData
     { gameDataSaveFile :: String

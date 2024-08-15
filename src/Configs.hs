@@ -83,7 +83,8 @@ data GameEquipment = GameEquip
     { text :: T.Text
     , timeAdded :: Int
     , price :: Int
-    , infoType :: Maybe T.Text
+    , infoType :: T.Text
+    , effectiveness :: Int
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameEquipment
