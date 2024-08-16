@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -9,6 +10,7 @@ module SaveData
     , loadFromFile
     , saveToFile
     , TripInfo(..)
+    , SharkFind(..)
     , tripInfo
     , tripCost
     , tripLength
@@ -20,7 +22,7 @@ import GHC.Generics ( Generic )
 import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Text as T
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 
 import Data.Word
 import System.Random.MWC as R
@@ -55,11 +57,21 @@ tripCost trip = L.sum $ price <$> tripEquipment trip
 tripLength :: TripInfo -> Int
 tripLength trip = L.sum $ timeAdded <$> tripEquipment trip
 
+data SharkFind = SharkFind
+    { findLocation :: T.Text
+    , findType :: T.Text
+    , findData :: Int
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON SharkFind
+instance ToJSON SharkFind
+
 data GameData = GameData
     { gameDataSaveFile :: String
     , gameDataSeed :: Seed
     , gameDataFunds :: Int
     , gameDataMonth :: Int
+    , gameDataFoundSharks :: M.Map T.Text [SharkFind]
     }
 
 
@@ -67,6 +79,7 @@ data GameSaveData = GameSaveData
     { saveSeed :: Vector Word32
     , saveFunds :: Int
     , saveMonth :: Int
+    , saveFoundSharks :: M.Map T.Text [SharkFind]
     } deriving (Show, Eq, Generic)
 
 
@@ -82,25 +95,25 @@ startNewGame = do
     let fn = path L.++ "/file" L.++ (show name) L.++ ".save"
     putStrLn fn
     s <- save g
-    return $ GameData fn s 0 0
+    return $ GameData fn s 0 0 M.empty
 
 
 convertSave :: String -> GameSaveData -> GameData
-convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd)
+convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd) (saveFoundSharks gsd)
     where
         seed = toSeed $ saveSeed gsd
 
 convertBack :: GameData -> (FilePath, GameSaveData)
-convertBack gd = (gameDataSaveFile gd, GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd))
+convertBack gd = (gameDataSaveFile gd, GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd) (gameDataFoundSharks gd))
     where
         seedV = fromSeed $ gameDataSeed gd
 
-loadFromFile :: FilePath -> IO GameData
+loadFromFile :: FilePath -> IO (Either T.Text GameData)
 loadFromFile fp = do
     gsdM <- eitherDecodeFileStrict fp
     case gsdM of
-        Left err -> error ("Failed to open save file " L.++ (show err))
-        Right gsd -> return $ convertSave fp gsd
+        Left err -> return $ Left $ T.pack ("Failed to open save file " L.++ (show err))
+        Right gsd -> return $ Right $ convertSave fp gsd
 
 saveToFile :: GameData -> IO ()
 saveToFile gd = do

@@ -20,10 +20,10 @@ import Control.Monad.IO.Class        (MonadIO)
 
 
 data AppEnvData = AppEnvData
-    { appEnvDataConfigs :: GameConfigs
-    , appEnvDataOutputHandles :: OutputHandles
-    , appEnvDataInputState :: InputState
-    , appEnvDataGameState :: GameState
+    { appEnvDataConfigs :: !GameConfigs
+    , appEnvDataOutputHandles :: !OutputHandles
+    , appEnvDataInputState :: !InputState
+    , appEnvDataGameState :: !GameState
     }
 
 

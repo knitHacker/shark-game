@@ -57,7 +57,7 @@ library
       OutputHandles.Draw
       OutputHandles.Types
       SaveData
-      Utils
+      Shark.Trip
   other-modules:
       Paths_shark_game
   hs-source-dirs:

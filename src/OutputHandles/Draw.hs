@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 module OutputHandles.Draw
     ( mkRect

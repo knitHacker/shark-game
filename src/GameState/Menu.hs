@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module GameState.Menu
@@ -34,20 +35,20 @@ decrementMenuCursor m@(Menu _ _ opt p)
     | optionLength opt >  0 = m { currentPos = p - 1 }
     | otherwise = m
 
-exitMenuAction :: GameConfigs -> InputState -> OutputHandles -> GameState
+exitMenuAction :: GameConfigs -> InputState -> OutputHandles -> GameView
 exitMenuAction _ _ _ = GameExiting Nothing
 
-exitSaveAction :: GameData -> GameConfigs -> InputState -> OutputHandles -> GameState
+exitSaveAction :: GameData -> GameConfigs -> InputState -> OutputHandles -> GameView
 exitSaveAction gd _ _ _ = GameExiting (Just gd)
 
-updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> GameState
+updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe GameView
 updateGameStateInMenu mM m cfgs inputs outs =
     case (esc, mM, selected, moveDirM) of
-        (True, Just om, _, _) -> OverlayMenu om m
-        (_, _, _, Just DUp) -> GameView mM $ decrementMenuCursor m
-        (_, _, _, Just DDown) -> GameView mM $ incrementMenuCursor m
-        (_, _, True, _) -> (activateOption pos (options m)) cfgs inputs outs
-        _ -> GameView mM m
+        (True, Just om, _, _) -> Just $ OverlayMenu om m
+        (_, _, _, Just DUp) -> Just $ GameView mM $ decrementMenuCursor m
+        (_, _, _, Just DDown) -> Just $ GameView mM $ incrementMenuCursor m
+        (_, _, True, _) -> Just $ (activateOption pos (options m)) cfgs inputs outs
+        _ -> Nothing
     where
         pos = currentPos m
         moveDirM = if inputRepeat inputs then Nothing else inputStateDirection inputs
@@ -55,14 +56,14 @@ updateGameStateInMenu mM m cfgs inputs outs =
         esc = escapeJustPressed inputs
         optLen = optionLength $ options m
 
-updateGameStateInOverlay :: OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> GameState
+updateGameStateInOverlay :: OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe GameView
 updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM cfgs inputs outs =
     case (esc, selected, moveDirM) of
-        (True, _, _) -> GameView (Just (om' topM)) backM
-        (_, True, _) -> (activateOption (currentPos topM) (options topM)) cfgs inputs outs
-        (_, _, Just DUp) -> OverlayMenu (om' (decrementMenuCursor topM)) backM
-        (_, _, Just DDown) -> OverlayMenu (om' (incrementMenuCursor topM)) backM
-        _ -> OverlayMenu om backM
+        (True, _, _) -> Just $ GameView (Just (om' topM)) backM
+        (_, True, _) -> Just $ (activateOption (currentPos topM) (options topM)) cfgs inputs outs
+        (_, _, Just DUp) -> Just $ OverlayMenu (om' (decrementMenuCursor topM)) backM
+        (_, _, Just DDown) -> Just $ OverlayMenu (om' (incrementMenuCursor topM)) backM
+        _ -> Nothing
     where
         moveDirM = if inputRepeat inputs then Nothing else inputStateDirection inputs
         selected = enterJustPressed inputs

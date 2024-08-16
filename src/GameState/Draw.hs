@@ -44,14 +44,19 @@ updateWindow :: (MonadIO m, ConfigsRead m, GameStateRead m) => m (Maybe ToRender
 updateWindow = do
     cfgs <- readConfigs
     gs <- readGameState
-    case gs of
-        (GameView _ m) -> return $ Just $ updateGameMenu 0 m
+    if gameReDraw gs then return (Just (updateWindow' (gameView gs))) else return Nothing
+
+
+updateWindow' :: GameView -> ToRender
+updateWindow' gv =
+    case gv of
+        (GameView _ m) -> updateGameMenu 0 m
         (OverlayMenu top back) ->
             let backR = updateGameMenu 0 back
                 bg = addRectangle renderEmpty 1 0 (DRectangle Yellow 20 20 150 200)
                 frontR = updateGameMenu 2 $ overlayMenu top
-            in return $ Just $ backR <> bg <> frontR
-        _ -> return $ Just renderEmpty
+            in backR <> bg <> frontR
+        _ -> renderEmpty
 
 updateGameMenu :: Int -> Menu -> ToRender
 updateGameMenu d (Menu words imgs opts p) = r' <> updateMenuOptions d p opts

@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -117,10 +118,10 @@ instance ToJSON StateConfigs
 type TextureFileMap = M.Map T.Text TextureCfg
 
 data Configs = Configs
-    { textureCfgs :: TextureFileMap
-    , gameCfgs :: SettingConfigs
-    , sCfgs :: StateConfigs
-    , pCfgs :: PlayConfigs
+    { textureCfgs :: !TextureFileMap
+    , gameCfgs :: !SettingConfigs
+    , sCfgs :: !StateConfigs
+    , pCfgs :: !PlayConfigs
     } deriving (Generic, Show, Eq)
 
 instance FromJSON Configs

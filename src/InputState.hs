@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 module InputState
     ( InputState(..)
     , initInputState
@@ -37,11 +38,11 @@ data KeyPress
 
 
 data InputState = InputState
-    { inputStateQuit :: Bool
-    , inputStateDirection :: Maybe Direction
-    , inputControl :: Maybe KeyPress
-    , inputRepeat :: Bool
-    , inputTimestamp :: Word32
+    { inputStateQuit :: !Bool
+    , inputStateDirection :: !(Maybe Direction)
+    , inputControl :: !(Maybe KeyPress)
+    , inputRepeat :: !Bool
+    , inputTimestamp :: !Word32
     } deriving (Show, Eq)
 
 

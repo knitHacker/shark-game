@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 module Game
     ( runGame
     ) where
@@ -10,7 +11,7 @@ import Env.Types
 import InputState ( updateInput, InputState(inputStateQuit) )
 import GameState ( isGameExiting, updateGameState )
 import GameState.Draw ( updateWindow )
-import GameState.Types ( GameState(..) )
+import GameState.Types ( GameState(..), GameView(..) )
 import SaveData
 import Configs ( ConfigsRead(..), GameConfigs(..), StateConfigs(..), updateStateConfigs )
 
@@ -20,6 +21,7 @@ import Control.Monad.Reader ( MonadReader(ask) )
 import Data.Time.Clock.System
     ( SystemTime(systemSeconds, systemNanoseconds), getSystemTime )
 import Data.Word ( Word32 )
+import Control.Concurrent
 
 framesPerSecond :: Word32
 framesPerSecond = 60
@@ -44,9 +46,10 @@ runGame count pTime appEnvData = do
             -- TODO: maybe in future push this into "output handles" so can still read inputs
             -- in "real" time
             if diff < frameTime
-                then
+                then do
                     -- wait another loop cycle before running game
                     -- TODO: a sleep for frameTime - diff?
+                    threadDelay (fromIntegral (diff `div` 1000)) -- number of microseconds
                     runGame count pTime appEnvData
                 else
                     -- step the state of the game
@@ -62,7 +65,7 @@ run count time appEnvData = do
     let stop = inputStateQuit input
         appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
 
-    case (gameState', stop) of
+    case (gameView gameState', stop) of
         (GameExiting Nothing, _) -> do
             outputs <- runAppEnv appEnvData getOutputs
             cleanupOutputHandles outputs

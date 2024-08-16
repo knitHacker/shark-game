@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 module GameState.Menu.GameMenus
     ( initMainMenu
@@ -24,17 +25,21 @@ import GameState.Types
 import Debug.Trace
 
 
-initMainMenu :: GameConfigs -> OutputHandles -> IO GameState
+initMainMenu :: GameConfigs -> OutputHandles -> IO GameView
 initMainMenu cfgs outs = do
     nGame <- startNewGame
     gdM <- case lastSaveM (stateCfgs cfgs) of
                 Nothing -> return Nothing
                 Just sf -> do
-                    gd <- loadFromFile sf
-                    return $ Just gd
+                    gdE <- loadFromFile sf
+                    case gdE of
+                        Left err -> do
+                            putStrLn $ T.unpack err
+                            return Nothing
+                        Right gd -> return $ Just gd
     return $ mainMenu gdM nGame cfgs outs
 
-mainMenu :: Maybe GameData -> GameData -> GameConfigs -> OutputHandles -> GameState
+mainMenu :: Maybe GameData -> GameData -> GameConfigs -> OutputHandles -> GameView
 mainMenu gdM ng cfgs outs = GameView Nothing $ Menu words [] optEntry 0
     where
         optEntry = selOneOpts 80 180 menuOpts cursor
@@ -88,8 +93,8 @@ initResearchCenterMenu outs gd = Menu words [] (selOneOpts 15 140 opts mc) 0
                 ]
         mm c = mapMenu c gd
         opts = [ MenuAction "Plan Research Trip" (\c _ _ -> GameView (Just (pauseMenu (mm c) gd)) (mm c))
-               , MenuAction "Review Data" undefined
-               , MenuAction "Lab Management" undefined
+               -- , MenuAction "Review Data" undefined
+               -- , MenuAction "Lab Management" undefined
                ]
 
 mapMenu :: GameConfigs -> GameData -> Menu

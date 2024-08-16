@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE InstanceSigs #-}
 
 {-# LANGUAGE TemplateHaskell #-}
@@ -26,6 +27,9 @@ module GameState.Types
     , selMultOpts
     , optionLength
     , toggleMultiOption
+    , reDraw
+    , GameView(..)
+    , noUpdate
     ) where
 
 import Control.Lens
@@ -50,8 +54,6 @@ import GameState.Collision.RTree ( RTree )
 import GameState.Collision.BoundBox ( BoundBox )
 import SaveData
 
-import Utils ()
-
 instance Show Unique where
     show:: Unique -> String
     show = show . hashUnique
@@ -60,12 +62,26 @@ instance Show Unique where
 --  Game menu is a menu with different options
 --  Game state is where character walks around
 --  Game exiting is how tell top loop to quit
-data GameState =
-      GameView (Maybe OverlayMenu) Menu
-    | OverlayMenu OverlayMenu Menu
-    | GameExiting (Maybe GameData)
+data GameState = GameState
+    { gameView :: GameView
+    , gameReDraw :: Bool
+    , gameDrawCount :: Int
+    }
 
-type OptAction = GameConfigs -> InputState -> OutputHandles -> GameState
+data GameView =
+      GameView !(Maybe OverlayMenu) !Menu
+    | OverlayMenu !OverlayMenu !Menu
+    | GameExiting !(Maybe GameData)
+
+reDraw :: GameView -> GameState
+reDraw gv = GameState gv True 0
+
+noUpdate :: GameState -> GameState
+noUpdate (GameState gv _ gdc)
+    | gdc < 30 = GameState gv False (gdc + 1)
+    | otherwise = reDraw gv
+
+type OptAction = GameConfigs -> InputState -> OutputHandles -> GameView
 
 data OverlayMenu = Overlay
     { bgXPos :: Int

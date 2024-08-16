@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE InstanceSigs #-}
 module OutputHandles.Types
@@ -35,7 +36,7 @@ type Position = (Int, Int, Int)
 type Draws = M.Map Position Draw
 
 data ToRender = ToRender
-    { nextId :: Int
+    { nextId :: !Int
     , draws :: !Draws
     , drawDebugs :: ![(Int, Int, Int, Int)]
     }
@@ -52,7 +53,9 @@ instance Semigroup ToRender where
 
 data Color = White | Gray | Black | Red | Blue | Green | Yellow
 
-data Draw = DrawTexture DrawTexture | DrawRectangle DrawRectangle | DrawTextDisplay TextDisplay
+data Draw = DrawTexture DrawTexture
+          | DrawRectangle DrawRectangle
+          | DrawTextDisplay TextDisplay
 
 renderEmpty :: ToRender
 renderEmpty = ToRender 0 M.empty []
