@@ -17,12 +17,12 @@ module GameState.Types
     , MenuAction(..)
     , MenuOptions(..)
     , OverlayMenu(..)
-    , OptAction
+    , GamePlayState(..)
     , CursorType(..)
     , OneActionListOptions(..)
     , MultiSelectListOptions(..)
     , SelectOption(..)
-    , activateOption
+    , getNextMenu
     , selOneOpts
     , selMultOpts
     , optionLength
@@ -53,6 +53,7 @@ import OutputHandles.Types
 import GameState.Collision.RTree ( RTree )
 import GameState.Collision.BoundBox ( BoundBox )
 import SaveData
+import Configs
 
 instance Show Unique where
     show:: Unique -> String
@@ -71,7 +72,7 @@ data GameState = GameState
 data GameView =
       GameView !(Maybe OverlayMenu) !Menu
     | OverlayMenu !OverlayMenu !Menu
-    | GameExiting !(Maybe GameData)
+    | GameExiting
 
 reDraw :: GameView -> GameState
 reDraw gv = GameState gv True 0
@@ -81,7 +82,17 @@ noUpdate (GameState gv _ gdc)
     | gdc < 30 = GameState gv False (gdc + 1)
     | otherwise = reDraw gv
 
-type OptAction = GameConfigs -> InputState -> OutputHandles -> GameView
+
+data GamePlayState =
+      MainMenu GameData
+    | PauseMenu GameData (GamePlayState)
+    | IntroPage
+    | ResearchCenter GameData
+    | TripDestinationSelect GameData
+    | TripEquipmentSelect GameData GameLocation [T.Text] Int
+    | TripReview GameData GameLocation [T.Text]
+    | GameExitState (Maybe GameData)
+    | ComingSoon
 
 data OverlayMenu = Overlay
     { bgXPos :: Int
@@ -99,7 +110,7 @@ data OverlayMenu = Overlay
 --  Start takes you to start menu (currently no saving)
 data MenuAction = MenuAction
     { menuOptionText :: T.Text
-    , optAction :: OptAction
+    , menuNextState :: GamePlayState
     }
 
 data SelectOption = SelectOption
@@ -120,9 +131,9 @@ data MultiSelectListOptions = MSLOpts
     { mslXPos :: Int
     , mslYPos :: Int
     , mslOpts :: [SelectOption]
-    , mslAction :: [T.Text] -> Int -> OptAction
-    , mslContinueAction :: [T.Text] -> OptAction
-    , mslBackActionM :: Maybe OptAction
+    , mslAction :: [T.Text] -> Int -> GamePlayState
+    , mslContinueAction :: [T.Text] -> GamePlayState
+    , mslBackActionM :: Maybe GamePlayState
     }
 
 data MenuOptions =
@@ -133,12 +144,12 @@ data MenuOptions =
 selOneOpts :: Int -> Int -> [MenuAction] -> CursorType -> MenuOptions
 selOneOpts x y opts curs = SelOneListOpts $ OALOpts x y opts curs
 
-selMultOpts :: Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> OptAction) -> ([T.Text] -> OptAction) -> Maybe OptAction -> MenuOptions
+selMultOpts :: Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptions
 selMultOpts x y opts up act back = SelMultiListOpts $ MSLOpts x y opts up act back
 
-activateOption :: Int -> MenuOptions -> OptAction
-activateOption pos (SelOneListOpts opts) = optAction ((oalOpts opts) !! pos)
-activateOption pos (SelMultiListOpts opts)
+getNextMenu :: Int -> MenuOptions -> GamePlayState
+getNextMenu pos (SelOneListOpts opts) = menuNextState ((oalOpts opts) !! pos)
+getNextMenu pos (SelMultiListOpts opts)
     | pos < len = (mslAction opts) selected pos
     | len == pos = (mslContinueAction opts) selected
     | otherwise =

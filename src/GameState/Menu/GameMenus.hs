@@ -1,8 +1,12 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 module GameState.Menu.GameMenus
-    ( initMainMenu
-    , initResearchCenterMenu
+    ( mainMenu
+    , researchCenterMenu
+    , introPage
+    , mapMenu
+    , equipmentPickMenu
+    , reviewTripMenu
     ) where
 
 
@@ -19,50 +23,29 @@ import OutputHandles.Types
     , TextDisplay(TextDisplay)
     )
 
-import GameState.Menu
 import GameState.Types
 
 import Debug.Trace
 
-
-initMainMenu :: GameConfigs -> OutputHandles -> IO GameView
-initMainMenu cfgs outs = do
-    nGame <- startNewGame
-    gdM <- case lastSaveM (stateCfgs cfgs) of
-                Nothing -> return Nothing
-                Just sf -> do
-                    gdE <- loadFromFile sf
-                    case gdE of
-                        Left err -> do
-                            putStrLn $ T.unpack err
-                            return Nothing
-                        Right gd -> return $ Just gd
-    return $ mainMenu gdM nGame cfgs outs
-
-mainMenu :: Maybe GameData -> GameData -> GameConfigs -> OutputHandles -> GameView
-mainMenu gdM ng cfgs outs = GameView Nothing $ Menu words [] optEntry 0
+mainMenu :: Maybe GameData -> GameConfigs -> OutputHandles -> Menu
+mainMenu gdM cfgs outs = Menu words [] optEntry 0
     where
         optEntry = selOneOpts 80 180 menuOpts cursor
         cursor = CursorPointer $ textures outs M.! "green_arrow"
         words = [ TextDisplay "Shark Research" 10 10 200 100 Gray
                 , TextDisplay "Press ENTER to select" 75 150 100 20 White
                 ]
-        newGame = MenuAction "New Game" (\_ _ o -> GameView Nothing  (introPage o ng))
-        continueGame cg = MenuAction "Continue" $ researchCenterOpt cg
-        exitOpt = MenuAction "Exit" exitMenuAction
+        newGame = MenuAction "New Game" IntroPage
+        continueGame cg = MenuAction "Continue" $ ResearchCenter cg
+        exitOpt = MenuAction "Exit" $ GameExitState gdM
         menuOpts =
             case gdM of
                 Nothing -> [newGame, exitOpt]
                 Just cg -> [continueGame cg, newGame, exitOpt]
 
 
-researchCenterOpt :: GameData -> OptAction
-researchCenterOpt gd _ _ o = GameView (Just (pauseMenu rcM gd)) rcM
-    where
-        rcM = initResearchCenterMenu o gd
-
-introPage :: OutputHandles -> GameData -> Menu
-introPage outs gd = Menu words [] (selOneOpts 80 220 opts (CursorRect Gray)) 0
+introPage :: GameData -> Menu
+introPage gd = Menu words [] (selOneOpts 80 220 opts (CursorRect Gray)) 0
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -77,13 +60,13 @@ introPage outs gd = Menu words [] (selOneOpts 80 220 opts (CursorRect Gray)) 0
                 , TextDisplay grantText 75 170 80 12 White
                 , TextDisplay startMoney 80 190 60 12 Green
                 ]
-        opts = [ MenuAction "Start Research" (researchCenterOpt gd')
+        opts = [ MenuAction "Start Research" $ ResearchCenter gd'
                ]
 
 
 
-initResearchCenterMenu :: OutputHandles -> GameData -> Menu
-initResearchCenterMenu outs gd = Menu words [] (selOneOpts 15 140 opts mc) 0
+researchCenterMenu :: GameData -> OutputHandles -> Menu
+researchCenterMenu gd outs = Menu words [] (selOneOpts 15 140 opts mc) 0
     where
         funds = gameDataFunds gd
         mc = CursorRect Gray
@@ -91,26 +74,24 @@ initResearchCenterMenu outs gd = Menu words [] (selOneOpts 15 140 opts mc) 0
         words = [ TextDisplay "Research Center" 10 10 200 100 White
                 , TextDisplay fundTxt 75 110 80 12 Green
                 ]
-        mm c = mapMenu c gd
-        opts = [ MenuAction "Plan Research Trip" (\c _ _ -> GameView (Just (pauseMenu (mm c) gd)) (mm c))
-               -- , MenuAction "Review Data" undefined
-               -- , MenuAction "Lab Management" undefined
+        opts = [ MenuAction "Plan Research Trip" $ TripDestinationSelect gd
+               , MenuAction "Review Data" ComingSoon
+               , MenuAction "Lab Management" ComingSoon
                ]
 
-mapMenu :: GameConfigs -> GameData -> Menu
-mapMenu cfgs gd = Menu words [] (selOneOpts 15 140 opts' mc) 0
+mapMenu :: GameData -> GameConfigs -> Menu
+mapMenu gd cfgs = Menu words [] (selOneOpts 15 140 opts' mc) 0
     where
         locs = (\(loc, lCfg) -> (lCfg, showText lCfg)) <$> (M.assocs $ siteLocations $ sharkCfgs cfgs)
         mc = CursorRect Gray
         words = [ TextDisplay "Select Trip Destination" 10 10 220 80 White
                 ]
-        eMenu loc c = equipmentPickMenu loc [] 0 c gd
-        opts = (\(loc, txt) -> MenuAction txt (\c _ _ -> GameView (Just (pauseMenu (eMenu loc c) gd)) (eMenu loc c))) <$> locs
-        rtOpt = MenuAction "Return to Lab" (researchCenterOpt gd)
+        opts = (\(loc, txt) -> MenuAction txt (TripEquipmentSelect gd loc [] 0)) <$> locs
+        rtOpt = MenuAction "Return to Lab" $ ResearchCenter gd
         opts' = opts ++ [rtOpt]
 
-equipmentPickMenu :: GameLocation -> [T.Text] -> Int -> GameConfigs -> GameData -> Menu
-equipmentPickMenu loc chsn pos cfgs gd = Menu words [] (selMultOpts 15 120 opts' update act (Just back)) pos
+equipmentPickMenu :: GameData -> GameLocation -> [T.Text] -> Int -> GameConfigs -> Menu
+equipmentPickMenu gd loc chsn pos cfgs = Menu words [] (selMultOpts 15 120 opts' update act (Just back)) pos
     where
         eq = equipment $ sharkCfgs cfgs
         rEs = requiredEquipment loc
@@ -129,16 +110,13 @@ equipmentPickMenu loc chsn pos cfgs gd = Menu words [] (selMultOpts 15 120 opts'
         wasChsn t = elem t chsn
         aOpts = (\(k, t) -> SelectOption t k (wasChsn k) True) <$> aEs'
         opts' = rOpts ++ aOpts
-        eMenu chsn p c = equipmentPickMenu loc chsn p c gd
-        rMenu chsn c = reviewTripMenu loc chsn c gd
-        update chsn p c _ _ = GameView (Just (pauseMenu (eMenu chsn p c) gd)) (eMenu chsn p c)
-        act keys c _ _ = GameView (Just (pauseMenu (rMenu keys c) gd)) (rMenu keys c)
-        mMenu c = mapMenu c gd
-        back c _ _ = GameView (Just (pauseMenu (mMenu c) gd)) (mMenu c)
+        update keys p = TripEquipmentSelect gd loc keys p
+        act keys = TripReview gd loc keys
+        back = TripDestinationSelect gd
 
 
-reviewTripMenu :: GameLocation -> [T.Text] -> GameConfigs -> GameData -> Menu
-reviewTripMenu loc eqs cfgs gd = Menu words [] (selOneOpts 80 180 opts (CursorRect Gray)) 0
+reviewTripMenu :: GameData -> GameLocation -> [T.Text] -> GameConfigs -> Menu
+reviewTripMenu gd loc eqs cfgs = Menu words [] (selOneOpts 80 180 opts (CursorRect Gray)) 0
     where
         trip = tripInfo (sharkCfgs cfgs) loc eqs
         funds = gameDataFunds gd
@@ -155,12 +133,7 @@ reviewTripMenu loc eqs cfgs gd = Menu words [] (selOneOpts 80 180 opts (CursorRe
                 , TextDisplay tripLenTxt 120 95 80 12 White
                 ]
         gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
-        bMenu c = equipmentPickMenu loc eqs 0 c gd
-        rMenu c = reviewTripMenu loc eqs c gd
-        rGV c _ _ = GameView (Just (pauseMenu (rMenu c) gd)) (rMenu c)
-        opts = [ MenuAction "Start Trip" (if enoughFunds then researchCenterOpt gd' else rGV)
-               , MenuAction "Back to equipment" (\c _ _ -> GameView (Just (pauseMenu (bMenu c) gd)) (bMenu c))
-               , MenuAction "Abort Trip" (researchCenterOpt gd)
+        opts = [ MenuAction "Start Trip" (if enoughFunds then ResearchCenter gd' else TripReview gd loc eqs)
+               , MenuAction "Back to equipment" (TripEquipmentSelect gd loc eqs 0)
+               , MenuAction "Abort Trip" (ResearchCenter gd)
                ]
-
-

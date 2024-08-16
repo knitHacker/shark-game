@@ -2,11 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module GameState.Menu
-    ( exitMenuAction
-    , updateGameStateInMenu
+    ( updateGameStateInMenu
     , updateGameStateInOverlay
-    , pauseMenu
-    , exitSaveAction
+    , withPause
     )
     where
 
@@ -18,6 +16,7 @@ import GameState.Types
 import SaveData
 
 import Data.Maybe (isJust)
+import qualified Data.Text as T
 
 import Debug.Trace
 
@@ -35,19 +34,14 @@ decrementMenuCursor m@(Menu _ _ opt p)
     | optionLength opt >  0 = m { currentPos = p - 1 }
     | otherwise = m
 
-exitMenuAction :: GameConfigs -> InputState -> OutputHandles -> GameView
-exitMenuAction _ _ _ = GameExiting Nothing
 
-exitSaveAction :: GameData -> GameConfigs -> InputState -> OutputHandles -> GameView
-exitSaveAction gd _ _ _ = GameExiting (Just gd)
-
-updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe GameView
+updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe (Either GameView GamePlayState)
 updateGameStateInMenu mM m cfgs inputs outs =
     case (esc, mM, selected, moveDirM) of
-        (True, Just om, _, _) -> Just $ OverlayMenu om m
-        (_, _, _, Just DUp) -> Just $ GameView mM $ decrementMenuCursor m
-        (_, _, _, Just DDown) -> Just $ GameView mM $ incrementMenuCursor m
-        (_, _, True, _) -> Just $ (activateOption pos (options m)) cfgs inputs outs
+        (True, Just om, _, _) -> Just $ Left $ OverlayMenu om m
+        (_, _, _, Just DUp) -> Just $ Left $ GameView mM $ decrementMenuCursor m
+        (_, _, _, Just DDown) -> Just $ Left $ GameView mM $ incrementMenuCursor m
+        (_, _, True, _) -> Just $ Right $ getNextMenu pos $ options m
         _ -> Nothing
     where
         pos = currentPos m
@@ -56,13 +50,13 @@ updateGameStateInMenu mM m cfgs inputs outs =
         esc = escapeJustPressed inputs
         optLen = optionLength $ options m
 
-updateGameStateInOverlay :: OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe GameView
+updateGameStateInOverlay :: OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe (Either GameView GamePlayState)
 updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM cfgs inputs outs =
     case (esc, selected, moveDirM) of
-        (True, _, _) -> Just $ GameView (Just (om' topM)) backM
-        (_, True, _) -> Just $ (activateOption (currentPos topM) (options topM)) cfgs inputs outs
-        (_, _, Just DUp) -> Just $ OverlayMenu (om' (decrementMenuCursor topM)) backM
-        (_, _, Just DDown) -> Just $ OverlayMenu (om' (incrementMenuCursor topM)) backM
+        (True, _, _) -> Just $ Left $ GameView (Just (om' topM)) backM
+        (_, True, _) -> Just $ Right $ getNextMenu (currentPos topM) $ options topM
+        (_, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
+        (_, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing
     where
         moveDirM = if inputRepeat inputs then Nothing else inputStateDirection inputs
@@ -70,17 +64,17 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM cfgs inputs outs =
         esc = escapeJustPressed inputs
         om' newM = om { overlayMenu = newM }
 
-pauseMenu :: Menu -> GameData -> OverlayMenu
-pauseMenu m gd = Overlay 20 20 150 200 Yellow menu
+withPause :: GamePlayState -> GameData -> Menu -> GameView
+withPause gps gd m = GameView (Just (pauseMenu gps gd)) m
+
+pauseMenu :: GamePlayState -> GameData -> OverlayMenu
+pauseMenu gps gd = Overlay 20 20 150 200 Yellow menu
     where
         menu = Menu words [] menuOpt 0
         menuOpt = SelOneListOpts $ OALOpts 50 120 opts $ CursorRect Gray
         words = [ TextDisplay "Game Menu" 30 30 120 60 Black
                 ]
-        opts = [ MenuAction "Continue" (\_ _ _ -> GameView (Just (pauseMenu m gd)) m)
-                -- TODO: should be able to go back to the main menu and start a new game but right now
-                -- actions don't allow IO actions. surprisingly first time we ran into this
-               -- , MenuAction "Main Menu" (\c _ o -> GameView Nothing (mainMenu (Just gd)
-               , MenuAction "Exit" (exitSaveAction gd)
+        opts = [ MenuAction "Continue" gps
+               , MenuAction "Main Menu" $ MainMenu gd
+               , MenuAction "Exit" (GameExitState (Just gd))
                ]
-

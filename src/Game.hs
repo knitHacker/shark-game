@@ -65,17 +65,9 @@ run count time appEnvData = do
     let stop = inputStateQuit input
         appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
 
-    case (gameView gameState', stop) of
-        (GameExiting Nothing, _) -> do
+    case (isGameExiting gameState', stop) of
+        (True, _) -> do
             outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        (GameExiting (Just gd), _) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            saveToFile gd
-            cfgs <- runAppEnv appEnvData readConfigs
-            let sc = stateCfgs cfgs
-                sc' = sc { lastSaveM = Just (gameDataSaveFile gd) }
-            updateStateConfigs sc'
             cleanupOutputHandles outputs
         (_, True) -> do
             outputs <- runAppEnv appEnvData getOutputs
