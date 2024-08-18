@@ -45,7 +45,7 @@ updateGameStateInMenu mM m cfgs inputs outs =
         _ -> Nothing
     where
         pos = currentPos m
-        moveDirM = if inputRepeat inputs then Nothing else inputStateDirection inputs
+        moveDirM = if inputRepeating inputs then Nothing else inputDirection inputs
         selected = enterJustPressed inputs
         esc = escapeJustPressed inputs
         optLen = optionLength $ options m
@@ -59,7 +59,7 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM cfgs inputs outs =
         (_, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing
     where
-        moveDirM = if inputRepeat inputs then Nothing else inputStateDirection inputs
+        moveDirM = if inputRepeating inputs then Nothing else inputDirection inputs
         selected = enterJustPressed inputs
         esc = escapeJustPressed inputs
         om' newM = om { overlayMenu = newM }

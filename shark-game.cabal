@@ -51,6 +51,7 @@ library
       GameState.Draw
       GameState.Menu
       GameState.Menu.GameMenus
+      GameState.Menu.TripMenus
       GameState.Types
       InputState
       OutputHandles
@@ -87,7 +88,7 @@ executable shark-game-exe
       Paths_shark_game
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
   build-depends:
       aeson >=2.0.3.0
     , base >=4.7 && <5

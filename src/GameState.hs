@@ -9,15 +9,11 @@ module GameState
 import Control.Monad ()
 import Configs ( ConfigsRead(readConfigs), GameConfigs )
 import InputState
-    ( enterJustPressed
-    , Direction(DDown, DUp)
-    ,InputRead(..)
-    , InputState(inputRepeat, inputStateDirection)
-    )
 import GameState.Types
 import OutputHandles.Types ( OutputHandles, OutputRead(..) )
 import GameState.Menu
 import GameState.Menu.GameMenus
+import GameState.Menu.TripMenus
 import SaveData
 import Configs
 

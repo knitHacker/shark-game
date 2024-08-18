@@ -8,7 +8,7 @@ import OutputHandles ( cleanupOutputHandles, executeDraw )
 import Env ( runAppEnv )
 import Env.Types
     ( AppEnv, AppEnvData(appEnvDataInputState, appEnvDataGameState) )
-import InputState ( updateInput, InputState(inputStateQuit) )
+import InputState
 import GameState ( isGameExiting, updateGameState )
 import GameState.Draw ( updateWindow )
 import GameState.Types ( GameState(..), GameView(..) )
@@ -62,7 +62,7 @@ run :: Word32 -> SystemTime -> AppEnvData -> IO ()
 run count time appEnvData = do
     input <- runAppEnv appEnvData stepGame
     gameState' <- runAppEnv appEnvData updateGameState
-    let stop = inputStateQuit input
+    let stop = inputQuit input
         appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
 
     case (isGameExiting gameState', stop) of
