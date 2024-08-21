@@ -7,6 +7,9 @@ module SaveData
     ( GameData(..)
     , startNewGame
     , getRandomPercent
+    , getRandomPercentS
+    , getRandomBool
+    , getRandomBoolS
     , loadFromFile
     , saveToFile
     , TripInfo(..)
@@ -35,13 +38,32 @@ import Configs
 import Env.Files (getGameDirectory)
 
 getRandomPercent :: GameData -> (GameData, Int)
-getRandomPercent gd = runST $ do
+getRandomPercent gd = (gd { gameDataSeed = s' }, p)
+    where
+        s = gameDataSeed gd
+        (s', p) = getRandomPercentS s
+
+getRandomBool :: GameData -> (GameData, Bool)
+getRandomBool gd = (gd { gameDataSeed = s' }, p)
+    where
+        s = gameDataSeed gd
+        (s', p) = getRandomBoolS s
+
+getRandomPercentS :: Seed -> (Seed, Int)
+getRandomPercentS s = runST $ do
         gen <- restore s
         p <- uniformR (0, 100) gen
         s' <- save gen
-        return $ (gd { gameDataSeed = s' }, p)
-    where
-        s = gameDataSeed gd
+        return $ (s', p)
+
+getRandomBoolS :: Seed -> (Seed, Bool)
+getRandomBoolS s = runST $ do
+        gen <- restore s
+        p <- uniformM gen
+        s' <- save gen
+        return $ (s', p)
+
+
 
 data TripInfo = TripInfo
     { tripDestination :: GameLocation

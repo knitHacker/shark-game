@@ -67,6 +67,7 @@ moveToNextState gps cfgs inputs outs =
         TripDestinationSelect gd -> return $ withPause gps gd $ mapMenu gd cfgs
         TripEquipmentSelect gd loc eqs cp -> return $ withPause gps gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> return $ withPause gps gd $ reviewTripMenu gd loc eqs cfgs
+        TripProgress gd tp -> return $ withPause gps gd $ tripProgressMenu gd tp cfgs
         _ -> undefined
 
 

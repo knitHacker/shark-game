@@ -8,6 +8,8 @@ module OutputHandles.Draw
     , drawLine
     , drawAll
     , initWindow
+    , scale
+    , unscale
     ) where
 
 
@@ -101,9 +103,12 @@ drawText :: MonadIO m => SDL.Renderer -> Font.Font -> TextDisplay -> m ()
 drawText r font wd = do
     surf <- Font.solid font (color (wordsColor wd)) (wordsText wd)
     text <- SDL.createTextureFromSurface r surf
-    SDL.copy r text Nothing (Just (mkRect (wordsPosX wd) (wordsPosY wd) (wordsWidth wd) (wordsHeight wd)))
+    (w, h) <- Font.size font (wordsText wd)
+    SDL.copy r text Nothing (Just (mkRect (wordsPosX wd) (wordsPosY wd) (fromIntegral (w * textScale)) (fromIntegral (h * textScale))))
     SDL.freeSurface surf
     SDL.destroyTexture text
+    where
+        textScale = wordsSize wd
 
 draw :: MonadIO m => Font.Font -> Bool -> SDL.Renderer -> Draw -> m ()
 draw _ showRect r (DrawTexture dt) = drawTextureNow showRect r dt
@@ -127,6 +132,10 @@ drawRectangleNow showRect r d = do
         pos = mkRect (rectPosX d) (rectPosY d) (rectWidth d) (rectHeight d)
 
 
+unscale :: (Integral a, RealFrac b) => a -> b -> a
+unscale 0 _ = 0
+unscale _ 0 = 0
+unscale o r = floor $ fromIntegral o / r
 
 scale :: (Integral a, RealFrac b) => a -> b -> a
 scale 0 _ = 0
@@ -136,10 +145,10 @@ scale o r = floor (fromIntegral o * r)
 scaleDraw :: Double -> Double -> Draw -> Draw
 scaleDraw rX rY (DrawTexture (DTexture t pX pY w h m)) = DrawTexture $ DTexture t (scale pX rX) (scale pY rY) (scale w rX) (scale h rY) m
 scaleDraw rX rY (DrawRectangle (DRectangle t pX pY w h)) = DrawRectangle $ DRectangle t (scale pX rX) (scale pY rY) (scale w rX) (scale h rY)
-scaleDraw rX rY (DrawTextDisplay (TextDisplay t pX pY w h c)) = DrawTextDisplay $ TextDisplay t (scale pX rX) (scale pY rY) (scale w rX) (scale h rY) c
+scaleDraw rX rY (DrawTextDisplay td) = DrawTextDisplay $ scaleWords rX rY td
 
 scaleWords :: Double -> Double -> TextDisplay -> TextDisplay
-scaleWords rX rY (TextDisplay wd pX pY w h c) = TextDisplay wd (scale pX rX) (scale pY rY) (scale w rX) (scale h rY) c
+scaleWords rX rY (TextDisplay wd pX pY s c) = TextDisplay wd (scale pX rX) (scale pY rY) s c
 
 scaleDebugs :: Double -> Double -> (Int, Int, Int, Int) -> (Int, Int, Int, Int)
 scaleDebugs rX rY (x, y, w, h) = (scale x rX, scale y rY, scale w rX, scale h rY)

@@ -25,6 +25,7 @@ extra-source-files:
     assets/images/arrow.png
     assets/images/dog_character_sheet.png
     assets/fonts/InsightSansSSi.ttf
+    assets/fonts/saxmono.ttf
 data-files:
     data/configs/game.json
     data/configs/textures.json
@@ -32,6 +33,7 @@ data-files:
     data/configs/shark_game.json
     assets/images/arrow.png
     assets/fonts/InsightSansSSi.ttf
+    assets/fonts/saxmono.ttf
 
 source-repository head
   type: git

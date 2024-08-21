@@ -19,6 +19,7 @@ module OutputHandles.Types
     , addTexture
     , addRectangle
     , addText
+    , getFontSize
     ) where
 
 import Foreign.C.Types ( CInt )
@@ -88,8 +89,7 @@ data TextDisplay = TextDisplay
     { wordsText :: !T.Text
     , wordsPosX :: !CInt
     , wordsPosY :: !CInt
-    , wordsWidth :: !CInt
-    , wordsHeight :: !CInt
+    , wordsSize :: !Int
     , wordsColor :: !Color
     }
 
@@ -117,11 +117,16 @@ addText (ToRender n ds dbs) depth priority td = ToRender (n + 1) ds' dbs
 
 type TextureMap = M.Map T.Text TextureEntry
 
+getFontSize :: OutputHandles -> (Double, Double)
+getFontSize outs = (fontWidth outs, fontHeight outs)
+
 data OutputHandles = OutputHandles
     { window :: SDL.Window
     , renderer :: SDL.Renderer
     , textures :: TextureMap
     , font :: Font.Font
+    , fontWidth :: Double
+    , fontHeight :: Double
     , ratioX :: Double
     , ratioY :: Double
     }

@@ -27,12 +27,13 @@ import OutputHandles.Types
       OutputRead,
       TextureEntry(TextureEntry),
       ToRender )
-import OutputHandles.Draw ( drawAll, initWindow )
+import OutputHandles.Draw
 import Env.Files            (getGameFullPath)
 
 
 fontFile :: FilePath
-fontFile = "assets/fonts/InsightSansSSi.ttf"
+fontFile = "assets/fonts/saxmono.ttf"
+--fontFile = "assets/fonts/InsightSansSSi.ttf"
 
 type TextureMap = M.Map T.Text TextureEntry
 
@@ -54,10 +55,15 @@ initOutputHandles textCfgs cfgs = do
     -- clears the screen
     initWindow r
     font <- Font.load fontPath 20
+    (w, h) <- Font.size font " "
+    b <- Font.isMonospace font
+    putStrLn $ "Font is monospace: " ++ show b
+    putStrLn $ "Font character size: " ++ show ((fromIntegral w) / ratioX, (fromIntegral h) / ratioY)
+    putStrLn $ "Ratios: " ++ show (ratioX, ratioY)
     textList <- mapM (loadTexture r) $ M.toList textCfgs
     let textures = M.fromList textList
     print $ fst <$> M.toList textures
-    return $ OutputHandles window r textures font ratioX ratioY
+    return $ OutputHandles window r textures font ((fromIntegral w) / ratioX) ((fromIntegral h) / ratioY) ratioX ratioY
     where
         gCfgs = settingCfgs cfgs
         screenWidth = fromIntegral $ windowSizeX gCfgs

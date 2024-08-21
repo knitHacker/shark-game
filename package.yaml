@@ -20,6 +20,7 @@ data-files:
 - data/configs/shark_game.json
 - assets/images/arrow.png
 - assets/fonts/InsightSansSSi.ttf
+- assets/fonts/saxmono.ttf
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package

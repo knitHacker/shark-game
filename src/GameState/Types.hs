@@ -30,6 +30,8 @@ module GameState.Types
     , reDraw
     , GameView(..)
     , noUpdate
+    , TripState(..)
+    , initTripProgress
     ) where
 
 import Control.Lens
@@ -52,6 +54,7 @@ import OutputHandles.Types
     )
 import GameState.Collision.RTree ( RTree )
 import GameState.Collision.BoundBox ( BoundBox )
+import Shark.Trip
 import SaveData
 import Configs
 
@@ -83,6 +86,21 @@ noUpdate (GameState gv _ gdc)
     | otherwise = reDraw gv
 
 
+data TripState = TripState
+    { trip :: TripInfo
+    , attempts :: Int
+    , tripTotalTries :: Int
+    , sharkFinds :: [SharkFind]
+    }
+
+initTripProgress :: GameData -> GameLocation -> [T.Text] -> GameConfigs -> (GameData, TripState)
+initTripProgress gd loc eqKeys cfgs = (gd', TripState trip 0 atmpts [])
+    where
+        playCfgs = sharkCfgs cfgs
+        trip = tripInfo playCfgs loc eqKeys
+        (gd', atmpts) = catchAttempts playCfgs gd trip
+
+
 data GamePlayState =
       MainMenu GameData
     | PauseMenu GameData (GamePlayState)
@@ -91,6 +109,7 @@ data GamePlayState =
     | TripDestinationSelect GameData
     | TripEquipmentSelect GameData GameLocation [T.Text] Int
     | TripReview GameData GameLocation [T.Text]
+    | TripProgress GameData TripState
     | GameExitState (Maybe GameData)
     | ComingSoon
 
@@ -123,6 +142,8 @@ data SelectOption = SelectOption
 data OneActionListOptions = OALOpts
     { oalXPos :: !Int
     , oalYPos :: !Int
+    , oalSize :: !Int
+    , oalSpace :: !Int
     , oalOpts :: ![MenuAction]
     , oalCursor :: !CursorType
     }
@@ -130,6 +151,8 @@ data OneActionListOptions = OALOpts
 data MultiSelectListOptions = MSLOpts
     { mslXPos :: !Int
     , mslYPos :: !Int
+    , mslSize :: !Int
+    , mslSpace :: !Int
     , mslOpts :: ![SelectOption]
     , mslAction :: [T.Text] -> Int -> GamePlayState
     , mslContinueAction :: [T.Text] -> GamePlayState
@@ -141,11 +164,11 @@ data MenuOptions =
     | SelMultiListOpts MultiSelectListOptions
     -- todo options at given positions
 
-selOneOpts :: Int -> Int -> [MenuAction] -> CursorType -> MenuOptions
-selOneOpts x y opts curs = SelOneListOpts $ OALOpts x y opts curs
+selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction] -> CursorType -> MenuOptions
+selOneOpts x y s sp opts curs = SelOneListOpts $ OALOpts x y s sp opts curs
 
-selMultOpts :: Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptions
-selMultOpts x y opts up act back = SelMultiListOpts $ MSLOpts x y opts up act back
+selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptions
+selMultOpts x y s sp opts up act back = SelMultiListOpts $ MSLOpts x y s sp opts up act back
 
 getNextMenu :: Int -> MenuOptions -> GamePlayState
 getNextMenu pos (SelOneListOpts opts) = menuNextState ((oalOpts opts) !! pos)
