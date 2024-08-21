@@ -68,36 +68,36 @@ renderDraws rend = M.elems $ draws rend
 
 
 data DrawTexture = DTexture
-    { drawTexture :: SDL.Texture
-    , drawPosX :: CInt
-    , drawPosY :: CInt
-    , drawWidth :: CInt
-    , drawHeight :: CInt
-    , drawMask :: Maybe (SDL.Rectangle CInt)
+    { drawTexture :: !SDL.Texture
+    , drawPosX :: !CInt
+    , drawPosY :: !CInt
+    , drawWidth :: !CInt
+    , drawHeight :: !CInt
+    , drawMask :: !(Maybe (SDL.Rectangle CInt))
     }
 
 data DrawRectangle = DRectangle
-    { rectColor :: Color
-    , rectPosX :: CInt
-    , rectPosY :: CInt
-    , rectWidth :: CInt
-    , rectHeight :: CInt
+    { rectColor :: !Color
+    , rectPosX :: !CInt
+    , rectPosY :: !CInt
+    , rectWidth :: !CInt
+    , rectHeight :: !CInt
     }
 
 data TextDisplay = TextDisplay
-    { wordsText :: T.Text
-    , wordsPosX :: CInt
-    , wordsPosY :: CInt
-    , wordsWidth :: CInt
-    , wordsHeight :: CInt
-    , wordsColor :: Color
+    { wordsText :: !T.Text
+    , wordsPosX :: !CInt
+    , wordsPosY :: !CInt
+    , wordsWidth :: !CInt
+    , wordsHeight :: !CInt
+    , wordsColor :: !Color
     }
 
 
 data TextureEntry = TextureEntry
-    { textureWidth :: Int
-    , textureHeight :: Int
-    , texture :: SDL.Texture
+    { textureWidth :: !Int
+    , textureHeight :: !Int
+    , texture :: !SDL.Texture
     }
 
 addTexture :: ToRender -> Int -> Int -> DrawTexture -> ToRender

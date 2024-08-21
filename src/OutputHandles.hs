@@ -53,7 +53,7 @@ initOutputHandles textCfgs cfgs = do
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
     initWindow r
-    font <- Font.load fontPath 12
+    font <- Font.load fontPath 20
     textList <- mapM (loadTexture r) $ M.toList textCfgs
     let textures = M.fromList textList
     print $ fst <$> M.toList textures

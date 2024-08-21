@@ -64,9 +64,9 @@ instance Show Unique where
 --  Game state is where character walks around
 --  Game exiting is how tell top loop to quit
 data GameState = GameState
-    { gameView :: GameView
-    , gameReDraw :: Bool
-    , gameDrawCount :: Int
+    { gameView :: !GameView
+    , gameReDraw :: !Bool
+    , gameDrawCount :: !Int
     }
 
 data GameView =
@@ -95,12 +95,12 @@ data GamePlayState =
     | ComingSoon
 
 data OverlayMenu = Overlay
-    { bgXPos :: Int
-    , bgYPos :: Int
-    , bgWidth :: Int
-    , bgHeight :: Int
-    , bgColor :: Color
-    , overlayMenu :: Menu
+    { bgXPos :: !Int
+    , bgYPos :: !Int
+    , bgWidth :: !Int
+    , bgHeight :: !Int
+    , bgColor :: !Color
+    , overlayMenu :: !Menu
     }
 
 -- Actions that can be done from the Menu
@@ -109,31 +109,31 @@ data OverlayMenu = Overlay
 --  Continue returns to the game area already started
 --  Start takes you to start menu (currently no saving)
 data MenuAction = MenuAction
-    { menuOptionText :: T.Text
-    , menuNextState :: GamePlayState
+    { menuOptionText :: !T.Text
+    , menuNextState :: !GamePlayState
     }
 
 data SelectOption = SelectOption
-    { selectOptionText :: T.Text
-    , selectKey :: T.Text
-    , selectSelected :: Bool
-    , changeable :: Bool
+    { selectOptionText :: !T.Text
+    , selectKey :: !T.Text
+    , selectSelected :: !Bool
+    , changeable :: !Bool
     }
 
 data OneActionListOptions = OALOpts
-    { oalXPos :: Int
-    , oalYPos :: Int
-    , oalOpts :: [MenuAction]
-    , oalCursor :: CursorType
+    { oalXPos :: !Int
+    , oalYPos :: !Int
+    , oalOpts :: ![MenuAction]
+    , oalCursor :: !CursorType
     }
 
 data MultiSelectListOptions = MSLOpts
-    { mslXPos :: Int
-    , mslYPos :: Int
-    , mslOpts :: [SelectOption]
+    { mslXPos :: !Int
+    , mslYPos :: !Int
+    , mslOpts :: ![SelectOption]
     , mslAction :: [T.Text] -> Int -> GamePlayState
     , mslContinueAction :: [T.Text] -> GamePlayState
-    , mslBackActionM :: Maybe GamePlayState
+    , mslBackActionM :: !(Maybe GamePlayState)
     }
 
 data MenuOptions =
@@ -177,10 +177,10 @@ toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle 
 --  Options for actions from this menu
 --  Cursor is the current option that is being pointed to
 data Menu = Menu
-    { texts :: [TextDisplay]
-    , imgs :: [(Int, Int, TextureEntry)]
-    , options :: MenuOptions
-    , currentPos :: Int
+    { texts :: ![TextDisplay]
+    , imgs :: ![(Int, Int, TextureEntry)]
+    , options :: !MenuOptions
+    , currentPos :: !Int
     }
 
 

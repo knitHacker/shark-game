@@ -34,8 +34,6 @@ import OutputHandles.Types
     , renderDraws
     )
 
-
-
 mkRect :: a -> a -> a -> a-> SDL.Rectangle a
 mkRect x y w h = SDL.Rectangle o z
   where
@@ -93,7 +91,6 @@ drawAll drawings = do
     setColor r Yellow
     when drawDbgs $ mapM_ (drawDebug r) debugs'
     setColor r Black
-    -- mapM_ (drawText r (font outs)) words'
     SDL.present r
 
 drawDebug :: MonadIO m => SDL.Renderer -> (Int, Int, Int, Int) -> m ()
@@ -106,6 +103,7 @@ drawText r font wd = do
     text <- SDL.createTextureFromSurface r surf
     SDL.copy r text Nothing (Just (mkRect (wordsPosX wd) (wordsPosY wd) (wordsWidth wd) (wordsHeight wd)))
     SDL.freeSurface surf
+    SDL.destroyTexture text
 
 draw :: MonadIO m => Font.Font -> Bool -> SDL.Renderer -> Draw -> m ()
 draw _ showRect r (DrawTexture dt) = drawTextureNow showRect r dt
