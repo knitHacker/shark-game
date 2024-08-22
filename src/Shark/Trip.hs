@@ -6,15 +6,25 @@ module Shark.Trip
 import SaveData
 import Configs
 
-catchAttempts :: PlayConfigs -> GameData -> TripInfo -> (GameData, Int)
+import qualified Data.Text as T
+import qualified Data.Map.Strict as M
+
+catchAttempts :: PlayConfigs -> GameData -> TripInfo -> (GameData, [T.Text])
 catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
     where
-        months = tripLength trip
-        (s', n) = catchAttempts' (gameDataSeed gd) 0 months
-        catchAttempts' s n 0 = (s, n)
-        catchAttempts' s n m =
+        months = foldl (\l eq -> replicate (timeAdded eq) (infoType eq) ++ l) [] $ tripEquipment trip
+        (s', n) = catchAttempts' (gameDataSeed gd) [] months
+        catchAttempts' s n [] = (s, n)
+        catchAttempts' s n (h:tl) =
             let (s', b) = getRandomBoolS s
-            in catchAttempts' s' (n + 1 + if b then 1 else 0) (m - 1)
+            in catchAttempts' s' (n ++ (h : (if b then [h] else []))) tl
 
-executeTrip :: PlayConfigs -> GameData -> TripInfo -> Maybe SharkFind
-executeTrip cfgs gd trip = Nothing
+executeTrip :: PlayConfigs -> GameData -> TripInfo -> T.Text -> (GameData, Maybe SharkFind)
+executeTrip cfgs gd trip infoType =
+    case sM of
+        Nothing -> (gd', Nothing)
+        Just shark ->  (gd', Just (SharkFind (tripDestination trip) shark infoType))
+    where
+        loc = (siteLocations cfgs) M.! (tripDestination trip)
+        sharks = Nothing : (Just <$> sharksFound loc)
+        (gd', sM) = getRandomElem gd sharks

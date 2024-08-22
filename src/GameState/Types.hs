@@ -87,17 +87,17 @@ reDraw gv = GameState gv Nothing
 
 data TripState = TripState
     { trip :: TripInfo
-    , attempts :: Int
+    , tripTries :: [T.Text]
     , tripTotalTries :: Int
     , sharkFinds :: [SharkFind]
     }
 
-initTripProgress :: GameData -> GameLocation -> [T.Text] -> GameConfigs -> (GameData, TripState)
-initTripProgress gd loc eqKeys cfgs = (gd', TripState trip 0 atmpts [])
+initTripProgress :: GameData -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
+initTripProgress gd loc eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
     where
         playCfgs = sharkCfgs cfgs
         trip = tripInfo playCfgs loc eqKeys
-        (gd', atmpts) = catchAttempts playCfgs gd trip
+        (gd', aType) = catchAttempts playCfgs gd trip
 
 
 data GamePlayState =
@@ -106,8 +106,8 @@ data GamePlayState =
     | IntroPage
     | ResearchCenter GameData
     | TripDestinationSelect GameData
-    | TripEquipmentSelect GameData GameLocation [T.Text] Int
-    | TripReview GameData GameLocation [T.Text]
+    | TripEquipmentSelect GameData T.Text [T.Text] Int
+    | TripReview GameData T.Text [T.Text]
     | TripProgress GameData TripState
     | GameExitState (Maybe GameData)
     | SharkFound GameData (Maybe SharkFind) TripState

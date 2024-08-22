@@ -10,6 +10,7 @@ module SaveData
     , getRandomPercentS
     , getRandomBool
     , getRandomBoolS
+    , getRandomElem
     , loadFromFile
     , saveToFile
     , TripInfo(..)
@@ -64,13 +65,22 @@ getRandomBoolS s = runST $ do
         return $ (s', p)
 
 
+getRandomElem :: GameData -> [a] -> (GameData, a)
+getRandomElem gd ls = runST $ do
+        gen <- restore s
+        p <- uniformR (0, len - 1) gen
+        s' <- save gen
+        return $ (gd { gameDataSeed = s' }, ls !! p)
+    where
+        s = gameDataSeed gd
+        len = L.length ls
 
 data TripInfo = TripInfo
-    { tripDestination :: GameLocation
+    { tripDestination :: T.Text
     , tripEquipment :: [GameEquipment]
     }
 
-tripInfo :: PlayConfigs -> GameLocation -> [T.Text] -> TripInfo
+tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
 tripInfo cfg loc eqTxt = TripInfo loc $ (\t -> equipment cfg M.! t) <$> eqTxt
 
 tripCost :: TripInfo -> Int

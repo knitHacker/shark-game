@@ -4,7 +4,7 @@
             "text": "Boat",
             "timeAdded": 1,
             "price": 100,
-            "infoType": "observe",
+            "infoType": "observed",
             "effectiveness": 5
         },
         "fishingGear": {
@@ -18,14 +18,14 @@
             "text": "Snorkel Gear",
             "timeAdded": 1,
             "price": 50,
-            "infoType": "observe",
+            "infoType": "observed",
             "effectiveness": 50
         },
         "scubaGear": {
             "text": "Scuba Gear",
             "timeAdded": 2,
             "price": 100,
-            "infoType": "observe",
+            "infoType": "observed",
             "effectiveness": 70
         }
     },
@@ -34,31 +34,49 @@
             "showText": "Reef",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
-            "sharksFound": {
-                "blackTipReef": {
-                    "caught": 25,
-                    "observe": 40
-                }
-            }
+            "sharksFound": ["blacktipReef"]
         },
         "mangroves": {
             "showText": "Mangroves",
             "requiredEquipment": ["boat"],
-            "allowedEquipment": ["fishingGear"]
+            "allowedEquipment": ["fishingGear"],
+            "sharksFound": ["lemon", "nurse"]
         },
         "openOcean": {
             "showText": "Open Ocean",
             "requiredEquipment": ["boat"],
-            "allowedEquipment": ["fishingGear", "scubaGear"]
+            "allowedEquipment": ["fishingGear", "scubaGear"],
+            "sharksFound": ["blue", "oceanicWhitetip"]
         }
     },
     "sharks": {
-        "blackTipReef": {
+        "blacktipReef": {
+            "sharkName": "Blacktip Reef Shark",
             "research": {
                 "size": {
                     "caught": 3
                 }
             }
+        },
+        "nurse": {
+            "sharkName": "Nurse Shark",
+            "research": {}
+        },
+        "lemon": {
+            "sharkName": "Lemon Shark",
+            "research": {}
+        },
+        "blue": {
+            "sharkName": "Blue Shark",
+            "research": {}
+        },
+        "oceanicWhitetip": {
+            "sharkName": "Oceanic Whitetip Shark",
+            "research": {}
+        },
+        "tiger": {
+            "sharkName": "Tiger Shark",
+            "research": {}
         }
     }
 }

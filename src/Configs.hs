@@ -14,6 +14,7 @@ module Configs
     , SettingConfigs(..)
     , TextureFileMap
     , updateStateConfigs
+    , SharkInfo(..)
     ) where
 
 import Control.Monad ()
@@ -95,14 +96,25 @@ data GameLocation = GameLoc
     { showText :: T.Text
     , requiredEquipment :: [T.Text]
     , allowedEquipment :: [T.Text]
+    , sharksFound :: [T.Text]
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameLocation
 instance ToJSON GameLocation
 
+
+data SharkInfo = SharkInfo
+    { sharkName :: T.Text
+--    , research :: M.Map T.Text SharkResearch
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON SharkInfo
+instance ToJSON SharkInfo
+
 data PlayConfigs = PlayConfigs
     { equipment :: M.Map T.Text GameEquipment
     , siteLocations :: M.Map T.Text GameLocation
+    , sharks :: M.Map T.Text SharkInfo
     } deriving (Generic, Show, Eq)
 
 instance FromJSON PlayConfigs
