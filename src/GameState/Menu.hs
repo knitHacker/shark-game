@@ -68,10 +68,10 @@ withPause :: GamePlayState -> GameData -> Menu -> GameView
 withPause gps gd m = GameView (Just (pauseMenu gps gd)) m
 
 pauseMenu :: GamePlayState -> GameData -> OverlayMenu
-pauseMenu gps gd = Overlay 20 20 200 200 Yellow menu
+pauseMenu gps gd = Overlay 20 20 200 200 Gray menu
     where
         menu = Menu words [] menuOpt 0
-        menuOpt = SelOneListOpts $ OALOpts 50 120 3 2 opts $ CursorRect Gray
+        menuOpt = SelOneListOpts $ OALOpts 50 120 5 15 opts $ CursorRect White
         words = [ TextDisplay "Game Menu" 30 30 10 Black
                 ]
         opts = [ MenuAction "Continue" gps

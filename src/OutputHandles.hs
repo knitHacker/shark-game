@@ -54,7 +54,7 @@ initOutputHandles textCfgs cfgs = do
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
     initWindow r
-    font <- Font.load fontPath 20
+    font <- Font.load fontPath 16
     (w, h) <- Font.size font " "
     b <- Font.isMonospace font
     putStrLn $ "Font is monospace: " ++ show b

@@ -75,11 +75,21 @@ updateMenuOptions _ _ _ (SelMultiListOpts (MSLOpts _ _ _ _ [] _ _ _)) = renderEm
 updateMenuOptions fs d p (SelMultiListOpts mslOpt) = updateMultiListOptions fs d p mslOpt
 
 
+getTextRectangle :: Color -> CInt -> CInt -> Int -> Int -> Int -> Int -> DrawRectangle
+getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
+    where
+        xAdj = max 1 (fromIntegral fSize) --(floor ((fromIntegral (2 * fSize)) / 2)))
+        yAdj = max 1 (min ((floor ((fromIntegral (sp - 1)) / 2))) (fromIntegral (div (textH - 1) 2)))
+        x' = fromIntegral $ x - xAdj
+        y' = fromIntegral $ y - yAdj
+        w = (fromIntegral textL) + (2 * xAdj)
+        h = (fromIntegral textH) + (2 * yAdj)
+
 updateSelOneListOptions :: FontSize -> Int -> Int -> OneActionListOptions -> ToRender
 updateSelOneListOptions _ _ _ (OALOpts _ _ _ _ [] _) = renderEmpty
 updateSelOneListOptions (fw, fh) d pos (OALOpts x y s sp ma curs) = r'
     where
-        r = updateListCursor d x yPos' cL curs
+        r = updateListCursor d oX yPos' cL (h - sp) s sp curs
         r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions (menuOptionText <$> ma) s h oX oY
         yPos = y + (h * pos)
         yPos' = fromIntegral yPos
@@ -89,19 +99,19 @@ updateSelOneListOptions (fw, fh) d pos (OALOpts x y s sp ma curs) = r'
         cL = floor $ fw * (fromIntegral (s * (T.length (menuOptionText opt))))
         h = sp + (floor $ fh * (fromIntegral s))
 
-updateListCursor :: Int -> Int -> CInt -> Int -> CursorType -> ToRender
-updateListCursor d x y _ (CursorPointer tE) = addTexture renderEmpty d 0 $ DTexture t x' (y - 1) w h Nothing
+updateListCursor :: Int -> CInt -> CInt -> Int -> Int -> Int -> Int -> CursorType -> ToRender
+updateListCursor d x y _ _ _ sp (CursorPointer tE) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
     where
-        x' = fromIntegral $ x - 20
+        x' = x - 20
+        y' = y - 2
         t = texture tE
         tW = textureWidth tE
         tH = textureHeight tE
         w = fromIntegral tW
         h = fromIntegral tH
-updateListCursor d x y tl (CursorRect c) = addRectangle renderEmpty d 0 $ DRectangle c x' (y - 3) w 20
+updateListCursor d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 rect
     where
-        x' = fromIntegral $ x - 5
-        w = fromIntegral $ tl + 10
+        rect = getTextRectangle c x y tl th r sp
 
 
 updateMultiListOptions :: FontSize -> Int -> Int -> MultiSelectListOptions -> ToRender
@@ -118,16 +128,19 @@ updateMultiListOptions fs d pos (MSLOpts x y s sp mo _ _ backM) =
 updateSelectedOptions :: FontSize -> Int -> Int -> ToRender -> Int -> Int -> Int -> [SelectOption] -> CInt -> CInt -> ToRender
 updateSelectedOptions (fw, fh) s sp r cp curp d opts x y = updateSelectedOptions' r curp opts y
     where
-        updateSelectedOptions' rend pos (h:tl) yPos = updateSelectedOptions' r'' (pos + 1) tl (yPos + (fromIntegral tH))
+        updateSelectedOptions' :: ToRender -> Int -> [SelectOption] -> CInt -> ToRender
+        updateSelectedOptions' rend _ [] _ = rend
+        updateSelectedOptions' rend pos (h:tl) yPos = updateSelectedOptions' r'' (pos + 1) tl yPos'
             where
                 r' = addText rend d 2 td
-                r'' = if selectSelected h || cp == curp then addRectangle r' d 1 hRect else r'
+                r'' = if selectSelected h || cp == pos then addRectangle r' d 1 hRect else r'
                 str = selectOptionText h
                 tlen = floor (fw * (fromIntegral (T.length str * s)))
-                tH = floor (fh * (fromIntegral s)) + sp
-                td = TextDisplay str x y s Blue
-                hlC = if cp == curp then Yellow else Gray
-                hRect = DRectangle hlC (x - 5) (y - 2) (tlen + 10) (fromIntegral tH)
+                tH = floor (fh * (fromIntegral s))
+                td = TextDisplay str x yPos s Blue
+                hlC = if cp == pos then Yellow else Gray
+                yPos' = yPos + (fromIntegral (sp + tH))
+                hRect = getTextRectangle hlC x yPos tlen tH s sp
 
 updateMenuListOptions :: [T.Text] -> Int -> Int -> CInt -> CInt -> [TextDisplay]
 updateMenuListOptions opts s h x y = updateMenuListOptions' opts y

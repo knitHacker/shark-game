@@ -17,18 +17,19 @@ import qualified Data.Text as T
 
 
 mapMenu :: GameData -> GameConfigs -> Menu
-mapMenu gd cfgs = Menu words [] (selOneOpts 15 140 3 3 opts' mc) 0
+mapMenu gd cfgs = Menu words [] (selOneOpts 15 140 4 8 opts' mc) 0
     where
         locs = (\(loc, lCfg) -> (lCfg, showText lCfg)) <$> (M.assocs $ siteLocations $ sharkCfgs cfgs)
         mc = CursorRect Gray
-        words = [ TextDisplay "Select Trip Destination" 10 10 10 White
+        words = [ TextDisplay "Select Trip" 10 10 8 White
+                , TextDisplay "Destination" 15 55 10 White
                 ]
         opts = (\(loc, txt) -> MenuAction txt (TripEquipmentSelect gd loc [] 0)) <$> locs
         rtOpt = MenuAction "Return to Lab" $ ResearchCenter gd
         opts' = opts ++ [rtOpt]
 
 equipmentPickMenu :: GameData -> GameLocation -> [T.Text] -> Int -> GameConfigs -> Menu
-equipmentPickMenu gd loc chsn pos cfgs = Menu words [] (selMultOpts 15 120 3 2 opts' update act (Just back)) pos
+equipmentPickMenu gd loc chsn pos cfgs = Menu words [] (selMultOpts 15 130 3 6 opts' update act (Just back)) pos
     where
         eq = equipment $ sharkCfgs cfgs
         rEs = requiredEquipment loc
@@ -40,8 +41,9 @@ equipmentPickMenu gd loc chsn pos cfgs = Menu words [] (selMultOpts 15 120 3 2 o
         aEs' = lupE <$> aEs
         cost = foldl (\s opt -> if selectSelected opt then s + price (eq M.! (selectKey opt)) else s) 0 opts'
         costTxt = T.append "Trip Current Cost: $" (T.pack (show cost))
-        words = [ TextDisplay "Select Trip Equipment" 10 10 10 White
-                , TextDisplay costTxt 10 90 5 White
+        words = [ TextDisplay "Select Trip" 10 10 8 White
+                , TextDisplay "Equipment" 15 55 10 White
+                , TextDisplay costTxt 20 100 4 Green
                 ]
         rOpts = (\(k, t) -> SelectOption t k True False) <$> rEs'
         wasChsn t = elem t chsn
@@ -53,7 +55,7 @@ equipmentPickMenu gd loc chsn pos cfgs = Menu words [] (selMultOpts 15 120 3 2 o
 
 
 reviewTripMenu :: GameData -> GameLocation -> [T.Text] -> GameConfigs -> Menu
-reviewTripMenu gd loc eqs cfgs = Menu words [] (selOneOpts 80 180 3 2 opts (CursorRect Gray)) 0
+reviewTripMenu gd loc eqs cfgs = Menu words [] (selOneOpts 80 185 3 4 opts (CursorRect Gray)) 0
     where
         trip = tripInfo (sharkCfgs cfgs) loc eqs
         funds = gameDataFunds gd
@@ -63,11 +65,12 @@ reviewTripMenu gd loc eqs cfgs = Menu words [] (selOneOpts 80 180 3 2 opts (Curs
         tripTxt = T.append "Trip Cost: $" (T.pack (show tc))
         afterTxt = T.append "After Trip: $" (T.pack (show (funds - tc)))
         tripLenTxt = T.append (T.append "Trip Length: " (T.pack (show (tripLength trip)))) " month(s)"
-        words = [ TextDisplay "Review Trip Details" 10 10 10 White
-                , TextDisplay fundTxt 25 95 4 Green
-                , TextDisplay tripTxt 25 115 4 Red
-                , TextDisplay afterTxt 25 135 4 (if enoughFunds then Green else Red)
-                , TextDisplay tripLenTxt 120 95 4 White
+        words = [ TextDisplay "Review Trip" 10 10 8 White
+                , TextDisplay "Details" 15 55 10 White
+                , TextDisplay fundTxt 25 105 3 Green
+                , TextDisplay tripTxt 25 125 3 Red
+                , TextDisplay afterTxt 25 145 3 (if enoughFunds then Green else Red)
+                , TextDisplay tripLenTxt 25 165 3 White
                 ]
         gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
         (gd'', atmpts) = initTripProgress gd' loc eqs cfgs

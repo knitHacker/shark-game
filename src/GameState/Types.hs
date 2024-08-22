@@ -54,6 +54,7 @@ import OutputHandles.Types
     )
 import GameState.Collision.RTree ( RTree )
 import GameState.Collision.BoundBox ( BoundBox )
+import OutputHandles.Types
 import Shark.Trip
 import SaveData
 import Configs
@@ -70,6 +71,7 @@ data GameState = GameState
     { gameView :: !GameView
     , gameReDraw :: !Bool
     , gameDrawCount :: !Int
+    -- , lastDraw :: !(Maybe ToRender)
     }
 
 data GameView =
