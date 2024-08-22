@@ -77,8 +77,6 @@ run count time appEnvData = do
 
 stepGame :: AppEnv InputState
 stepGame = do
-    drawsM <- updateWindow
-    case drawsM of
-        Just draws -> executeDraw draws
-        _ -> return ()
+    draws <- updateWindow
+    _ <- executeDraw draws
     updateInput

@@ -14,6 +14,7 @@ module GameState.Types
     ( GameState(..)
     , GameStateRead(..)
     , Menu(..)
+    , mkMenu
     , MenuAction(..)
     , MenuOptions(..)
     , OverlayMenu(..)
@@ -21,6 +22,9 @@ module GameState.Types
     , CursorType(..)
     , OneActionListOptions(..)
     , MultiSelectListOptions(..)
+    , View(..)
+    , TimeoutView(..)
+    , BasicView(..)
     , SelectOption(..)
     , getNextMenu
     , selOneOpts
@@ -29,7 +33,6 @@ module GameState.Types
     , toggleMultiOption
     , reDraw
     , GameView(..)
-    , noUpdate
     , TripState(..)
     , initTripProgress
     ) where
@@ -39,7 +42,7 @@ import Control.Monad ()
 import Control.Monad.IO.Class ()
 import qualified Data.Map.Strict as M
 import Data.Unique ( Unique, hashUnique )
-import Data.Word ( Word32 )
+import Data.Int ( Int64 )
 import qualified Data.Text as T
 import InputState
 import Data.Maybe (isJust)
@@ -63,29 +66,23 @@ instance Show Unique where
     show:: Unique -> String
     show = show . hashUnique
 
--- Top level game state
---  Game menu is a menu with different options
---  Game state is where character walks around
---  Game exiting is how tell top loop to quit
 data GameState = GameState
     { gameView :: !GameView
-    , gameReDraw :: !Bool
-    , gameDrawCount :: !Int
-    -- , lastDraw :: !(Maybe ToRender)
+    , gameLastDraw :: !(Maybe ToRender)
     }
 
 data GameView =
-      GameView !(Maybe OverlayMenu) !Menu
-    | OverlayMenu !OverlayMenu !Menu
+      GameMenu !(Maybe OverlayMenu) !Menu
+    | OverlayMenu !OverlayMenu !BasicView
+    | GameTimeout !(Maybe OverlayMenu) !TimeoutView
     | GameExiting
 
-reDraw :: GameView -> GameState
-reDraw gv = GameState gv True 0
+data BasicView =
+      BasicMenu !Menu
+    | BasicTimeoutView !TimeoutView
 
-noUpdate :: GameState -> GameState
-noUpdate (GameState gv _ gdc)
-    | gdc < 30 = GameState gv False (gdc + 1)
-    | otherwise = reDraw gv
+reDraw :: GameView -> GameState
+reDraw gv = GameState gv Nothing
 
 
 data TripState = TripState
@@ -113,6 +110,8 @@ data GamePlayState =
     | TripReview GameData GameLocation [T.Text]
     | TripProgress GameData TripState
     | GameExitState (Maybe GameData)
+    | SharkFound GameData (Maybe SharkFind) TripState
+    | TripResults GameData TripState
     | ComingSoon
 
 data OverlayMenu = Overlay
@@ -124,11 +123,22 @@ data OverlayMenu = Overlay
     , overlayMenu :: !Menu
     }
 
--- Actions that can be done from the Menu
---  Start makes a new game area
---  Exit quits the game
---  Continue returns to the game area already started
---  Start takes you to start menu (currently no saving)
+data TimeoutView = TimeoutView
+    { lastTimeout :: !Int64
+    , timeoutLength :: !Int64
+    , timeoutView :: !View
+    , timeoutAction :: !GamePlayState
+    }
+
+mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptions -> Int -> Menu
+mkMenu words imgs opts pos = Menu (View words imgs []) opts pos
+
+data View = View
+    { texts :: ![TextDisplay]
+    , imgs :: ![(Int, Int, TextureEntry)]
+    , rects :: ![(Color, Int, Int, Int, Int)]
+    }
+
 data MenuAction = MenuAction
     { menuOptionText :: !T.Text
     , menuNextState :: !GamePlayState
@@ -202,8 +212,7 @@ toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle 
 --  Options for actions from this menu
 --  Cursor is the current option that is being pointed to
 data Menu = Menu
-    { texts :: ![TextDisplay]
-    , imgs :: ![(Int, Int, TextureEntry)]
+    { menuView :: !View
     , options :: !MenuOptions
     , currentPos :: !Int
     }

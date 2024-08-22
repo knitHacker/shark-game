@@ -41,32 +41,47 @@ import GameState.Collision.BoundBox
 
 type FontSize = (Double, Double)
 
-updateWindow :: (MonadIO m, ConfigsRead m, GameStateRead m, OutputRead m) => m (Maybe ToRender)
+updateWindow :: (MonadIO m, ConfigsRead m, GameStateRead m, OutputRead m) => m ToRender
 updateWindow = do
     outs <- getOutputs
     cfgs <- readConfigs
     gs <- readGameState
-    if gameReDraw gs then return (Just (updateWindow' (getFontSize outs) (gameView gs))) else return Nothing
+    case gameLastDraw gs of
+        Just r -> return r
+        Nothing -> return $ updateWindow' (getFontSize outs) (gameView gs)
 
 
 updateWindow' :: FontSize -> GameView -> ToRender
 updateWindow' fs gv =
     case gv of
-        (GameView _ m) -> updateGameMenu fs 0 m
+        (GameMenu _ m) -> updateGameMenu fs 0 m
         (OverlayMenu (Overlay x y w h c m) back) ->
-            let backR = updateGameMenu fs 0 back
+            let backR = updateBasicView fs 0 back
                 bg = addRectangle renderEmpty 1 0 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))
                 frontR = updateGameMenu fs 2 m
             in backR <> bg <> frontR
+        (GameTimeout _ tov) -> updateTimeoutView 0 tov
         _ -> renderEmpty
 
-updateGameMenu :: FontSize -> Int -> Menu -> ToRender
-updateGameMenu fs d (Menu words imgs opts p) = r' <> updateMenuOptions fs d p opts
+
+updateBasicView :: FontSize -> Int -> BasicView -> ToRender
+updateBasicView fs d (BasicMenu m) = updateGameMenu fs d m
+updateBasicView _ d (BasicTimeoutView tov) = updateTimeoutView d tov
+
+updateTimeoutView :: Int -> TimeoutView -> ToRender
+updateTimeoutView d tov = updateGameView d (timeoutView tov)
+
+updateGameView :: Int -> View -> ToRender
+updateGameView d (View words imgs rs) = r''
     where
         r = foldl (\rend td -> addText rend d 1 td) renderEmpty words
         r' = foldl (\rend t -> addTexture rend d 0 (toDraw t )) r imgs
+        r'' = foldl (\rend (c, x, y, w, h) -> addRectangle rend d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r' rs
         toDraw (x, y, tE) = DTexture (texture tE) (fromIntegral x) (fromIntegral y)
                                      (fromIntegral (textureWidth tE)) (fromIntegral (textureHeight tE)) Nothing
+
+updateGameMenu :: FontSize -> Int -> Menu -> ToRender
+updateGameMenu fs d (Menu v opts p) = updateGameView d v <> updateMenuOptions fs d p opts
 
 updateMenuOptions :: FontSize -> Int -> Int -> MenuOptions -> ToRender
 updateMenuOptions _ _ _ (SelOneListOpts (OALOpts _ _ _ _ [] _)) = renderEmpty

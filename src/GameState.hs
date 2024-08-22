@@ -25,13 +25,15 @@ import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
 import Control.Monad.IO.Class ( MonadIO(..) )
 
+import Debug.Trace
+
 initGameState :: GameConfigs -> OutputHandles -> IO GameState
 initGameState cfgs outs = do
     gv <- mainMenuView cfgs outs
     return $ reDraw gv
 
 isGameExiting :: GameState -> Bool
-isGameExiting (GameState GameExiting _ _) = True
+isGameExiting (GameState GameExiting _) = True
 isGameExiting _ = False
 
 updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
@@ -40,17 +42,28 @@ updateGameState = do
     inputs <- readInputState
     gs <- readGameState
     outs <- getOutputs
-    gsM <- case gameView gs of
-        GameView mm m -> return $ updateGameStateInMenu mm m cfgs inputs outs
-        OverlayMenu tm bm -> return $ updateGameStateInOverlay tm bm cfgs inputs outs
-        _ -> return Nothing
+    let gsM = case gameView gs of
+                GameMenu mm m -> updateGameStateInMenu mm m inputs
+                OverlayMenu tm bm -> updateGameStateInOverlay tm bm inputs
+                GameTimeout mm tv -> updateGameTimeout mm tv inputs
+                _ -> Nothing
     case gsM of
-        Nothing -> return $ noUpdate gs
+        Nothing -> return gs
         Just (Left gv) -> return $ reDraw gv
         Just (Right gps) -> do
             gv <- liftIO $ moveToNextState gps cfgs inputs outs
             return $ reDraw gv
 
+
+updateGameTimeout :: (Maybe OverlayMenu) -> TimeoutView -> InputState -> Maybe (Either GameView GamePlayState)
+updateGameTimeout mM tv i@(InputState _ ts) =
+    case (esc, mM, to) of
+        (True, Just om, _) -> Just $ Left $ OverlayMenu om $ BasicTimeoutView tv
+        (_, _, True) -> Just $ Right $ timeoutAction tv
+        _ -> Nothing
+    where
+        esc = escapeJustPressed i
+        to = ts - (lastTimeout tv) > timeoutLength tv
 
 moveToNextState :: GamePlayState -> GameConfigs -> InputState -> OutputHandles -> IO GameView
 moveToNextState gps cfgs inputs outs =
@@ -61,13 +74,15 @@ moveToNextState gps cfgs inputs outs =
         GameExitState Nothing -> return GameExiting
         MainMenu gd -> do
             saveGame gd cfgs
-            return $ GameView Nothing $ mainMenu (Just gd) cfgs outs
+            return $ GameMenu Nothing $ mainMenu (Just gd) cfgs outs
         IntroPage -> introPageIO
-        ResearchCenter gd -> return $ withPause gps gd $ researchCenterMenu gd outs
-        TripDestinationSelect gd -> return $ withPause gps gd $ mapMenu gd cfgs
-        TripEquipmentSelect gd loc eqs cp -> return $ withPause gps gd $ equipmentPickMenu gd loc eqs cp cfgs
-        TripReview gd loc eqs -> return $ withPause gps gd $ reviewTripMenu gd loc eqs cfgs
-        TripProgress gd tp -> return $ withPause gps gd $ tripProgressMenu gd tp cfgs
+        ResearchCenter gd -> return $ withPause gps gd $ BasicMenu $ researchCenterMenu gd outs
+        TripDestinationSelect gd -> return $ withPause gps gd $ BasicMenu $ mapMenu gd cfgs
+        TripEquipmentSelect gd loc eqs cp -> return $ withPause gps gd $ BasicMenu $ equipmentPickMenu gd loc eqs cp cfgs
+        TripReview gd loc eqs -> return $ withPause gps gd $ BasicMenu $ reviewTripMenu gd loc eqs cfgs
+        TripProgress gd tp -> return $ withPause gps gd $ BasicTimeoutView $ tripProgressMenu gd tp cfgs inputs
+        SharkFound gd sf tp -> return $ GameMenu Nothing $ sharkFoundMenu gd sf tp cfgs
+        TripResults gd tp -> return $ GameMenu Nothing $ tripResultsMenu gd tp cfgs
         _ -> undefined
 
 
@@ -89,10 +104,10 @@ mainMenuView cfgs outs = do
                             putStrLn $ T.unpack err
                             return Nothing
                         Right gd -> return $ Just gd
-    return $ GameView Nothing $ mainMenu gdM cfgs outs
+    return $ GameMenu Nothing $ mainMenu gdM cfgs outs
 
 
 introPageIO :: IO GameView
 introPageIO = do
     nGame <- startNewGame
-    return $ GameView Nothing $ introPage nGame
+    return $ GameMenu Nothing $ introPage nGame

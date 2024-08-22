@@ -22,25 +22,26 @@ import Debug.Trace
 
 
 incrementMenuCursor :: Menu -> Menu
-incrementMenuCursor m@(Menu _ _ opts p)
+incrementMenuCursor m@(Menu _ opts p)
     | p < len - 1 = m { currentPos = p + 1 }
     | otherwise = m
     where
         len = optionLength opts
 
 decrementMenuCursor :: Menu -> Menu
-decrementMenuCursor m@(Menu _ _ _ 0) = m
-decrementMenuCursor m@(Menu _ _ opt p)
+decrementMenuCursor m@(Menu _ _ 0) = m
+decrementMenuCursor m@(Menu _ opt p)
     | optionLength opt >  0 = m { currentPos = p - 1 }
     | otherwise = m
 
 
-updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe (Either GameView GamePlayState)
-updateGameStateInMenu mM m cfgs inputs outs =
+updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> InputState -> Maybe (Either GameView GamePlayState)
+updateGameStateInMenu _ _ (InputState Nothing _) = Nothing
+updateGameStateInMenu mM m inputs =
     case (esc, mM, selected, moveDirM) of
-        (True, Just om, _, _) -> Just $ Left $ OverlayMenu om m
-        (_, _, _, Just DUp) -> Just $ Left $ GameView mM $ decrementMenuCursor m
-        (_, _, _, Just DDown) -> Just $ Left $ GameView mM $ incrementMenuCursor m
+        (True, Just om, _, _) -> Just $ Left $ OverlayMenu om $ BasicMenu m
+        (_, _, _, Just DUp) -> Just $ Left $ GameMenu mM $ decrementMenuCursor m
+        (_, _, _, Just DDown) -> Just $ Left $ GameMenu mM $ incrementMenuCursor m
         (_, _, True, _) -> Just $ Right $ getNextMenu pos $ options m
         _ -> Nothing
     where
@@ -50,13 +51,15 @@ updateGameStateInMenu mM m cfgs inputs outs =
         esc = escapeJustPressed inputs
         optLen = optionLength $ options m
 
-updateGameStateInOverlay :: OverlayMenu -> Menu -> GameConfigs -> InputState -> OutputHandles -> Maybe (Either GameView GamePlayState)
-updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM cfgs inputs outs =
-    case (esc, selected, moveDirM) of
-        (True, _, _) -> Just $ Left $ GameView (Just (om' topM)) backM
-        (_, True, _) -> Just $ Right $ getNextMenu (currentPos topM) $ options topM
-        (_, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
-        (_, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
+updateGameStateInOverlay :: OverlayMenu -> BasicView -> InputState -> Maybe (Either GameView GamePlayState)
+updateGameStateInOverlay _ _ (InputState Nothing _) = Nothing
+updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
+    case (esc, backM, selected, moveDirM) of
+        (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
+        (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameTimeout (Just (om' topM)) tov
+        (_, _, True, _) -> Just $ Right $ getNextMenu (currentPos topM) $ options topM
+        (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
+        (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing
     where
         moveDirM = if inputRepeating inputs then Nothing else inputDirection inputs
@@ -64,13 +67,14 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM cfgs inputs outs =
         esc = escapeJustPressed inputs
         om' newM = om { overlayMenu = newM }
 
-withPause :: GamePlayState -> GameData -> Menu -> GameView
-withPause gps gd m = GameView (Just (pauseMenu gps gd)) m
+withPause :: GamePlayState -> GameData -> BasicView -> GameView
+withPause gps gd (BasicMenu m) = GameMenu (Just (pauseMenu gps gd)) m
+withPause gps gd (BasicTimeoutView m) = GameTimeout (Just (pauseMenu gps gd)) m
 
 pauseMenu :: GamePlayState -> GameData -> OverlayMenu
 pauseMenu gps gd = Overlay 20 20 200 200 Gray menu
     where
-        menu = Menu words [] menuOpt 0
+        menu = mkMenu words [] menuOpt 0
         menuOpt = SelOneListOpts $ OALOpts 50 120 5 15 opts $ CursorRect White
         words = [ TextDisplay "Game Menu" 30 30 10 Black
                 ]

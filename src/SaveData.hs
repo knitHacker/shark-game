@@ -81,8 +81,8 @@ tripLength trip = L.sum $ timeAdded <$> tripEquipment trip
 
 data SharkFind = SharkFind
     { findLocation :: T.Text
-    , findType :: T.Text
-    , findData :: Int
+    , findSpecies :: T.Text
+    , findDataType :: T.Text
     } deriving (Generic, Show, Eq)
 
 instance FromJSON SharkFind
