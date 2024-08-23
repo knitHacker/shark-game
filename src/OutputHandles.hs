@@ -57,9 +57,6 @@ initOutputHandles textCfgs cfgs = do
     font <- Font.load fontPath 16
     (w, h) <- Font.size font " "
     b <- Font.isMonospace font
-    putStrLn $ "Font is monospace: " ++ show b
-    putStrLn $ "Font character size: " ++ show ((fromIntegral w) / ratioX, (fromIntegral h) / ratioY)
-    putStrLn $ "Ratios: " ++ show (ratioX, ratioY)
     textList <- mapM (loadTexture r) $ M.toList textCfgs
     let textures = M.fromList textList
     print $ fst <$> M.toList textures

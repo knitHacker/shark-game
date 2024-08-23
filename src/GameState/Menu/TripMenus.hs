@@ -136,4 +136,4 @@ tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 185 3 4 opts (Cursor
         sfMap' = foldl (\m sf -> M.insertWith (\l sfL -> l ++ sfL) (findSpecies sf) [sf] m) sfMap (sharkFinds tp)
         gd' = gd { gameDataFoundSharks = sfMap' }
         words = [ TextDisplay "Trip Complete!" 10 10 8 White ]
-        opts = [ MenuAction "Back to Research Center" (traceShow (gameDataFoundSharks gd') (ResearchCenter gd')) ]
+        opts = [ MenuAction "Back to Research Center" (ResearchCenter gd') ]
