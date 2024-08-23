@@ -43,7 +43,7 @@ mainMenu gdM cfgs outs = mkMenu words [] optEntry 0
 
 
 introPage :: GameData -> Menu
-introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect Gray)) 0
+introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White)) 0
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -67,7 +67,7 @@ researchCenterMenu :: GameData -> OutputHandles -> Menu
 researchCenterMenu gd outs = mkMenu words [] (selOneOpts 15 140 4 20 opts mc) 0
     where
         funds = gameDataFunds gd
-        mc = CursorRect Gray
+        mc = CursorRect White
         fundTxt = T.append "Current Funds: $" (T.pack (show funds))
         words = [ TextDisplay "Research" 10 10 12 White
                 , TextDisplay "Center" 40 60 12 White

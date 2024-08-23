@@ -153,7 +153,7 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x y = updateSelectedOptions
                 tlen = floor (fw * (fromIntegral (T.length str * s)))
                 tH = floor (fh * (fromIntegral s))
                 td = TextDisplay str x yPos s Blue
-                hlC = if cp == pos then Yellow else Gray
+                hlC = if cp == pos then Yellow else (if changeable h then White else Gray)
                 yPos' = yPos + (fromIntegral (sp + tH))
                 hRect = getTextRectangle hlC x yPos tlen tH s sp
 
