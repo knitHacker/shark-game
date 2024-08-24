@@ -23,6 +23,7 @@ extra-source-files:
     data/configs/state.json
     data/configs/textures.json
     assets/images/arrow.png
+    assets/images/dog_character_sheet.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 data-files:
@@ -60,6 +61,7 @@ library
       OutputHandles.Types
       SaveData
       Shark.Trip
+      Shark.Types
   other-modules:
       Paths_shark_game
   hs-source-dirs:

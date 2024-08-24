@@ -91,20 +91,21 @@ tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> Timeou
 tripProgressMenu gd tp cfgs (InputState _ ts) =
     case tripTries tp of
         [] -> TimeoutView ts 0 v $ TripResults gd tp
-        (h:tl) ->
+        ((mn, h):tl) ->
             let (gd', sfM) = exec h
                 tp' = newTrip sfM tl
+                --lastText = T.concat ["month ", T.pack (show mn), ", using ", h
             in TimeoutView ts 2 v $ SharkFound gd' sfM tp'
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
         v = View words [] [backRect, progressRect]
-        progX = 80
+        progX = 30
         progY = 150
         progH = 20
-        backRect = (Gray, progX, progY, 100, progH)
+        backRect = (Gray, progX, progY, 200, progH)
         p = floor ((fromIntegral (allA - curA)) / (fromIntegral allA) * 100)
-        progressRect = (Green, progX, progY, p, progH)
+        progressRect = (Green, progX, progY, 2*p, progH)
         words = [ TextDisplay "Trip Progress" 10 10 8 White
                 , TextDisplay "Looking for sharks..." 20 100 5 Blue
                 ]

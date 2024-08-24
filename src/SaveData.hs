@@ -13,11 +13,6 @@ module SaveData
     , getRandomElem
     , loadFromFile
     , saveToFile
-    , TripInfo(..)
-    , SharkFind(..)
-    , tripInfo
-    , tripCost
-    , tripLength
     ) where
 
 import System.IO ()
@@ -37,6 +32,7 @@ import qualified Data.List as L
 
 import Configs
 import Env.Files (getGameDirectory)
+import Shark.Types
 
 getRandomPercent :: GameData -> (GameData, Int)
 getRandomPercent gd = (gd { gameDataSeed = s' }, p)
@@ -74,29 +70,6 @@ getRandomElem gd ls = runST $ do
     where
         s = gameDataSeed gd
         len = L.length ls
-
-data TripInfo = TripInfo
-    { tripDestination :: T.Text
-    , tripEquipment :: [GameEquipment]
-    }
-
-tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
-tripInfo cfg loc eqTxt = TripInfo loc $ (\t -> equipment cfg M.! t) <$> eqTxt
-
-tripCost :: TripInfo -> Int
-tripCost trip = L.sum $ price <$> tripEquipment trip
-
-tripLength :: TripInfo -> Int
-tripLength trip = L.sum $ timeAdded <$> tripEquipment trip
-
-data SharkFind = SharkFind
-    { findLocation :: T.Text
-    , findSpecies :: T.Text
-    , findDataType :: T.Text
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON SharkFind
-instance ToJSON SharkFind
 
 data GameData = GameData
     { gameDataSaveFile :: String
