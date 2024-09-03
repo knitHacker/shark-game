@@ -62,6 +62,7 @@ library
       SaveData
       Shark.Trip
       Shark.Types
+      Util
   other-modules:
       Paths_shark_game
   hs-source-dirs:

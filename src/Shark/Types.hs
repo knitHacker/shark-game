@@ -19,10 +19,11 @@ import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
+import Util
 
 data TripAttempt = TripAttempt
     { attemptMonth :: Int
-    , attemptEqipment :: T.Text
+    , attemptEqipment :: DataEntry GameEquipment
     }
 
 data TripState = TripState
@@ -72,8 +73,8 @@ instance FromJSON PlayConfigs
 instance ToJSON PlayConfigs
 
 data TripInfo = TripInfo
-    { tripDestination :: T.Text
-    , tripEquipment :: [GameEquipment]
+    { tripDestination :: DataEntry GameLocation
+    , tripEquipment :: [DataEntry GameEquipment]
     }
 
 data SharkFind = SharkFind

@@ -11,7 +11,7 @@
 {-# LANGUAGE InstanceSigs #-}
 
 module GameState.Types
-    ( BaseicView(..)
+    ( BasicView(..)
     , CursorType(..)
     , GamePlayState(..)
     , GameState(..)

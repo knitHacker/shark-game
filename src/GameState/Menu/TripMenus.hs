@@ -14,11 +14,13 @@ import Configs
 import GameState.Types
 import OutputHandles.Types
 import InputState
+import Util
+import Shark.Types
+import Shark.Trip
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
-import Shark.Trip
 
 import Debug.Trace
 
@@ -90,16 +92,16 @@ reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cu
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> TimeoutView
 tripProgressMenu gd tp cfgs (InputState _ ts) =
     case tripTries tp of
-        [] -> TimeoutView ts 0 v $ TripResults gd tp
-        ((mn, h):tl) ->
+        [] -> TimeoutView ts 0 (v []) $ TripResults gd tp
+        ((TripAttempt mn h):tl) ->
             let (gd', sfM) = exec h
                 tp' = newTrip sfM tl
-                --lastText = T.concat ["month ", T.pack (show mn), ", using ", h
-            in TimeoutView ts 2 v $ SharkFound gd' sfM tp'
+                lastText = T.concat ["month ", T.pack (show mn), ", using ", getData h text]
+            in TimeoutView ts 2 (v [TextDisplay lastText 30 60 4 Green]) $ SharkFound gd' sfM tp'
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
-        v = View words [] [backRect, progressRect]
+        v w = View (words ++ w) [] [backRect, progressRect]
         progX = 30
         progY = 150
         progH = 20
