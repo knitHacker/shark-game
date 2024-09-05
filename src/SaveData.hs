@@ -5,6 +5,7 @@
 
 module SaveData
     ( GameData(..)
+    , GameSharkData(..)
     , startNewGame
     , getRandomPercent
     , getRandomPercentS
@@ -71,12 +72,22 @@ getRandomElem gd ls = runST $ do
         s = gameDataSeed gd
         len = L.length ls
 
+data GameSharkData = GameShark
+    { gameSharkMonth :: Int
+    , gameSharkSpecies :: T.Text
+    , gameSharkLocation :: T.Text
+    , gameSharkEquipment :: T.Text
+    } deriving (Show, Eq, Generic)
+
+instance FromJSON GameSharkData
+instance ToJSON GameSharkData
+
 data GameData = GameData
     { gameDataSaveFile :: String
     , gameDataSeed :: Seed
     , gameDataFunds :: Int
     , gameDataMonth :: Int
-    , gameDataFoundSharks :: M.Map T.Text [SharkFind]
+    , gameDataFoundSharks :: M.Map T.Text [GameSharkData]
     }
 
 
@@ -84,7 +95,7 @@ data GameSaveData = GameSaveData
     { saveSeed :: Vector Word32
     , saveFunds :: Int
     , saveMonth :: Int
-    , saveFoundSharks :: M.Map T.Text [SharkFind]
+    , saveFoundSharks :: M.Map T.Text [GameSharkData]
     } deriving (Show, Eq, Generic)
 
 

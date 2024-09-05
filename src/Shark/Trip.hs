@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Shark.Trip
     ( catchAttempts
     , executeTrip
@@ -5,6 +7,9 @@ module Shark.Trip
     , tripInfo
     , tripLength
     , initTripProgress
+    , mkSharkFind
+    , mkGameShark
+    , monthToText
     ) where
 
 import SaveData
@@ -15,6 +20,22 @@ import Util
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
+
+monthToText :: Int -> T.Text
+monthToText 0 = "0 months"
+monthToText mnths
+    | year == 0 = monthTxt month
+    | month == 0 = yearTxt year
+    | otherwise = T.concat [yearTxt year, ", ", monthTxt month]
+    where
+        year = div mnths 12
+        month = mod mnths 12
+        yearTxt 0 = ""
+        yearTxt 1 = "1 year"
+        yearTxt n = T.pack (show n ++ " years")
+        monthTxt 0 = ""
+        monthTxt 1 = "1 month"
+        monthTxt n = T.pack (show n ++ " months")
 
 tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
 tripInfo cfg loc eqTxt = TripInfo locE eqEs
@@ -47,12 +68,22 @@ catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
             let (s', b) = getRandomBoolS s
             in catchAttempts' (i+1) s' (n ++ ((TripAttempt i h) : (if b then [(TripAttempt i h)] else []))) tl
 
-executeTrip :: PlayConfigs -> GameData -> TripInfo -> DataEntry GameEquipment -> (GameData, Maybe SharkFind)
-executeTrip cfgs gd trip eq =
+executeTrip :: PlayConfigs -> GameData -> TripInfo -> TripAttempt -> (GameData, Maybe SharkFind)
+executeTrip cfgs gd trip (TripAttempt mnth eq) =
     case sM of
         Nothing -> (gd', Nothing)
-        Just shark ->  (gd', Just (SharkFind (entryKey (tripDestination trip)) shark (getData eq infoType)))
+        Just shark ->  (gd', Just (SharkFind (curMnth + mnth - 1) (getEntry (sharks cfgs) shark) (tripDestination trip) eq))
     where
+        curMnth = gameDataMonth gd
         loc = entryData (tripDestination trip)
-        sharks = Nothing : (Just <$> sharksFound loc)
-        (gd', sM) = getRandomElem gd sharks
+        sharksAround = Nothing : (Just <$> sharksFound loc)
+        (gd', sM) = getRandomElem gd sharksAround
+
+mkSharkFind :: PlayConfigs -> [GameSharkData] -> [SharkFind]
+mkSharkFind cfgs [] = []
+mkSharkFind cfgs (h:tl) = convert h : mkSharkFind cfgs tl
+    where
+        convert (GameShark m s l e) = SharkFind m (getEntry (sharks cfgs) s) (getEntry (siteLocations cfgs) l) (getEntry (equipment cfgs) e)
+
+mkGameShark :: SharkFind -> GameSharkData
+mkGameShark sf = GameShark (findMonth sf) (entryKey (findSpecies sf)) (entryKey (findLocation sf)) (entryKey (findEquipment sf))

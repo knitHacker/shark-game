@@ -57,16 +57,17 @@ instance ToJSON GameLocation
 
 data SharkInfo = SharkInfo
     { sharkName :: T.Text
---    , research :: M.Map T.Text SharkResearch
     } deriving (Generic, Show, Eq)
 
 instance FromJSON SharkInfo
 instance ToJSON SharkInfo
 
+
 data PlayConfigs = PlayConfigs
     { equipment :: M.Map T.Text GameEquipment
     , siteLocations :: M.Map T.Text GameLocation
     , sharks :: M.Map T.Text SharkInfo
+--    , research :: M.Map T.Text ResearchData
     } deriving (Generic, Show, Eq)
 
 instance FromJSON PlayConfigs
@@ -78,9 +79,10 @@ data TripInfo = TripInfo
     }
 
 data SharkFind = SharkFind
-    { findLocation :: T.Text
-    , findSpecies :: T.Text
-    , findDataType :: T.Text
+    { findMonth :: Int
+    , findSpecies :: DataEntry SharkInfo
+    , findLocation :: DataEntry GameLocation
+    , findEquipment :: DataEntry GameEquipment
     } deriving (Generic, Show, Eq)
 
 instance FromJSON SharkFind
