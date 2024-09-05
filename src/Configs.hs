@@ -3,18 +3,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Configs
-    ( GameConfigs(..)
-    , initConfigs
-    , ConfigsRead(..)
-    , TextureCfg(..)
-    , GameEquipment(..)
-    , GameLocation(..)
-    , PlayConfigs(..)
+    ( ConfigsRead(..)
+    , GameConfigs(..)
     , StateConfigs(..)
     , SettingConfigs(..)
+    , TextureCfg(..)
     , TextureFileMap
+    , initConfigs
     , updateStateConfigs
-    , SharkInfo(..)
     ) where
 
 import Control.Monad ()
@@ -29,6 +25,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import Env.Files    (getGameFullPath)
+import Shark.Types
 
 configFile :: FilePath
 configFile = "data/configs/game.json"
@@ -79,46 +76,6 @@ data SettingConfigs = SettingConfigs
 
 instance FromJSON SettingConfigs
 instance ToJSON SettingConfigs
-
-
-data GameEquipment = GameEquip
-    { text :: T.Text
-    , timeAdded :: Int
-    , price :: Int
-    , infoType :: T.Text
-    , effectiveness :: Int
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON GameEquipment
-instance ToJSON GameEquipment
-
-data GameLocation = GameLoc
-    { showText :: T.Text
-    , requiredEquipment :: [T.Text]
-    , allowedEquipment :: [T.Text]
-    , sharksFound :: [T.Text]
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON GameLocation
-instance ToJSON GameLocation
-
-
-data SharkInfo = SharkInfo
-    { sharkName :: T.Text
---    , research :: M.Map T.Text SharkResearch
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON SharkInfo
-instance ToJSON SharkInfo
-
-data PlayConfigs = PlayConfigs
-    { equipment :: M.Map T.Text GameEquipment
-    , siteLocations :: M.Map T.Text GameLocation
-    , sharks :: M.Map T.Text SharkInfo
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON PlayConfigs
-instance ToJSON PlayConfigs
 
 data StateConfigs = StateConfigs
     { lastSaveM :: Maybe String

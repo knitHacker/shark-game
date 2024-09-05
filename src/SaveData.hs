@@ -5,6 +5,7 @@
 
 module SaveData
     ( GameData(..)
+    , GameSharkData(..)
     , startNewGame
     , getRandomPercent
     , getRandomPercentS
@@ -13,11 +14,6 @@ module SaveData
     , getRandomElem
     , loadFromFile
     , saveToFile
-    , TripInfo(..)
-    , SharkFind(..)
-    , tripInfo
-    , tripCost
-    , tripLength
     ) where
 
 import System.IO ()
@@ -37,6 +33,7 @@ import qualified Data.List as L
 
 import Configs
 import Env.Files (getGameDirectory)
+import Shark.Types
 
 getRandomPercent :: GameData -> (GameData, Int)
 getRandomPercent gd = (gd { gameDataSeed = s' }, p)
@@ -75,35 +72,22 @@ getRandomElem gd ls = runST $ do
         s = gameDataSeed gd
         len = L.length ls
 
-data TripInfo = TripInfo
-    { tripDestination :: T.Text
-    , tripEquipment :: [GameEquipment]
-    }
+data GameSharkData = GameShark
+    { gameSharkMonth :: Int
+    , gameSharkSpecies :: T.Text
+    , gameSharkLocation :: T.Text
+    , gameSharkEquipment :: T.Text
+    } deriving (Show, Eq, Generic)
 
-tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
-tripInfo cfg loc eqTxt = TripInfo loc $ (\t -> equipment cfg M.! t) <$> eqTxt
-
-tripCost :: TripInfo -> Int
-tripCost trip = L.sum $ price <$> tripEquipment trip
-
-tripLength :: TripInfo -> Int
-tripLength trip = L.sum $ timeAdded <$> tripEquipment trip
-
-data SharkFind = SharkFind
-    { findLocation :: T.Text
-    , findSpecies :: T.Text
-    , findDataType :: T.Text
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON SharkFind
-instance ToJSON SharkFind
+instance FromJSON GameSharkData
+instance ToJSON GameSharkData
 
 data GameData = GameData
     { gameDataSaveFile :: String
     , gameDataSeed :: Seed
     , gameDataFunds :: Int
     , gameDataMonth :: Int
-    , gameDataFoundSharks :: M.Map T.Text [SharkFind]
+    , gameDataFoundSharks :: M.Map T.Text [GameSharkData]
     }
 
 
@@ -111,7 +95,7 @@ data GameSaveData = GameSaveData
     { saveSeed :: Vector Word32
     , saveFunds :: Int
     , saveMonth :: Int
-    , saveFoundSharks :: M.Map T.Text [SharkFind]
+    , saveFoundSharks :: M.Map T.Text [GameSharkData]
     } deriving (Show, Eq, Generic)
 
 

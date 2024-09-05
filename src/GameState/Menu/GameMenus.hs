@@ -13,6 +13,7 @@ import qualified Data.Text as T
 
 import Configs
 import SaveData
+import Shark.Trip
 
 import OutputHandles.Types
     ( Color(..)
@@ -64,14 +65,16 @@ introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White)) 0
 
 
 researchCenterMenu :: GameData -> OutputHandles -> Menu
-researchCenterMenu gd outs = mkMenu words [] (selOneOpts 15 140 4 20 opts mc) 0
+researchCenterMenu gd outs = mkMenu words [] (selOneOpts 15 160 4 15 opts mc) 0
     where
         funds = gameDataFunds gd
         mc = CursorRect White
         fundTxt = T.append "Current Funds: $" (T.pack (show funds))
+        dateTxt = T.append "Center research run time: " (monthToText (gameDataMonth gd))
         words = [ TextDisplay "Research" 10 10 12 White
-                , TextDisplay "Center" 40 60 12 White
-                , TextDisplay fundTxt 55 110 4 Green
+                , TextDisplay "Center" 40 50 12 White
+                , TextDisplay fundTxt 45 100 4 Green
+                , TextDisplay dateTxt 10 125 3 Green
                 ]
         opts = [ MenuAction "Plan Research Trip" $ TripDestinationSelect gd
                , MenuAction "Review Data" ComingSoon

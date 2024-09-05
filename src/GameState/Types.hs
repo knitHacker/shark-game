@@ -11,30 +11,28 @@
 {-# LANGUAGE InstanceSigs #-}
 
 module GameState.Types
-    ( GameState(..)
+    ( BasicView(..)
+    , CursorType(..)
+    , GamePlayState(..)
+    , GameState(..)
     , GameStateRead(..)
+    , GameView(..)
     , Menu(..)
-    , mkMenu
     , MenuAction(..)
     , MenuOptions(..)
-    , OverlayMenu(..)
-    , GamePlayState(..)
-    , CursorType(..)
-    , OneActionListOptions(..)
     , MultiSelectListOptions(..)
-    , View(..)
-    , TimeoutView(..)
-    , BasicView(..)
+    , OverlayMenu(..)
+    , OneActionListOptions(..)
     , SelectOption(..)
+    , TimeoutView(..)
+    , View(..)
     , getNextMenu
+    , mkMenu
+    , optionLength
+    , reDraw
     , selOneOpts
     , selMultOpts
-    , optionLength
     , toggleMultiOption
-    , reDraw
-    , GameView(..)
-    , TripState(..)
-    , initTripProgress
     ) where
 
 import Control.Lens
@@ -58,7 +56,7 @@ import OutputHandles.Types
 import GameState.Collision.RTree ( RTree )
 import GameState.Collision.BoundBox ( BoundBox )
 import OutputHandles.Types
-import Shark.Trip
+import Shark.Types
 import SaveData
 import Configs
 
@@ -83,21 +81,6 @@ data BasicView =
 
 reDraw :: GameView -> GameState
 reDraw gv = GameState gv Nothing
-
-
-data TripState = TripState
-    { trip :: TripInfo
-    , tripTries :: [T.Text]
-    , tripTotalTries :: Int
-    , sharkFinds :: [SharkFind]
-    }
-
-initTripProgress :: GameData -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
-initTripProgress gd loc eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
-    where
-        playCfgs = sharkCfgs cfgs
-        trip = tripInfo playCfgs loc eqKeys
-        (gd', aType) = catchAttempts playCfgs gd trip
 
 
 data GamePlayState =

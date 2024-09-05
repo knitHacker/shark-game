@@ -14,11 +14,13 @@ import Configs
 import GameState.Types
 import OutputHandles.Types
 import InputState
+import Util
+import Shark.Types
+import Shark.Trip
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
-import Shark.Trip
 
 import Debug.Trace
 
@@ -90,21 +92,22 @@ reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cu
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> TimeoutView
 tripProgressMenu gd tp cfgs (InputState _ ts) =
     case tripTries tp of
-        [] -> TimeoutView ts 0 v $ TripResults gd tp
-        (h:tl) ->
-            let (gd', sfM) = exec h
+        [] -> TimeoutView ts 0 (v []) $ TripResults gd tp
+        (ta@(TripAttempt mn h):tl) ->
+            let (gd', sfM) = exec ta
                 tp' = newTrip sfM tl
-            in TimeoutView ts 2 v $ SharkFound gd' sfM tp'
+                lastText = T.concat ["month ", T.pack (show mn), ", using ", getData h text]
+            in TimeoutView ts 2 (v [TextDisplay lastText 30 60 4 Green]) $ SharkFound gd' sfM tp'
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
-        v = View words [] [backRect, progressRect]
-        progX = 80
+        v w = View (words ++ w) [] [backRect, progressRect]
+        progX = 30
         progY = 150
         progH = 20
-        backRect = (Gray, progX, progY, 100, progH)
+        backRect = (Gray, progX, progY, 200, progH)
         p = floor ((fromIntegral (allA - curA)) / (fromIntegral allA) * 100)
-        progressRect = (Green, progX, progY, p, progH)
+        progressRect = (Green, progX, progY, 2*p, progH)
         words = [ TextDisplay "Trip Progress" 10 10 8 White
                 , TextDisplay "Looking for sharks..." 20 100 5 Blue
                 ]
@@ -116,8 +119,8 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Menu
 sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White)) 0
     where
-        typeText sf = T.append (T.append "You " (findDataType sf)) " a "
-        sharkText sf = sharkName ((sharks (sharkCfgs cfgs)) M.! (findSpecies sf))
+        typeText sf = T.append (T.append "You " (getData (findEquipment sf) infoType)) " a "
+        sharkText sf = getData (findSpecies sf) sharkName
         words = case sfM of
                     Nothing -> [ TextDisplay "No Shark" 40 10 10 White
                                , TextDisplay "Found" 70 50 10 White
@@ -130,10 +133,16 @@ sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cur
         opts = [ MenuAction "Continue Trip" nextState ]
 
 tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu
-tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 185 3 4 opts (CursorRect White)) 0
+tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (CursorRect White)) 0
     where
         sfMap = gameDataFoundSharks gd
-        sfMap' = foldl (\m sf -> M.insertWith (\l sfL -> l ++ sfL) (findSpecies sf) [sf] m) sfMap (sharkFinds tp)
+        sfMap' = foldl (\m sf -> M.insertWith (\l sfL -> l ++ sfL) (entryKey (findSpecies sf)) [mkGameShark sf] m) sfMap (sharkFinds tp)
         gd' = gd { gameDataFoundSharks = sfMap' }
-        words = [ TextDisplay "Trip Complete!" 10 10 8 White ]
+        words = (TextDisplay "Trip Complete!" 10 10 8 White) : sharkFindsTxt
+        findText sf = T.concat [getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) infoType]
+        findDisplays (i, sf) = [ TextDisplay (findText sf) 30 (50 + (i * 40)) 3 White
+                               , TextDisplay (T.append "at " (monthToText (findMonth sf))) 50 (65 + (i * 40)) 3 White
+                               ]
+        sharkFindsTxt = concat $ findDisplays <$> zip [0..] (sharkFinds tp)
         opts = [ MenuAction "Back to Research Center" (ResearchCenter gd') ]
+

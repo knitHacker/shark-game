@@ -59,24 +59,22 @@
             }
         },
         "nurse": {
-            "sharkName": "Nurse Shark",
-            "research": {}
+            "sharkName": "Nurse Shark"
         },
         "lemon": {
-            "sharkName": "Lemon Shark",
-            "research": {}
+            "sharkName": "Lemon Shark"
         },
         "blue": {
-            "sharkName": "Blue Shark",
-            "research": {}
+            "sharkName": "Blue Shark"
         },
         "oceanicWhitetip": {
-            "sharkName": "Oceanic Whitetip Shark",
-            "research": {}
+            "sharkName": "Oceanic Whitetip Shark"
         },
         "tiger": {
-            "sharkName": "Tiger Shark",
-            "research": {}
+            "sharkName": "Tiger Shark"
+        },
+        "sandbar": {
+            "sharkName": "Sandbar Shark"
         }
     }
 }
