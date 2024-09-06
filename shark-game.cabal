@@ -52,6 +52,7 @@ library
       GameState.Collision.RTree
       GameState.Draw
       GameState.Menu
+      GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
       GameState.Menu.TripMenus
       GameState.Types
