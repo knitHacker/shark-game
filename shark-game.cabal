@@ -61,6 +61,7 @@ library
       OutputHandles.Draw
       OutputHandles.Types
       SaveData
+      Shark.Review
       Shark.Trip
       Shark.Types
       Util

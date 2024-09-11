@@ -75,6 +75,9 @@
         },
         "sandbar": {
             "sharkName": "Sandbar Shark"
+        },
+        "leopard": {
+            "sharkName": "Leopard Shark"
         }
     },
     "research": {

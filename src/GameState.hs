@@ -14,6 +14,7 @@ import OutputHandles.Types ( OutputHandles, OutputRead(..) )
 import GameState.Menu
 import GameState.Menu.GameMenus
 import GameState.Menu.TripMenus
+import GameState.Menu.DataReviewMenu
 import SaveData
 import Configs
 
@@ -83,6 +84,8 @@ moveToNextState gps cfgs inputs outs =
         TripProgress gd tp -> return $ withPause gps gd $ BasicTimeoutView $ tripProgressMenu gd tp cfgs inputs
         SharkFound gd sf tp -> return $ GameMenu Nothing $ sharkFoundMenu gd sf tp cfgs
         TripResults gd tp -> return $ GameMenu Nothing $ tripResultsMenu gd tp cfgs
+        DataReviewTop gd -> return $ withPause gps gd $ BasicMenu $ topReviewMenu gd cfgs
+        SharkReview gd se -> return $ withPause gps gd $ BasicMenu $ sharkReviewMenu gd se cfgs
         _ -> undefined
 
 
