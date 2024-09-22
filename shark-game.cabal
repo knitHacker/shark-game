@@ -64,6 +64,7 @@ library
       Shark.Review
       Shark.Trip
       Shark.Types
+      Shark.Util
       Util
   other-modules:
       Paths_shark_game

@@ -78,6 +78,9 @@
         },
         "leopard": {
             "sharkName": "Leopard Shark"
+        },
+        "bonnethead": {
+            "sharkName": "Bonnethead Shark"
         }
     },
     "research": {

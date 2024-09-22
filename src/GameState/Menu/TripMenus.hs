@@ -17,6 +17,7 @@ import InputState
 import Util
 import Shark.Types
 import Shark.Trip
+import Shark.Util
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
