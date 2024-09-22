@@ -59,6 +59,7 @@ import OutputHandles.Types
 import Shark.Types
 import SaveData
 import Configs
+import Util
 
 instance Show Unique where
     show:: Unique -> String
@@ -95,6 +96,8 @@ data GamePlayState =
     | GameExitState (Maybe GameData)
     | SharkFound GameData (Maybe SharkFind) TripState
     | TripResults GameData TripState
+    | DataReviewTop GameData
+    | SharkReview GameData (DataEntry SharkInfo)
     | ComingSoon
 
 data OverlayMenu = Overlay

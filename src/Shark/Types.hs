@@ -62,12 +62,28 @@ data SharkInfo = SharkInfo
 instance FromJSON SharkInfo
 instance ToJSON SharkInfo
 
+data ResearchReq = ResearchReq
+    { dataType :: T.Text
+    , reqCount :: Int
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON ResearchReq
+instance ToJSON ResearchReq
+
+data ResearchData = ResearchData
+    { researchReqs :: [ResearchReq]
+    , researchPaperName :: T.Text
+    , researchDescription :: T.Text
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON ResearchData
+instance ToJSON ResearchData
 
 data PlayConfigs = PlayConfigs
     { equipment :: M.Map T.Text GameEquipment
     , siteLocations :: M.Map T.Text GameLocation
     , sharks :: M.Map T.Text SharkInfo
---    , research :: M.Map T.Text ResearchData
+    , research :: M.Map T.Text ResearchData
     } deriving (Generic, Show, Eq)
 
 instance FromJSON PlayConfigs

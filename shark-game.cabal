@@ -52,6 +52,7 @@ library
       GameState.Collision.RTree
       GameState.Draw
       GameState.Menu
+      GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
       GameState.Menu.TripMenus
       GameState.Types
@@ -60,8 +61,10 @@ library
       OutputHandles.Draw
       OutputHandles.Types
       SaveData
+      Shark.Review
       Shark.Trip
       Shark.Types
+      Shark.Util
       Util
   other-modules:
       Paths_shark_game

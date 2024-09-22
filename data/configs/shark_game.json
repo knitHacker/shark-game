@@ -75,6 +75,19 @@
         },
         "sandbar": {
             "sharkName": "Sandbar Shark"
+        },
+        "leopard": {
+            "sharkName": "Leopard Shark"
+        },
+        "bonnethead": {
+            "sharkName": "Bonnethead Shark"
+        }
+    },
+    "research": {
+        "nurse": {
+            "researchPaperName": "Nurse Shark Sizes",
+            "researchDescription": "Nurse sharks can be grow up to 10ft and 700lbs.",
+            "researchReqs": [{ "dataType": "caught", "reqCount": 5}]
         }
     }
 }
