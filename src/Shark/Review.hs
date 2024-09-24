@@ -31,12 +31,3 @@ getInfoCounts sd = getInfoCounts' M.empty sd
                 info = getData eq infoType
             in getInfoCounts' (M.insertWith (\old new -> old + new) info 1 m) tl
 
-{-
-getInfoTypeCount :: [SharkFind] -> T.Text -> Int
-getInfoTypeCount [] _ = 0
-getInfoTypeCount (h:tl) it
-    | infoType eq == it = 1 + getInfoTypeCount tl it
-    | otherwise = getInfoTypeCount tl it
-    where
-        eq = gameSharkEquipment h
--}
