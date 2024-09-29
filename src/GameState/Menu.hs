@@ -80,5 +80,5 @@ pauseMenu gps gd = Overlay 20 20 200 200 Gray menu
                 ]
         opts = [ MenuAction "Continue" gps
                , MenuAction "Main Menu" $ MainMenu gd
-               , MenuAction "Exit" (GameExitState (Just gd))
+               , MenuAction "Save & Exit" (GameExitState (Just gd))
                ]

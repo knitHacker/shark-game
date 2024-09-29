@@ -98,6 +98,11 @@ data GamePlayState =
     | TripResults GameData TripState
     | DataReviewTop GameData
     | SharkReview GameData (DataEntry SharkInfo)
+    | LabMenuTop GameData
+    | OpenResearchMenu GameData
+    | CompletedResearchMenu GameData
+    | InvestigateResearchMenu GameData (DataEntry ResearchData)
+    | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | ComingSoon
 
 data OverlayMenu = Overlay

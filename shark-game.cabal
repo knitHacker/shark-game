@@ -54,6 +54,7 @@ library
       GameState.Menu
       GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
+      GameState.Menu.LabMenus
       GameState.Menu.TripMenus
       GameState.Types
       InputState
@@ -61,6 +62,7 @@ library
       OutputHandles.Draw
       OutputHandles.Types
       SaveData
+      Shark.Research
       Shark.Review
       Shark.Trip
       Shark.Types

@@ -52,14 +52,14 @@ getRandomPercentS s = runST $ do
         gen <- restore s
         p <- uniformR (0, 100) gen
         s' <- save gen
-        return $ (s', p)
+        return (s', p)
 
 getRandomBoolS :: Seed -> (Seed, Bool)
 getRandomBoolS s = runST $ do
         gen <- restore s
         p <- uniformM gen
         s' <- save gen
-        return $ (s', p)
+        return (s', p)
 
 
 getRandomElem :: GameData -> [a] -> (GameData, a)
@@ -67,7 +67,7 @@ getRandomElem gd ls = runST $ do
         gen <- restore s
         p <- uniformR (0, len - 1) gen
         s' <- save gen
-        return $ (gd { gameDataSeed = s' }, ls !! p)
+        return (gd { gameDataSeed = s' }, ls !! p)
     where
         s = gameDataSeed gd
         len = L.length ls
@@ -82,12 +82,30 @@ data GameSharkData = GameShark
 instance FromJSON GameSharkData
 instance ToJSON GameSharkData
 
+data SharkCompleteEntry = SharkCompleteEntry
+    { sharkCompleteCaughtMonth :: Int
+    , sharkCompleteCaughtEquipment :: T.Text
+    , sharkCompleteSpecies :: T.Text
+    } deriving (Show, Eq, Generic)
+
+instance FromJSON SharkCompleteEntry
+instance ToJSON SharkCompleteEntry
+
+data ResearchCompleteInfo = ResearchCompleteInfo
+    { researchCompleteMonth :: Int
+    , researchCompleteSharks :: [SharkCompleteEntry]
+    } deriving (Show, Eq, Generic)
+
+instance FromJSON ResearchCompleteInfo
+instance ToJSON ResearchCompleteInfo
+
 data GameData = GameData
     { gameDataSaveFile :: String
     , gameDataSeed :: Seed
     , gameDataFunds :: Int
     , gameDataMonth :: Int
     , gameDataFoundSharks :: M.Map T.Text [GameSharkData]
+    , gameDataResearchComplete :: M.Map T.Text ResearchCompleteInfo
     }
 
 
@@ -96,6 +114,7 @@ data GameSaveData = GameSaveData
     , saveFunds :: Int
     , saveMonth :: Int
     , saveFoundSharks :: M.Map T.Text [GameSharkData]
+    , saveResearchComplete :: M.Map T.Text ResearchCompleteInfo
     } deriving (Show, Eq, Generic)
 
 
@@ -111,16 +130,18 @@ startNewGame = do
     let fn = path L.++ "/file" L.++ (show name) L.++ ".save"
     putStrLn fn
     s <- save g
-    return $ GameData fn s 0 0 M.empty
+    return $ GameData fn s 0 0 M.empty M.empty
 
 
 convertSave :: String -> GameSaveData -> GameData
-convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd) (saveFoundSharks gsd)
+convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd) (saveFoundSharks gsd) (saveResearchComplete gsd)
     where
         seed = toSeed $ saveSeed gsd
 
 convertBack :: GameData -> (FilePath, GameSaveData)
-convertBack gd = (gameDataSaveFile gd, GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd) (gameDataFoundSharks gd))
+convertBack gd = ( gameDataSaveFile gd
+                 , GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd) (gameDataFoundSharks gd) (gameDataResearchComplete gd)
+                 )
     where
         seedV = fromSeed $ gameDataSeed gd
 
@@ -128,7 +149,7 @@ loadFromFile :: FilePath -> IO (Either T.Text GameData)
 loadFromFile fp = do
     gsdM <- eitherDecodeFileStrict fp
     case gsdM of
-        Left err -> return $ Left $ T.pack ("Failed to open save file " L.++ (show err))
+        Left err -> return $ Left $ T.pack ("Failed to open save file " L.++ show err)
         Right gsd -> return $ Right $ convertSave fp gsd
 
 saveToFile :: GameData -> IO ()

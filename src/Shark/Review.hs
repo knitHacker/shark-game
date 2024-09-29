@@ -23,11 +23,11 @@ getFinds cfgs gd se =
 
 
 getInfoCounts :: [SharkFind] -> M.Map T.Text Int
-getInfoCounts sd = getInfoCounts' M.empty sd
+getInfoCounts = getInfoCounts' M.empty
     where
         getInfoCounts' m [] = m
         getInfoCounts' m (h:tl) =
             let eq = findEquipment h
                 info = getData eq infoType
-            in getInfoCounts' (M.insertWith (\old new -> old + new) info 1 m) tl
+            in getInfoCounts' (M.insertWith (+) info 1 m) tl
 
