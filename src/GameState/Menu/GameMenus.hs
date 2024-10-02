@@ -78,6 +78,6 @@ researchCenterMenu gd outs = mkMenu words [] (selOneOpts 15 160 4 15 opts mc) 0
                 ]
         opts = [ MenuAction "Plan Research Trip" $ TripDestinationSelect gd
                , MenuAction "Review Data" $ DataReviewTop gd
-               , MenuAction "Lab" $ LabMenuTop gd
+               , MenuAction "Lab Management" ComingSoon
                ]
 

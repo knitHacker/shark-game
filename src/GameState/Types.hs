@@ -97,8 +97,9 @@ data GamePlayState =
     | SharkFound GameData (Maybe SharkFind) TripState
     | TripResults GameData TripState
     | DataReviewTop GameData
+    | SharkReviewTop GameData
     | SharkReview GameData (DataEntry SharkInfo)
-    | LabMenuTop GameData
+    | ResearchReviewTop GameData
     | OpenResearchMenu GameData
     | CompletedResearchMenu GameData
     | InvestigateResearchMenu GameData (DataEntry ResearchData)
