@@ -6,6 +6,8 @@
 module SaveData
     ( GameData(..)
     , GameSharkData(..)
+    , ResearchCompleteInfo(..)
+    , SharkCompleteEntry(..)
     , startNewGame
     , getRandomPercent
     , getRandomPercentS
@@ -127,7 +129,7 @@ startNewGame = do
     name <- uniform g :: IO Int
     let dir = "data/saves"
     path <- getGameDirectory dir
-    let fn = path L.++ "/file" L.++ (show name) L.++ ".save"
+    let fn = path L.++ "/file" L.++ show name L.++ ".save"
     putStrLn fn
     s <- save g
     return $ GameData fn s 0 0 M.empty M.empty

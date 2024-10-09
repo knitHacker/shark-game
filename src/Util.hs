@@ -5,6 +5,8 @@
 module Util
     ( DataEntry(..)
     , getEntry
+    , getEntries
+    , getAllEntries
     , getData
     ) where
 
@@ -25,6 +27,12 @@ instance ToJSON a => ToJSON (DataEntry a)
 
 getEntry :: M.Map T.Text a -> T.Text -> DataEntry a
 getEntry m k = Entry k (m M.! k)
+
+getEntries :: M.Map T.Text [a] -> T.Text -> [DataEntry a]
+getEntries m k = Entry k <$> m M.! k
+
+getAllEntries :: M.Map T.Text [a] -> [DataEntry a]
+getAllEntries m = concatMap (getEntries m) (M.keys m)
 
 getData :: DataEntry a -> (a -> b) -> b
 getData (Entry _ d) f = f d

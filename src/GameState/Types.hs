@@ -133,6 +133,7 @@ data View = View
 
 data MenuAction = MenuAction
     { menuOptionText :: !T.Text
+    , menuOptionEnabled :: !Bool
     , menuNextState :: !GamePlayState
     }
 
@@ -174,19 +175,21 @@ selOneOpts x y s sp opts curs = SelOneListOpts $ OALOpts x y s sp opts curs
 selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptions
 selMultOpts x y s sp opts up act back = SelMultiListOpts $ MSLOpts x y s sp opts up act back
 
-getNextMenu :: Int -> MenuOptions -> GamePlayState
-getNextMenu pos (SelOneListOpts opts) = menuNextState ((oalOpts opts) !! pos)
+getNextMenu :: Int -> MenuOptions -> Maybe GamePlayState
+getNextMenu pos (SelOneListOpts opts) = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
+        where
+            opt = oalOpts opts !! pos
 getNextMenu pos (SelMultiListOpts opts)
-    | pos < len = (mslAction opts) selected pos
-    | len == pos = (mslContinueAction opts) selected
+    | pos < len = Just $ mslAction opts selected pos
+    | len == pos = Just $ mslContinueAction opts selected
     | otherwise =
         case mslBackActionM opts of
-            Nothing -> (mslAction opts) selected pos
-            Just back -> back
+            Nothing -> Just $ mslAction opts selected pos
+            Just back -> Just back
     where
         len = length (mslOpts opts)
         opts' = toggleMultiOption opts pos
-        selected = selectKey <$> filter (\o -> selectSelected o) (mslOpts opts')
+        selected = selectKey <$> filter selectSelected (mslOpts opts')
 
 optionLength :: MenuOptions -> Int
 optionLength (SelOneListOpts opts) = length $ oalOpts opts

@@ -3,11 +3,13 @@ module Shark.Review
     ( getInfoCounts
     , getFinds
     , getKnownResearch
+    , getResearchRequirements
     ) where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Set as S
+import qualified Data.List as L
 
 import Shark.Types
 import Shark.Util
@@ -55,9 +57,25 @@ shouldShowResearch cfgs gd re = rSharks `S.isSubsetOf` kSharks && depends `S.isS
         completed = S.fromList $ M.keys $ gameDataResearchComplete gd
         depends = S.fromList $ researchDepends (entryData re)
 
-getResearchRequirements :: PlayConfigs -> GameData -> DataEntry ResearchReq -> [(T.Text, T.Text, Int, Int)]
-getResearchRequirements cfgs gd rqE = undefined
+getResearchRequirements :: PlayConfigs -> GameData -> DataEntry ResearchData -> [(T.Text, [(T.Text, Int, Int)])]
+getResearchRequirements cfgs gd re = researchReq <$> bySharks
     where
-        sharkE = getEntry (sharks cfgs) (entryKey rqE)
-        sfs = getFinds cfgs gd sharkE
-        ics = getInfoCounts sfs
+        bySharks = M.toList $ researchReqs (entryData re)
+        researchReq (sk, reqs) = (getName sk, getResearchRequirement cfgs gd sk <$> reqs)
+        getName sk = sharkName $ sharks cfgs M.! sk
+
+getResearchRequirement :: PlayConfigs -> GameData -> T.Text -> ResearchReq -> (T.Text, Int, Int)
+getResearchRequirement cfgs gd sk req = (iType, sInfos, reqCount req)
+    where
+        sds = gameDataFoundSharks gd M.! sk
+        iType = dataType req
+        sInfos = length $ L.filter (\sd -> getSharkInfo cfgs sd == iType) sds
+
+getSharkInfo :: PlayConfigs -> GameSharkData -> T.Text
+getSharkInfo cfgs sd = infoType $ equipment cfgs M.! gameSharkEquipment sd
+
+--completeResearch :: PlayConfigs -> GameData -> DataEntry ResearchData -> GameData
+--completeResearch cfgs gd re = gd { gameDataResearchComplete = M.insert (entryKey re) rci (gameDataResearchComplete gd) }
+--    where
+--        rci = ResearchCompleteInfo (gameDataMonth gd) []
+

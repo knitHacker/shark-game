@@ -34,9 +34,9 @@ mainMenu gdM cfgs outs = mkMenu words [] optEntry 0
                 , TextDisplay "Research" 20 60 14 Gray
                 , TextDisplay "Press ENTER to select" 50 150 3 White
                 ]
-        newGame = MenuAction "New Game" IntroPage
-        continueGame cg = MenuAction "Continue" $ ResearchCenter cg
-        exitOpt = MenuAction "Exit" $ GameExitState gdM
+        newGame = MenuAction "New Game" True IntroPage
+        continueGame cg = MenuAction "Continue" True $ ResearchCenter cg
+        exitOpt = MenuAction "Exit" True $ GameExitState gdM
         menuOpts =
             case gdM of
                 Nothing -> [newGame, exitOpt]
@@ -59,7 +59,7 @@ introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White)) 0
                 , TextDisplay grantText 75 170 4 White
                 , TextDisplay startMoney 100 190 3 Green
                 ]
-        opts = [ MenuAction "Start Research" $ ResearchCenter gd'
+        opts = [ MenuAction "Start Research" True $ ResearchCenter gd'
                ]
 
 
@@ -76,8 +76,8 @@ researchCenterMenu gd outs = mkMenu words [] (selOneOpts 15 160 4 15 opts mc) 0
                 , TextDisplay fundTxt 45 100 4 Green
                 , TextDisplay dateTxt 10 125 3 Green
                 ]
-        opts = [ MenuAction "Plan Research Trip" $ TripDestinationSelect gd
-               , MenuAction "Review Data" $ DataReviewTop gd
-               , MenuAction "Lab Management" ComingSoon
+        opts = [ MenuAction "Plan Research Trip" True $ TripDestinationSelect gd
+               , MenuAction "Review Data" True $ DataReviewTop gd
+               , MenuAction "Lab Management" False ComingSoon
                ]
 

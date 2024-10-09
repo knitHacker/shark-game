@@ -33,8 +33,8 @@ mapMenu gd cfgs = mkMenu words [] (selOneOpts 15 140 4 8 opts' mc) 0
         words = [ TextDisplay "Select Trip" 10 10 8 White
                 , TextDisplay "Destination" 15 55 10 White
                 ]
-        opts = (\(loc, txt) -> MenuAction txt (TripEquipmentSelect gd loc [] 0)) <$> locs
-        rtOpt = MenuAction "Return to Lab" $ ResearchCenter gd
+        opts = (\(loc, txt) -> MenuAction txt True (TripEquipmentSelect gd loc [] 0)) <$> locs
+        rtOpt = MenuAction "Return to Lab" True $ ResearchCenter gd
         opts' = opts ++ [rtOpt]
 
 equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu
@@ -49,15 +49,14 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] (selMultOpts 15 130 3 6
             in (et, T.append (T.append (text eqEntry) " - $") (T.pack (show (price eqEntry))))
         rEs' = lupE <$> rEs
         aEs' = lupE <$> aEs
-        cost = foldl (\s opt -> if selectSelected opt then s + price (eq M.! (selectKey opt)) else s) 0 opts'
+        cost = foldl (\s opt -> if selectSelected opt then s + price (eq M.! selectKey opt) else s) 0 opts'
         costTxt = T.append "Trip Current Cost: $" (T.pack (show cost))
         words = [ TextDisplay "Select Trip" 10 10 8 White
                 , TextDisplay "Equipment" 15 55 10 White
                 , TextDisplay costTxt 20 100 4 Green
                 ]
         rOpts = (\(k, t) -> SelectOption t k True False) <$> rEs'
-        wasChsn t = elem t chsn
-        aOpts = (\(k, t) -> SelectOption t k (wasChsn k) True) <$> aEs'
+        aOpts = (\(k, t) -> SelectOption t k (k `elem` chsn) True) <$> aEs'
         opts' = rOpts ++ aOpts
         update = TripEquipmentSelect gd loc
         act = TripReview gd loc
@@ -85,9 +84,9 @@ reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cu
         gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
         (gd'', atmpts) = initTripProgress gd' loc eqs cfgs
         progress = TripProgress
-        opts = [ MenuAction "Start Trip" (if enoughFunds then TripProgress gd'' atmpts else TripReview gd loc eqs)
-               , MenuAction "Back to equipment" (TripEquipmentSelect gd loc eqs 0)
-               , MenuAction "Abort Trip" (ResearchCenter gd)
+        opts = [ MenuAction "Start Trip" enoughFunds (if enoughFunds then TripProgress gd'' atmpts else TripReview gd loc eqs)
+               , MenuAction "Back to equipment" True (TripEquipmentSelect gd loc eqs 0)
+               , MenuAction "Abort Trip" True (ResearchCenter gd)
                ]
 
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> TimeoutView
@@ -131,7 +130,7 @@ sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cur
                                , TextDisplay (sharkText sf) 20 80 5 Blue
                                ]
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
-        opts = [ MenuAction "Continue Trip" nextState ]
+        opts = [ MenuAction "Continue Trip" True nextState ]
 
 tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu
 tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (CursorRect White)) 0
@@ -145,5 +144,5 @@ tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (Cursor
                                , TextDisplay (T.append "at " (monthToText (findMonth sf))) 50 (65 + (i * 40)) 3 White
                                ]
         sharkFindsTxt = concatMap findDisplays $ zip [0..] (sharkFinds tp)
-        opts = [ MenuAction "Back to Research Center" (ResearchCenter gd') ]
+        opts = [ MenuAction "Back to Research Center" True (ResearchCenter gd') ]
 
