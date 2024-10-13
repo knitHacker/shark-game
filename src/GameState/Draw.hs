@@ -94,7 +94,7 @@ getTextRectangle :: Color -> CInt -> CInt -> Int -> Int -> Int -> Int -> DrawRec
 getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
     where
         xAdj = max 1 (fromIntegral fSize)
-        yAdj = max 1 (min (floor (fromIntegral (sp - 1) / 2)) (fromIntegral (div (textH - 1) 2)))
+        yAdj = max 2 (min (floor (fromIntegral (sp - 1) / 2)) (fromIntegral (div (textH - 1) 2)))
         x' = fromIntegral $ x - xAdj
         y' = fromIntegral $ y - yAdj
         w = fromIntegral textL + (2 * xAdj)

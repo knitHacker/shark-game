@@ -60,6 +60,7 @@ library
       OutputHandles
       OutputHandles.Draw
       OutputHandles.Types
+      OutputHandles.Util
       SaveData
       Shark.Review
       Shark.Trip

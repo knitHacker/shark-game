@@ -103,6 +103,7 @@ data GamePlayState =
     | OpenResearchMenu GameData
     | CompletedResearchMenu GameData
     | InvestigateResearchMenu GameData (DataEntry ResearchData)
+    | AwardGrantMenu GameData (DataEntry ResearchData)
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | ComingSoon
 

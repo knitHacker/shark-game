@@ -7,7 +7,7 @@ module SaveData
     ( GameData(..)
     , GameSharkData(..)
     , ResearchCompleteInfo(..)
-    , SharkCompleteEntry(..)
+    , SharkIndex
     , startNewGame
     , getRandomPercent
     , getRandomPercentS
@@ -16,6 +16,8 @@ module SaveData
     , getRandomElem
     , loadFromFile
     , saveToFile
+    , addShark
+    , getShark
     ) where
 
 import System.IO ()
@@ -74,6 +76,8 @@ getRandomElem gd ls = runST $ do
         s = gameDataSeed gd
         len = L.length ls
 
+type SharkIndex = Int
+
 data GameSharkData = GameShark
     { gameSharkMonth :: Int
     , gameSharkSpecies :: T.Text
@@ -84,29 +88,23 @@ data GameSharkData = GameShark
 instance FromJSON GameSharkData
 instance ToJSON GameSharkData
 
-data SharkCompleteEntry = SharkCompleteEntry
-    { sharkCompleteCaughtMonth :: Int
-    , sharkCompleteCaughtEquipment :: T.Text
-    , sharkCompleteSpecies :: T.Text
-    } deriving (Show, Eq, Generic)
-
-instance FromJSON SharkCompleteEntry
-instance ToJSON SharkCompleteEntry
-
 data ResearchCompleteInfo = ResearchCompleteInfo
     { researchCompleteMonth :: Int
-    , researchCompleteSharks :: [SharkCompleteEntry]
+    , researchCompleteSharks :: [SharkIndex]
     } deriving (Show, Eq, Generic)
 
 instance FromJSON ResearchCompleteInfo
 instance ToJSON ResearchCompleteInfo
+
 
 data GameData = GameData
     { gameDataSaveFile :: String
     , gameDataSeed :: Seed
     , gameDataFunds :: Int
     , gameDataMonth :: Int
-    , gameDataFoundSharks :: M.Map T.Text [GameSharkData]
+    , gameDataSharkIndex :: SharkIndex
+    , gameDataSharks :: M.Map SharkIndex GameSharkData
+    , gameDataFoundSharks :: M.Map T.Text [SharkIndex]
     , gameDataResearchComplete :: M.Map T.Text ResearchCompleteInfo
     }
 
@@ -115,7 +113,8 @@ data GameSaveData = GameSaveData
     { saveSeed :: Vector Word32
     , saveFunds :: Int
     , saveMonth :: Int
-    , saveFoundSharks :: M.Map T.Text [GameSharkData]
+    , saveSharkIndex :: SharkIndex
+    , saveSharks :: M.Map SharkIndex GameSharkData
     , saveResearchComplete :: M.Map T.Text ResearchCompleteInfo
     } deriving (Show, Eq, Generic)
 
@@ -125,24 +124,28 @@ instance ToJSON GameSaveData
 
 startNewGame :: IO GameData
 startNewGame = do
-    g <- R.create
+    --g <- R.create -- apparently uses the same seed every time
+    g <- createSystemRandom
     name <- uniform g :: IO Int
     let dir = "data/saves"
     path <- getGameDirectory dir
     let fn = path L.++ "/file" L.++ show name L.++ ".save"
     putStrLn fn
     s <- save g
-    return $ GameData fn s 0 0 M.empty M.empty
+    return $ GameData fn s 0 0 0 M.empty M.empty M.empty
 
+sortSharks :: M.Map SharkIndex GameSharkData -> M.Map T.Text [SharkIndex]
+sortSharks = M.foldlWithKey' (\m i sd -> M.insertWith (L.++) (gameSharkSpecies sd) [i] m) M.empty
 
 convertSave :: String -> GameSaveData -> GameData
-convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd) (saveFoundSharks gsd) (saveResearchComplete gsd)
+convertSave fn gsd = GameData fn seed (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks (sortSharks sSharks) (saveResearchComplete gsd)
     where
         seed = toSeed $ saveSeed gsd
+        sSharks = saveSharks gsd
 
 convertBack :: GameData -> (FilePath, GameSaveData)
 convertBack gd = ( gameDataSaveFile gd
-                 , GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd) (gameDataFoundSharks gd) (gameDataResearchComplete gd)
+                 , GameSaveData seedV (gameDataFunds gd) (gameDataMonth gd) (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd)
                  )
     where
         seedV = fromSeed $ gameDataSeed gd
@@ -160,6 +163,17 @@ saveToFile gd = do
     encodeFile fn gsd
     where
         (fn, gsd) = convertBack gd
+
+addShark :: GameData -> GameSharkData -> GameData
+addShark gd gsd = gd { gameDataSharkIndex = i + 1
+                     , gameDataSharks = M.insert i gsd (gameDataSharks gd)
+                     , gameDataFoundSharks = M.insertWith (L.++) (gameSharkSpecies gsd) [i] (gameDataFoundSharks gd)
+                     }
+    where
+        i = gameDataSharkIndex gd
+
+getShark :: GameData -> SharkIndex -> GameSharkData
+getShark gd i = gameDataSharks gd M.! i
 
 class Monad m => SaveData m where
     saveData :: m ()

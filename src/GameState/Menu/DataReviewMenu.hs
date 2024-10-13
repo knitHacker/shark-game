@@ -9,6 +9,7 @@ module GameState.Menu.DataReviewMenu
     , completedResearchMenu
     , investigateResearchMenu
     , completedResearchReviewMenu
+    , awardGrantMenu
     ) where
 
 import qualified Data.Map.Strict as M
@@ -21,6 +22,8 @@ import Shark.Types
 import Shark.Review
 import GameState.Types
 import SaveData
+
+import Debug.Trace
 
 topReviewMenu :: GameData -> GameConfigs -> Menu
 topReviewMenu gd cfgs = mkMenu words [] (selOneOpts 20 60 3 20 opts mc) 0
@@ -76,7 +79,7 @@ openResearchMenu :: GameData -> GameConfigs -> Menu
 openResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++ otherOpts) mc) 0
     where
         sCfgs = sharkCfgs cfgs
-        availResearch = getKnownResearch sCfgs gd
+        availResearch = filter (\r -> M.notMember (entryKey r) (gameDataResearchComplete gd)) (getKnownResearch sCfgs gd)
         sharksInfo = sharks sCfgs
         mc = CursorRect White
         words = [ TextDisplay "Open Research" 10 10 6 White
@@ -86,34 +89,53 @@ openResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++ othe
         words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 20 60 2 Red] else words
 
 completedResearchMenu :: GameData -> GameConfigs -> Menu
-completedResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 opts mc) 0
+completedResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++ otherOpts) mc) 0
     where
         mc = CursorRect White
+        availResearch = filter (\r -> M.member (entryKey r) (gameDataResearchComplete gd)) $ getKnownResearch (sharkCfgs cfgs) gd
         words = [ TextDisplay "Completed Research" 10 10 6 White
                 ]
-        research = (\s -> MenuAction (getData s researchPaperName) True (CompletedResearchReviewMenu gd s)) <$> []
-        opts = [ MenuAction "Back" True $ ResearchReviewTop gd ]
+        research = (\s -> MenuAction (getData s researchPaperName) True (CompletedResearchReviewMenu gd s)) <$> availResearch
+        opts = (\s -> MenuAction (getData s researchPaperName) True (CompletedResearchReviewMenu gd s) ) <$> availResearch
+        otherOpts = [ MenuAction "Back" True $ ResearchReviewTop gd ]
         words' = if null research then words ++ [TextDisplay "No completed research" 20 60 2 Red] else words
 
 investigateResearchMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Menu
-investigateResearchMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 180 3 20 [returnOpt] mc) 0
+investigateResearchMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 180 3 20 [completeOpt, returnOpt] mc) 0
     where
         reqs = getResearchRequirements (sharkCfgs cfgs) gd researchEntry
         mc = CursorRect White
-        completeOpt = MenuAction "Complete Research" False ComingSoon
+        gd' = completeResearch (sharkCfgs cfgs) gd researchEntry reqs
+        completeOpt = MenuAction "Complete Research" (canCompleteResearch reqs) $ AwardGrantMenu gd' researchEntry
         returnOpt = MenuAction "Back" True $ OpenResearchMenu gd
         grantText = T.append "Grant awarded when complete: " (T.pack (show (getData researchEntry researchGrant)))
         words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
                 , TextDisplay grantText 20 40 2 Green
                 ]
-        words' = words
+        words' = fst $ foldl makeReqTxt (words, 60) reqs
+        makeReqTxt (l, y) (sN, rrs) = (l ++ [sharkHeader] ++ infoRqs, y'' + 20)
+                where
+                        sharkHeader = TextDisplay sN 25 y 3 White
+                        (infoRqs, y'') = foldl (\(l', y') (it, gsd, c) -> (l' ++ [TextDisplay (T.concat [T.toTitle it, " ", T.pack (show (length gsd)), "/", T.pack (show c)]) 30 y' 2 White], y' + 10)) ([], y + 20) rrs
+
+awardGrantMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Menu
+awardGrantMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 180 3 20 [returnOpt] mc) 0
+    where
+            mc = CursorRect White
+            returnOpt = MenuAction "Back" True $ OpenResearchMenu gd
+            grantText = T.append "Grant awarded when complete: " (T.pack (show (getData researchEntry researchGrant)))
+            words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
+                    , TextDisplay grantText 20 40 2 Green
+                    , TextDisplay (getData researchEntry researchDescription) 20 60 2 White
+                    ]
+            words' = words
 
 completedResearchReviewMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Menu
 completedResearchReviewMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 180 3 20 [returnOpt] mc) 0
     where
             mc = CursorRect White
-            returnOpt = MenuAction "Back" True $ OpenResearchMenu gd
-            grantText = T.append "Grant awarded when complete: " (T.pack (show (getData researchEntry researchGrant)))
+            returnOpt = MenuAction "Back" True $ CompletedResearchMenu gd
+            grantText = T.append "Grant awarded when completed: " (T.pack (show (getData researchEntry researchGrant)))
             words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
                     , TextDisplay grantText 20 40 2 Green
                     , TextDisplay (getData researchEntry researchDescription) 20 60 2 White

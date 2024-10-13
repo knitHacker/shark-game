@@ -136,8 +136,7 @@ tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu
 tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (CursorRect White)) 0
     where
         sfMap = gameDataFoundSharks gd
-        sfMap' = foldl (\m sf -> M.insertWith (++) (entryKey (findSpecies sf)) [mkGameShark sf] m) sfMap (sharkFinds tp)
-        gd' = gd { gameDataFoundSharks = sfMap' }
+        gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
         words = TextDisplay "Trip Complete!" 10 10 8 White : sharkFindsTxt
         findText sf = T.concat [getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) infoType]
         findDisplays (i, sf) = [ TextDisplay (findText sf) 30 (50 + (i * 40)) 3 White
