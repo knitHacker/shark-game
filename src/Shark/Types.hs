@@ -11,6 +11,8 @@ module Shark.Types
     , TripAttempt(..)
     , TripState(..)
     , TripInfo(..)
+    , ResearchReq(..)
+    , ResearchData(..)
     ) where
 
 import GHC.Generics ( Generic )
@@ -71,9 +73,11 @@ instance FromJSON ResearchReq
 instance ToJSON ResearchReq
 
 data ResearchData = ResearchData
-    { researchReqs :: [ResearchReq]
+    { researchReqs :: M.Map T.Text [ResearchReq]
     , researchPaperName :: T.Text
     , researchDescription :: T.Text
+    , researchGrant :: Int
+    , researchDepends :: [T.Text]
     } deriving (Generic, Show, Eq)
 
 instance FromJSON ResearchData

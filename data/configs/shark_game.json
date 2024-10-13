@@ -84,10 +84,14 @@
         }
     },
     "research": {
-        "nurse": {
+        "nurse_0": {
             "researchPaperName": "Nurse Shark Sizes",
-            "researchDescription": "Nurse sharks can be grow up to 10ft and 700lbs.",
-            "researchReqs": [{ "dataType": "caught", "reqCount": 5}]
+            "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 700lbs. They are brownish with two barbels on their snout.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
         }
     }
 }

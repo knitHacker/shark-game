@@ -15,7 +15,7 @@ import OutputHandles.Types
 import GameState.Types
 import SaveData
 
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromMaybe)
 import qualified Data.Text as T
 
 import Debug.Trace
@@ -42,7 +42,7 @@ updateGameStateInMenu mM m inputs =
         (True, Just om, _, _) -> Just $ Left $ OverlayMenu om $ BasicMenu m
         (_, _, _, Just DUp) -> Just $ Left $ GameMenu mM $ decrementMenuCursor m
         (_, _, _, Just DDown) -> Just $ Left $ GameMenu mM $ incrementMenuCursor m
-        (_, _, True, _) -> Just $ Right $ getNextMenu pos $ options m
+        (_, _, True, _) -> Right <$> (getNextMenu pos $ options m)
         _ -> Nothing
     where
         pos = currentPos m
@@ -57,7 +57,7 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
     case (esc, backM, selected, moveDirM) of
         (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
         (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameTimeout (Just (om' topM)) tov
-        (_, _, True, _) -> Just $ Right $ getNextMenu (currentPos topM) $ options topM
+        (_, _, True, _) -> Right <$> (getNextMenu (currentPos topM) $ options topM)
         (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
         (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing
@@ -78,7 +78,7 @@ pauseMenu gps gd = Overlay 20 20 200 200 Gray menu
         menuOpt = SelOneListOpts $ OALOpts 50 120 5 15 opts $ CursorRect White
         words = [ TextDisplay "Game Menu" 30 30 10 Black
                 ]
-        opts = [ MenuAction "Continue" gps
-               , MenuAction "Main Menu" $ MainMenu gd
-               , MenuAction "Exit" (GameExitState (Just gd))
+        opts = [ MenuAction "Continue" True gps
+               , MenuAction "Main Menu" True $ MainMenu gd
+               , MenuAction "Save & Exit" True (GameExitState (Just gd))
                ]

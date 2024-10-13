@@ -77,16 +77,25 @@ moveToNextState gps cfgs inputs outs =
             saveGame gd cfgs
             return $ GameMenu Nothing $ mainMenu (Just gd) cfgs outs
         IntroPage -> introPageIO
-        ResearchCenter gd -> return $ withPause gps gd $ BasicMenu $ researchCenterMenu gd outs
-        TripDestinationSelect gd -> return $ withPause gps gd $ BasicMenu $ mapMenu gd cfgs
-        TripEquipmentSelect gd loc eqs cp -> return $ withPause gps gd $ BasicMenu $ equipmentPickMenu gd loc eqs cp cfgs
-        TripReview gd loc eqs -> return $ withPause gps gd $ BasicMenu $ reviewTripMenu gd loc eqs cfgs
+        ResearchCenter gd -> return $ menuWithPause gd $ researchCenterMenu gd outs
+        TripDestinationSelect gd -> return $ menuWithPause gd $ mapMenu gd cfgs
+        TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
+        TripReview gd loc eqs -> return $ menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
         TripProgress gd tp -> return $ withPause gps gd $ BasicTimeoutView $ tripProgressMenu gd tp cfgs inputs
         SharkFound gd sf tp -> return $ GameMenu Nothing $ sharkFoundMenu gd sf tp cfgs
         TripResults gd tp -> return $ GameMenu Nothing $ tripResultsMenu gd tp cfgs
-        DataReviewTop gd -> return $ withPause gps gd $ BasicMenu $ topReviewMenu gd cfgs
-        SharkReview gd se -> return $ withPause gps gd $ BasicMenu $ sharkReviewMenu gd se cfgs
+        DataReviewTop gd -> return $ menuWithPause gd $ topReviewMenu gd cfgs
+        SharkReviewTop gd -> return $ menuWithPause gd $ topReviewSharksMenu gd cfgs
+        SharkReview gd se -> return $ menuWithPause gd $ sharkReviewMenu gd se cfgs
+        ResearchReviewTop gd -> return $ menuWithPause gd $ topLabMenu gd cfgs
+        OpenResearchMenu gd -> return $ menuWithPause gd $ openResearchMenu gd cfgs
+        CompletedResearchMenu gd -> return $ menuWithPause gd $ completedResearchMenu gd cfgs
+        InvestigateResearchMenu gd rd -> return $ menuWithPause gd $ investigateResearchMenu gd rd cfgs
+        AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs outs
+        CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs outs
         _ -> undefined
+    where
+        menuWithPause gd bm = withPause gps gd $ BasicMenu bm
 
 
 saveGame :: GameData -> GameConfigs -> IO ()
