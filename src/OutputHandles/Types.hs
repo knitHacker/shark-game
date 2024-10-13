@@ -1,5 +1,4 @@
 {-# LANGUAGE Strict #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE InstanceSigs #-}
 module OutputHandles.Types
     ( OutputHandles(..)

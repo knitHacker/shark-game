@@ -1,5 +1,4 @@
 {-# LANGUAGE Strict #-}
-{-# LANGUAGE OverloadedStrings #-}
 module GameState
     ( initGameState
     , isGameExiting
@@ -7,7 +6,6 @@ module GameState
     ) where
 
 import Control.Monad ()
-import Configs ( ConfigsRead(readConfigs), GameConfigs )
 import InputState
 import GameState.Types
 import OutputHandles.Types ( OutputHandles, OutputRead(..) )
@@ -56,7 +54,7 @@ updateGameState = do
             return $ reDraw gv
 
 
-updateGameTimeout :: (Maybe OverlayMenu) -> TimeoutView -> InputState -> Maybe (Either GameView GamePlayState)
+updateGameTimeout :: Maybe OverlayMenu -> TimeoutView -> InputState -> Maybe (Either GameView GamePlayState)
 updateGameTimeout mM tv i@(InputState _ ts) =
     case (esc, mM, to) of
         (True, Just om, _) -> Just $ Left $ OverlayMenu om $ BasicTimeoutView tv
@@ -64,7 +62,7 @@ updateGameTimeout mM tv i@(InputState _ ts) =
         _ -> Nothing
     where
         esc = escapeJustPressed i
-        to = ts - (lastTimeout tv) > timeoutLength tv
+        to = ts - lastTimeout tv > timeoutLength tv
 
 moveToNextState :: GamePlayState -> GameConfigs -> InputState -> OutputHandles -> IO GameView
 moveToNextState gps cfgs inputs outs =
