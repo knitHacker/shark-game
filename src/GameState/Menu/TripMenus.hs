@@ -106,7 +106,7 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
         progY = 150
         progH = 20
         backRect = (Gray, progX, progY, 200, progH)
-        p = floor (fromIntegral (allA - curA) / (fromIntegral allA) * 100)
+        p = floor (fromIntegral (allA - curA) / fromIntegral allA * 100)
         progressRect = (Green, progX, progY, 2*p, progH)
         words = [ TextDisplay "Trip Progress" 10 10 8 White
                 , TextDisplay "Looking for sharks..." 20 100 5 Blue

@@ -46,7 +46,7 @@ topReviewSharksMenu gd cfgs = mkMenu words [] (selOneOpts 20 90 3 20 (opts ++ ot
         words = [ TextDisplay "Data Review" 10 10 10 White
                 , TextDisplay "Discovered Sharks" 15 60 5 Green
                 ]
-        opts = (\s -> MenuAction (sharkName (sharksInfo M.! s)) True (SharkReview gd (getEntry sharksInfo s))) <$> (M.keys (gameDataFoundSharks gd))
+        opts = (\s -> MenuAction (sharkName (sharksInfo M.! s)) True (SharkReview gd (getEntry sharksInfo s))) <$> M.keys (gameDataFoundSharks gd)
         otherOpts = [ MenuAction "Back" True $ DataReviewTop gd ]
 
 sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> Menu

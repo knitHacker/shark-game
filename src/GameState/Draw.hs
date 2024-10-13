@@ -16,24 +16,11 @@ import qualified Data.Text as T
 import Data.Unique ( Unique )
 
 import Configs
-    ( ConfigsRead(..)
-    , GameConfigs(..)
-    )
-import GameState ()
+import GameState
 import GameState.Types
 import OutputHandles.Types
-    ( Color(..)
-    , Draw(..)
-    , Draws
-    , TextDisplay(..)
-    , TextureEntry(..)
-    , ToRender(..)
-    , DrawTexture(..)
-    , DrawRectangle(..)
-    )
-import OutputHandles.Draw ( mkRect )
-import OutputHandles.Types
-import InputState ( Direction(..) )
+import OutputHandles.Draw
+import InputState
 
 import Debug.Trace
 import GHC.Real (fromIntegral)

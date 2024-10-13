@@ -75,7 +75,7 @@ reDraw gv = GameState gv Nothing
 
 data GamePlayState =
       MainMenu GameData
-    | PauseMenu GameData (GamePlayState)
+    | PauseMenu GameData GamePlayState
     | IntroPage
     | ResearchCenter GameData
     | TripDestinationSelect GameData
@@ -113,7 +113,7 @@ data TimeoutView = TimeoutView
     }
 
 mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptions -> Int -> Menu
-mkMenu words imgs opts pos = Menu (View words imgs []) opts pos
+mkMenu words imgs = Menu (View words imgs [])
 
 data View = View
     { texts :: ![TextDisplay]
