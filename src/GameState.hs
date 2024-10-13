@@ -91,8 +91,8 @@ moveToNextState gps cfgs inputs outs =
         OpenResearchMenu gd -> return $ menuWithPause gd $ openResearchMenu gd cfgs
         CompletedResearchMenu gd -> return $ menuWithPause gd $ completedResearchMenu gd cfgs
         InvestigateResearchMenu gd rd -> return $ menuWithPause gd $ investigateResearchMenu gd rd cfgs
-        AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs
-        CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs
+        AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs outs
+        CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs outs
         _ -> undefined
     where
         menuWithPause gd bm = withPause gps gd $ BasicMenu bm
