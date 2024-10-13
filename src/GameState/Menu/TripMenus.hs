@@ -26,9 +26,9 @@ import qualified Data.Text as T
 import Debug.Trace
 
 mapMenu :: GameData -> GameConfigs -> Menu
-mapMenu gd cfgs = mkMenu words [] (selOneOpts 15 140 4 8 opts' mc) 0
+mapMenu gd cfgs = mkMenu words [] (selOneOpts 15 120 4 8 opts' mc) 0
     where
-        locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> (M.assocs $ siteLocations $ sharkCfgs cfgs)
+        locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 10 10 8 White
                 , TextDisplay "Destination" 15 55 10 White
@@ -106,7 +106,7 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
         progY = 150
         progH = 20
         backRect = (Gray, progX, progY, 200, progH)
-        p = floor ((fromIntegral (allA - curA)) / (fromIntegral allA) * 100)
+        p = floor (fromIntegral (allA - curA) / (fromIntegral allA) * 100)
         progressRect = (Green, progX, progY, 2*p, progH)
         words = [ TextDisplay "Trip Progress" 10 10 8 White
                 , TextDisplay "Looking for sharks..." 20 100 5 Blue

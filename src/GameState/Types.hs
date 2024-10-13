@@ -1,14 +1,11 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE InstanceSigs #-}
 
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE InstanceSigs #-}
 
 module GameState.Types
     ( BasicView(..)
@@ -42,17 +39,9 @@ import qualified Data.Map.Strict as M
 import Data.Unique ( Unique, hashUnique )
 import Data.Int ( Int64 )
 import qualified Data.Text as T
-import InputState
 import Data.Maybe (isJust)
 
-import Configs ( GameConfigs )
-import InputState ( Direction, InputState )
-import OutputHandles.Types
-    ( OutputHandles
-    , TextureEntry
-    , TextDisplay
-    , Color(..)
-    )
+import InputState
 import GameState.Collision.RTree ( RTree )
 import GameState.Collision.BoundBox ( BoundBox )
 import OutputHandles.Types
@@ -194,7 +183,7 @@ getNextMenu pos (SelMultiListOpts opts)
 
 optionLength :: MenuOptions -> Int
 optionLength (SelOneListOpts opts) = length $ oalOpts opts
-optionLength (SelMultiListOpts opts) = 1 + (length $ mslOpts opts) + (if isJust (mslBackActionM opts) then 1 else 0)
+optionLength (SelMultiListOpts opts) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
 
 toggleMultiOption :: MultiSelectListOptions -> Int -> MultiSelectListOptions
 toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle o else o) <$> zip [0..] (mslOpts opt)}

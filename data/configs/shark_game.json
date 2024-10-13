@@ -47,16 +47,17 @@
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "scubaGear"],
             "sharksFound": ["blue", "oceanicWhitetip"]
+        },
+        "seaGrass": {
+            "showText": "Sea Grass",
+            "requiredEquipment": ["boat"],
+            "allowedEquipment": ["fishingGear", "snorkelGear"],
+            "sharksFound": ["tiger", "sandbar", "bonnethead"]
         }
     },
     "sharks": {
         "blacktipReef": {
-            "sharkName": "Blacktip Reef Shark",
-            "research": {
-                "size": {
-                    "caught": 3
-                }
-            }
+            "sharkName": "Blacktip Reef Shark"
         },
         "nurse": {
             "sharkName": "Nurse Shark"
@@ -90,6 +91,15 @@
             "researchGrant": 500,
             "researchReqs": {
                 "nurse": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "blacktip_0": {
+            "researchPaperName": "Blacktip Reef Shark Sizes",
+            "researchDescription": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs. They are grey with black tips on their fins.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "blacktipReef": [{ "dataType": "caught", "reqCount": 5}]
             },
             "researchDepends": []
         }

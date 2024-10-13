@@ -39,13 +39,13 @@ tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
 tripInfo cfg loc eqTxt = TripInfo locE eqEs
     where
         locE = getEntry (siteLocations cfg) loc
-        eqEs = (\k -> getEntry (equipment cfg) k) <$> eqTxt
+        eqEs = getEntry (equipment cfg) <$> eqTxt
 
 tripCost :: TripInfo -> Int
-tripCost trip = L.sum $ (\ee -> getData ee price) <$> tripEquipment trip
+tripCost trip = L.sum $ flip getData price <$> tripEquipment trip
 
 tripLength :: TripInfo -> Int
-tripLength trip = L.sum $ (\ee -> getData ee timeAdded) <$> tripEquipment trip
+tripLength trip = L.sum $ flip getData timeAdded <$> tripEquipment trip
 
 
 initTripProgress :: GameData -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
@@ -64,7 +64,7 @@ catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
         catchAttempts' _ s n [] = (s, n)
         catchAttempts' i s n (h:tl) =
             let (s', b) = getRandomBoolS s
-            in catchAttempts' (i+1) s' (n ++ ((TripAttempt i h) : (if b then [(TripAttempt i h)] else []))) tl
+            in catchAttempts' (i+1) s' (n ++ (TripAttempt i h : ([TripAttempt i h | b]))) tl
 
 executeTrip :: PlayConfigs -> GameData -> TripInfo -> TripAttempt -> (GameData, Maybe SharkFind)
 executeTrip cfgs gd trip (TripAttempt mnth eq) =
