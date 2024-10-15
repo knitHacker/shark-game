@@ -3,7 +3,7 @@
         "boat": {
             "text": "Boat",
             "timeAdded": 1,
-            "price": 100,
+            "price": 50,
             "infoType": "observed",
             "effectiveness": 5
         },
@@ -57,7 +57,12 @@
     },
     "sharks": {
         "blacktipReef": {
-            "sharkName": "Blacktip Reef Shark"
+            "sharkName": "Blacktip Reef Shark",
+            "sharkFacts": [ {
+                "sharkFactTitle": "Shark Size",
+                "sharkFactInfo": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs.",
+                "sharkFactRevealDepends": ["blacktipReef_0"]
+            } ]
         },
         "nurse": {
             "sharkName": "Nurse Shark"
@@ -94,7 +99,7 @@
             },
             "researchDepends": []
         },
-        "blacktip_0": {
+        "blacktipReef_0": {
             "researchPaperName": "Blacktip Reef Shark Sizes",
             "researchDescription": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs. They are grey with black tips on their fins.",
             "researchGrant": 500,
