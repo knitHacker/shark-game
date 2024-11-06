@@ -7,7 +7,6 @@ module OutputHandles.Util
     , oneLine
     ) where
 
-
 import Foreign.C.Types ( CInt )
 import qualified Data.Text as T
 

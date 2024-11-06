@@ -83,4 +83,3 @@ researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4
                , MenuAction "Review Data" True $ DataReviewTop gd
                , MenuAction "Lab Management" False ComingSoon
                ]
-
