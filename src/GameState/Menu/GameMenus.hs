@@ -20,6 +20,7 @@ import OutputHandles.Types
     , OutputHandles(textures)
     , TextDisplay(TextDisplay)
     )
+import OutputHandles.Util
 
 import GameState.Types
 
@@ -65,17 +66,19 @@ introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White)) 0
 
 
 researchCenterMenu :: GameData -> OutputHandles -> Menu
-researchCenterMenu gd outs = mkMenu words [] (selOneOpts 15 160 4 15 opts mc) 0
+researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts mc) 0
     where
         funds = gameDataFunds gd
         mc = CursorRect White
-        fundTxt = T.append "Current Funds: $" (T.pack (show funds))
-        dateTxt = T.append "Center research run time: " (monthToText (gameDataMonth gd))
-        words = [ TextDisplay "Research" 10 10 12 White
-                , TextDisplay "Center" 40 50 12 White
-                , TextDisplay fundTxt 45 100 4 Green
-                , TextDisplay dateTxt 10 125 3 Green
+        fundTxts = [("Current Funds: ", White, 3), (T.append "$" (T.pack (show funds)), Green, 3)]
+        dateTxt = "Center research run time:"
+        dateTxt2 = (monthToText (gameDataMonth gd))
+        words = [ TextDisplay "Research" 10 10 10 White
+                , TextDisplay "Center" 40 45 10 White
+                , TextDisplay dateTxt 35 105 3 White
+                , TextDisplay dateTxt2 55 120 3 Green
                 ]
+        fundWords = oneLine outs fundTxts 35 90 2
         opts = [ MenuAction "Plan Research Trip" True $ TripDestinationSelect gd
                , MenuAction "Review Data" True $ DataReviewTop gd
                , MenuAction "Lab Management" False ComingSoon

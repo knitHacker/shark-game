@@ -99,6 +99,15 @@
             },
             "researchDepends": []
         },
+        "nurse_1": {
+            "researchPaperName": "Nurse Shark Reproduction",
+            "researchDescription": "Nurse sharks are ovoviviparous, meaning they give live birth. They have a gestation period of 6 months and can have up to 40 pups.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["nurse_0"]
+        },
         "blacktipReef_0": {
             "researchPaperName": "Blacktip Reef Shark Sizes",
             "researchDescription": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs. They are grey with black tips on their fins.",

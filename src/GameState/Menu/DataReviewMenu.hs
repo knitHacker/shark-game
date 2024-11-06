@@ -49,19 +49,22 @@ topReviewSharksMenu gd cfgs = mkMenu words [] (selOneOpts 20 90 3 20 (opts ++ ot
         opts = (\s -> MenuAction (sharkName (sharksInfo M.! s)) True (SharkReview gd (getEntry sharksInfo s))) <$> M.keys (gameDataFoundSharks gd)
         otherOpts = [ MenuAction "Back" True $ DataReviewTop gd ]
 
-sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> Menu
-sharkReviewMenu gd sharkEntry cfgs = mkMenu words' [] (selOneOpts 30 180 3 20 [returnOpt] mc) 0
+sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> OutputHandles -> Menu
+sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') [] (selOneOpts 30 180 3 20 [returnOpt] mc) 0
     where
+        locs = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
+        locsTxt = T.concat ["Locations: ", T.intercalate ", " locs]
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
         mc = CursorRect White
         infoCnts = getInfoCounts sharkFinds
         returnOpt = MenuAction "Back" True $ SharkReviewTop gd
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
-        words = [ TextDisplay (getData sharkEntry sharkName) 10 10 6 White
-                , TextDisplay sightingText 20 40 4 White
+        (locWords, end) = wrapText outs locsTxt 20 40 120 2 3 Blue
+        words = [ TextDisplay (getData sharkEntry sharkName) 10 10 5 White
+                , TextDisplay sightingText 20 (end + 20) 3 White
                 ]
-        (_, words') = foldl (\(y, l) t -> (y + 20, l ++ [TextDisplay t 30 y 3 White])) (80, words) countTxts
+        (_, words') = foldl (\(y, l) t -> (y + 20, l ++ [TextDisplay t 30 y 3 White])) (end + 40, words) countTxts
 
 
 topLabMenu :: GameData -> GameConfigs -> Menu

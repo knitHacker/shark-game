@@ -84,7 +84,7 @@ moveToNextState gps cfgs inputs outs =
         TripResults gd tp -> return $ GameMenu Nothing $ tripResultsMenu gd tp cfgs
         DataReviewTop gd -> return $ menuWithPause gd $ topReviewMenu gd cfgs
         SharkReviewTop gd -> return $ menuWithPause gd $ topReviewSharksMenu gd cfgs
-        SharkReview gd se -> return $ menuWithPause gd $ sharkReviewMenu gd se cfgs
+        SharkReview gd se -> return $ menuWithPause gd $ sharkReviewMenu gd se cfgs outs
         ResearchReviewTop gd -> return $ menuWithPause gd $ topLabMenu gd cfgs
         OpenResearchMenu gd -> return $ menuWithPause gd $ openResearchMenu gd cfgs
         CompletedResearchMenu gd -> return $ menuWithPause gd $ completedResearchMenu gd cfgs

@@ -4,6 +4,7 @@ module Shark.Review
     , getFinds
     , getKnownResearch
     , getResearchRequirements
+    , getSeenLocations
     , canCompleteResearch
     , completeResearch
     ) where
@@ -27,6 +28,8 @@ getFinds cfgs gd se =
         sharkKey = entryKey se
         gsd = gameDataFoundSharks gd
 
+getSeenLocations :: PlayConfigs -> GameData -> DataEntry SharkInfo -> [T.Text]
+getSeenLocations cfgs gd se = (\lE -> getData lE showText) <$> (L.nub $ findLocation <$> getFinds cfgs gd se)
 
 getInfoCounts :: [SharkFind] -> M.Map T.Text Int
 getInfoCounts = getInfoCounts' M.empty
