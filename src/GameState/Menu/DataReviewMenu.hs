@@ -109,7 +109,7 @@ investigateResearchMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 
         gd' = completeResearch (sharkCfgs cfgs) gd researchEntry reqs
         completeOpt = MenuAction "Complete Research" (canCompleteResearch reqs) $ AwardGrantMenu gd' researchEntry
         returnOpt = MenuAction "Back" True $ OpenResearchMenu gd
-        grantText = T.append "Grant awarded when complete: " (T.pack (show (getData researchEntry researchGrant)))
+        grantText = T.append "Grant awarded when complete: $" (T.pack (show (getData researchEntry researchGrant)))
         words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
                 , TextDisplay grantText 20 40 2 Green
                 ]
@@ -124,7 +124,7 @@ awardGrantMenu gd researchEntry cfgs outs = mkMenu words' [] (selOneOpts 10 180 
     where
         mc = CursorRect White
         returnOpt = MenuAction "Continue" True $ ResearchReviewTop gd
-        grantText = T.append "Grant awarded when complete: " (T.pack (show (getData researchEntry researchGrant)))
+        grantText = T.append "Grant awarded when complete: $" (T.pack (show (getData researchEntry researchGrant)))
         words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
                 , TextDisplay grantText 20 40 2 Green
                 ]
