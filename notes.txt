@@ -1,3 +1,24 @@
+Potential minigames
+- tag the shark
+- use lasers to measure length
+- fishing?
+- find the released tag
+- dna decoding (make family trees?)
+- simple puzzle to "do" the research
+
+Future eqipment
+- tags
+    - satellite
+    - depth
+    - temperature
+    - speed
+    - id number (for recatches)
+- DNA samples
+- bloodwork
+- BRUV (baitred remove underwater video)
+- deep sea submarine
+- deep sea trolling
+
 Shark facts to add
 
 Bonnethead Sharks - Eats and consumes seagrass so only known omnivore shark (maybe whale shark eating algea / kelp?)

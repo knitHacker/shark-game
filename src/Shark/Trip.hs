@@ -18,6 +18,9 @@ import Util
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
+import Data.Maybe (isJust)
+
+import Debug.Trace
 
 monthToText :: Int -> T.Text
 monthToText 0 = "0 months"
@@ -72,9 +75,16 @@ executeTrip cfgs gd trip (TripAttempt mnth eq) =
         Nothing -> (gd', Nothing)
         Just shark ->  (gd', Just (SharkFind (curMnth + mnth - 1) (getEntry (sharks cfgs) shark) (tripDestination trip) eq))
     where
+        eqChance = getData eq effectiveness
         curMnth = gameDataMonth gd
         loc = entryData (tripDestination trip)
-        sharksAround = Nothing : (Just <$> sharksFound loc)
-        (gd', sM) = getRandomElem gd sharksAround
-
-
+        (gd', caughtP) = getRandomPercent gd
+        caughtAnything = eqChance > caughtP
+        (_, sharkChances) = foldl (\(p, ls) (s, c) -> (p + c, ls ++ [(s, p+c)])) (0, []) (sharksFound loc)
+        (gd'', sharkChoice) = getRandomPercent gd'
+        sharkMatch (s, p) m
+            | isJust m = m
+            | sharkChoice < p = Just s
+            | otherwise = Nothing
+        sharkM = foldr sharkMatch Nothing sharkChances
+        sM = if not caughtAnything || null sharkChances then Nothing else sharkM

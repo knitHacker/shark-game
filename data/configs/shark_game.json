@@ -34,25 +34,25 @@
             "showText": "Reef",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
-            "sharksFound": ["blacktipReef"]
+            "sharksFound": [["blacktipReef", 100]]
         },
         "mangroves": {
             "showText": "Mangroves",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear"],
-            "sharksFound": ["lemon", "nurse"]
+            "sharksFound": [["lemon", 50], ["nurse", 50]]
         },
         "openOcean": {
             "showText": "Open Ocean",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "scubaGear"],
-            "sharksFound": ["blue", "oceanicWhitetip"]
+            "sharksFound": [["blue", 50], ["oceanicWhitetip", 50]]
         },
         "seaGrass": {
             "showText": "Sea Grass",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear"],
-            "sharksFound": ["tiger", "sandbar", "bonnethead"]
+            "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
         }
     },
     "sharks": {

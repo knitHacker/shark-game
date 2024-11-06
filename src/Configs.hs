@@ -96,6 +96,8 @@ data Configs = Configs
 instance FromJSON Configs
 instance ToJSON Configs
 
+checkConfigs :: Configs -> Bool
+checkConfigs cfgs = checkPlayConfigs (pCfgs cfgs)
 
 initConfigs :: IO (TextureFileMap, GameConfigs)
 initConfigs = do
@@ -110,7 +112,9 @@ initConfigs = do
     let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playerE
     case cfgE of
         Left err -> error ("Faile to parse game configs: " ++ (show err))
-        Right configs -> return (textureCfgs configs, toGameConfigs configs)
+        Right configs -> if checkConfigs configs
+                            then return (textureCfgs configs, toGameConfigs configs)
+                            else error "Invalid game configs"
 
 
 toGameConfigs :: Configs -> GameConfigs
