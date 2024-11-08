@@ -64,6 +64,12 @@
                 "sharkFactRevealDepends": ["blacktipReef_0"]
             } ]
         },
+        "whitetipReef": {
+            "sharkName": "Whitetip Reef Shark"
+        },
+        "blacktip": {
+            "sharkName": "Blacktip Shark"
+        },
         "nurse": {
             "sharkName": "Nurse Shark"
         },
@@ -87,6 +93,12 @@
         },
         "bonnethead": {
             "sharkName": "Bonnethead Shark"
+        },
+        "zebra": {
+            "sharkName": "Zebra Shark"
+        },
+        "epaulette": {
+            "sharkName": "Epaulette Shark"
         }
     },
     "research": {

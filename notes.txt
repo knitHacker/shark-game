@@ -5,6 +5,7 @@ Potential minigames
 - find the released tag
 - dna decoding (make family trees?)
 - simple puzzle to "do" the research
+- photographs iding
 
 Future eqipment
 - tags
@@ -22,5 +23,3 @@ Future eqipment
 Shark facts to add
 
 Bonnethead Sharks - Eats and consumes seagrass so only known omnivore shark (maybe whale shark eating algea / kelp?)
-
-
