@@ -53,6 +53,12 @@
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear"],
             "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
+        },
+        "kelpForest": {
+            "showText": "Kelp Forest",
+            "requiredEquipment": ["boat"],
+            "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
+            "sharksFound": [["leopard", 50], ["sevengill", 15], ["white", 5], ["horn", 30]]
         }
     },
     "sharks": {
@@ -102,6 +108,15 @@
         },
         "swell": {
             "sharkName": "Swell Shark"
+        },
+        "white": {
+            "sharkName": "Great White Shark"
+        },
+        "sevengill": {
+            "sharkName": "Sevengill Shark"
+        },
+        "horn": {
+            "sharkName": "Horn Shark"
         }
     },
     "research": {

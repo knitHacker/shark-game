@@ -72,7 +72,7 @@ researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4
         mc = CursorRect White
         fundTxts = [("Current Funds: ", White, 3), (T.append "$" (T.pack (show funds)), Green, 3)]
         dateTxt = "Center research run time:"
-        dateTxt2 = (monthToText (gameDataMonth gd))
+        dateTxt2 = monthToText (gameDataMonth gd)
         words = [ TextDisplay "Research" 10 10 10 White
                 , TextDisplay "Center" 40 45 10 White
                 , TextDisplay dateTxt 35 105 3 White
