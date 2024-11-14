@@ -13,6 +13,7 @@ module Shark.Types
     , TripInfo(..)
     , ResearchReq(..)
     , ResearchData(..)
+    , checkPlayConfigs
     ) where
 
 import GHC.Generics ( Generic )
@@ -46,11 +47,16 @@ data GameEquipment = GameEquip
 instance FromJSON GameEquipment
 instance ToJSON GameEquipment
 
+checkGameLocation :: GameLocation -> Bool
+checkGameLocation loc = foldl (\p (_, c) -> p + c) 0 shks == 100
+    where
+        shks = sharksFound loc
+
 data GameLocation = GameLoc
     { showText :: T.Text
     , requiredEquipment :: [T.Text]
     , allowedEquipment :: [T.Text]
-    , sharksFound :: [T.Text]
+    , sharksFound :: [(T.Text, Int)]
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameLocation
@@ -82,6 +88,9 @@ data ResearchData = ResearchData
 
 instance FromJSON ResearchData
 instance ToJSON ResearchData
+
+checkPlayConfigs :: PlayConfigs -> Bool
+checkPlayConfigs cfgs = and $ checkGameLocation <$> siteLocations cfgs
 
 data PlayConfigs = PlayConfigs
     { equipment :: M.Map T.Text GameEquipment

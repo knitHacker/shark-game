@@ -34,25 +34,25 @@
             "showText": "Reef",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
-            "sharksFound": ["blacktipReef"]
+            "sharksFound": [["blacktipReef", 50], ["tiger", 50]]
         },
         "mangroves": {
             "showText": "Mangroves",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear"],
-            "sharksFound": ["lemon", "nurse"]
+            "sharksFound": [["lemon", 50], ["nurse", 50]]
         },
         "openOcean": {
             "showText": "Open Ocean",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "scubaGear"],
-            "sharksFound": ["blue", "oceanicWhitetip"]
+            "sharksFound": [["blue", 50], ["oceanicWhitetip", 50]]
         },
         "seaGrass": {
             "showText": "Sea Grass",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear"],
-            "sharksFound": ["tiger", "sandbar", "bonnethead"]
+            "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
         }
     },
     "sharks": {
@@ -63,6 +63,12 @@
                 "sharkFactInfo": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs.",
                 "sharkFactRevealDepends": ["blacktipReef_0"]
             } ]
+        },
+        "whitetipReef": {
+            "sharkName": "Whitetip Reef Shark"
+        },
+        "blacktip": {
+            "sharkName": "Blacktip Shark"
         },
         "nurse": {
             "sharkName": "Nurse Shark"
@@ -87,6 +93,15 @@
         },
         "bonnethead": {
             "sharkName": "Bonnethead Shark"
+        },
+        "zebra": {
+            "sharkName": "Zebra Shark"
+        },
+        "epaulette": {
+            "sharkName": "Epaulette Shark"
+        },
+        "swell": {
+            "sharkName": "Swell Shark"
         }
     },
     "research": {
@@ -98,6 +113,15 @@
                 "nurse": [{ "dataType": "caught", "reqCount": 5}]
             },
             "researchDepends": []
+        },
+        "nurse_1": {
+            "researchPaperName": "Nurse Shark Reproduction",
+            "researchDescription": "Nurse sharks are ovoviviparous, meaning they give live birth. They have a gestation period of 6 months and can have up to 40 pups.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["nurse_0"]
         },
         "blacktipReef_0": {
             "researchPaperName": "Blacktip Reef Shark Sizes",
