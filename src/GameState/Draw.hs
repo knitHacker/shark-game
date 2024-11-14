@@ -68,13 +68,13 @@ updateGameView d (View words imgs rs) = r''
                                      (fromIntegral (textureWidth tE)) (fromIntegral (textureHeight tE)) Nothing
 
 updateGameMenu :: FontSize -> Int -> Menu -> ToRender
-updateGameMenu fs d (Menu v opts p) = updateGameView d v <> updateMenuOptions fs d p opts
+updateGameMenu fs d (Menu v opts) = updateGameView d v <> updateMenuOptions fs d opts
 
-updateMenuOptions :: FontSize -> Int -> Int -> MenuOptions -> ToRender
-updateMenuOptions _ _ _ (SelOneListOpts (OALOpts _ _ _ _ [] _)) = renderEmpty
-updateMenuOptions fs d p (SelOneListOpts oalOpt) = updateSelOneListOptions fs d p oalOpt
-updateMenuOptions _ _ _ (SelMultiListOpts (MSLOpts _ _ _ _ [] _ _ _)) = renderEmpty
-updateMenuOptions fs d p (SelMultiListOpts mslOpt) = updateMultiListOptions fs d p mslOpt
+updateMenuOptions :: FontSize -> Int -> MenuOptions -> ToRender
+updateMenuOptions _ _ (MenuOptions (SelOneListOpts (OALOpts _ _ _ _ [] _)) _ _) = renderEmpty
+updateMenuOptions fs d (MenuOptions (SelOneListOpts oalOpt) p _) = updateSelOneListOptions fs d p oalOpt
+updateMenuOptions _ _ (MenuOptions (SelMultiListOpts (MSLOpts _ _ _ _ [] _ _ _)) _ _) = renderEmpty
+updateMenuOptions fs d (MenuOptions (SelMultiListOpts mslOpt) p _) = updateMultiListOptions fs d p mslOpt
 
 
 getTextRectangle :: Color -> CInt -> CInt -> Int -> Int -> Int -> Int -> DrawRectangle

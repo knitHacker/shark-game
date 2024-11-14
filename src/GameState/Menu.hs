@@ -22,16 +22,16 @@ import Debug.Trace
 
 
 incrementMenuCursor :: Menu -> Menu
-incrementMenuCursor m@(Menu _ opts p)
-    | p < len - 1 = m { currentPos = p + 1 }
+incrementMenuCursor m@(Menu _ opts@(MenuOptions _ p _))
+    | p < len - 1 = m { options = opts { currentPos = p + 1 } }
     | otherwise = m
     where
         len = optionLength opts
 
 decrementMenuCursor :: Menu -> Menu
-decrementMenuCursor m@(Menu _ _ 0) = m
-decrementMenuCursor m@(Menu _ opt p)
-    | optionLength opt >  0 = m { currentPos = p - 1 }
+decrementMenuCursor m@(Menu _ (MenuOptions _ 0 _)) = m
+decrementMenuCursor m@(Menu _ opt@(MenuOptions _ p _))
+    | optionLength opt >  0 = m { options = opt { currentPos = p - 1 }}
     | otherwise = m
 
 
@@ -42,10 +42,9 @@ updateGameStateInMenu mM m inputs =
         (True, Just om, _, _) -> Just $ Left $ OverlayMenu om $ BasicMenu m
         (_, _, _, Just DUp) -> Just $ Left $ GameMenu mM $ decrementMenuCursor m
         (_, _, _, Just DDown) -> Just $ Left $ GameMenu mM $ incrementMenuCursor m
-        (_, _, True, _) -> Right <$> (getNextMenu pos $ options m)
+        (_, _, True, _) -> Right <$> (getNextMenu $ options m)
         _ -> Nothing
     where
-        pos = currentPos m
         moveDirM = if inputRepeating inputs then Nothing else inputDirection inputs
         selected = enterJustPressed inputs
         esc = escapeJustPressed inputs
@@ -57,7 +56,7 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
     case (esc, backM, selected, moveDirM) of
         (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
         (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameTimeout (Just (om' topM)) tov
-        (_, _, True, _) -> Right <$> (getNextMenu (currentPos topM) $ options topM)
+        (_, _, True, _) -> Right <$> (getNextMenu $ options topM)
         (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
         (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing

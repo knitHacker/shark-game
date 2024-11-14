@@ -17,6 +17,7 @@ module GameState.Types
     , Menu(..)
     , MenuAction(..)
     , MenuOptions(..)
+    , MenuOptionType(..)
     , MultiSelectListOptions(..)
     , OverlayMenu(..)
     , OneActionListOptions(..)
@@ -30,6 +31,7 @@ module GameState.Types
     , selOneOpts
     , selMultOpts
     , toggleMultiOption
+    , optionScroll
     ) where
 
 import Control.Lens
@@ -49,6 +51,8 @@ import Shark.Types
 import SaveData
 import Configs
 import Util
+import SDL (MouseScrollDirection(ScrollFlipped))
+import Data.IntMap (update)
 
 instance Show Unique where
     show:: Unique -> String
@@ -112,8 +116,11 @@ data TimeoutView = TimeoutView
     , timeoutAction :: !GamePlayState
     }
 
-mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptions -> Int -> Menu
-mkMenu words imgs = Menu (View words imgs [])
+mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptionType -> Int -> Menu
+mkMenu words imgs opts pos = Menu (View words imgs []) (MenuOptions opts pos Nothing)
+
+mkMenuScroll :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptionType -> Int -> Int -> Menu
+mkMenuScroll words imgs opts pos m = Menu (View words imgs []) (MenuOptions opts pos (Just $ optionScroll m))
 
 data View = View
     { texts :: ![TextDisplay]
@@ -154,22 +161,37 @@ data MultiSelectListOptions = MSLOpts
     , mslBackActionM :: !(Maybe GamePlayState)
     }
 
-data MenuOptions =
+data MenuScroll = Scroll
+    { scrollMax :: !Int
+    , scrollPos :: !Int
+    }
+
+optionScroll :: Int -> MenuScroll
+optionScroll max = Scroll max 0
+
+data MenuOptions = MenuOptions
+    { menuOptions :: !MenuOptionType
+    , currentPos :: !Int
+    , menuScroll :: Maybe MenuScroll
+    }
+
+data MenuOptionType =
       SelOneListOpts OneActionListOptions
     | SelMultiListOpts MultiSelectListOptions
     -- todo options at given positions
 
-selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction] -> CursorType -> MenuOptions
+
+selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction] -> CursorType -> MenuOptionType
 selOneOpts x y s sp opts curs = SelOneListOpts $ OALOpts x y s sp opts curs
 
-selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptions
+selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptionType
 selMultOpts x y s sp opts up act back = SelMultiListOpts $ MSLOpts x y s sp opts up act back
 
-getNextMenu :: Int -> MenuOptions -> Maybe GamePlayState
-getNextMenu pos (SelOneListOpts opts) = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
+getNextMenu :: MenuOptions -> Maybe GamePlayState
+getNextMenu (MenuOptions (SelOneListOpts opts) pos _) = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
         where
             opt = oalOpts opts !! pos
-getNextMenu pos (SelMultiListOpts opts)
+getNextMenu (MenuOptions (SelMultiListOpts opts) pos _)
     | pos < len = Just $ mslAction opts selected pos
     | len == pos = Just $ mslContinueAction opts selected
     | otherwise =
@@ -182,8 +204,8 @@ getNextMenu pos (SelMultiListOpts opts)
         selected = selectKey <$> filter selectSelected (mslOpts opts')
 
 optionLength :: MenuOptions -> Int
-optionLength (SelOneListOpts opts) = length $ oalOpts opts
-optionLength (SelMultiListOpts opts) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
+optionLength (MenuOptions (SelOneListOpts opts) _ _) = length $ oalOpts opts
+optionLength (MenuOptions (SelMultiListOpts opts) _ _) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
 
 toggleMultiOption :: MultiSelectListOptions -> Int -> MultiSelectListOptions
 toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle o else o) <$> zip [0..] (mslOpts opt)}
@@ -199,12 +221,9 @@ toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle 
 data Menu = Menu
     { menuView :: !View
     , options :: !MenuOptions
-    , currentPos :: !Int
     }
 
-
 data CursorType = CursorPointer TextureEntry | CursorRect Color
-
 
 type Barriers = RTree ()
 
