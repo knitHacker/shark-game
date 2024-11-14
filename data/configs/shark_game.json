@@ -99,6 +99,9 @@
         },
         "epaulette": {
             "sharkName": "Epaulette Shark"
+        },
+        "swell": {
+            "sharkName": "Swell Shark"
         }
     },
     "research": {
