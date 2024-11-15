@@ -88,11 +88,11 @@ withPause gps gd (BasicMenu m) = GameMenu (Just (pauseMenu gps gd)) m
 withPause gps gd (BasicTimeoutView m) = GameTimeout (Just (pauseMenu gps gd)) m
 
 pauseMenu :: GamePlayState -> GameData -> OverlayMenu
-pauseMenu gps gd = Overlay 20 20 200 200 Gray menu
+pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
     where
         menu = mkMenu words [] menuOpt
         menuOpt = MenuOptions (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
-        words = [ TextDisplay "Game Menu" 30 30 10 Black
+        words = [ TextDisplay "Game Menu" 30 30 10 White
                 ]
         opts = [ MenuAction "Continue" True gps
                , MenuAction "Main Menu" True $ MainMenu gd

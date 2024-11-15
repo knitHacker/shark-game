@@ -158,13 +158,22 @@ updateMenuListOptions opts s h x = updateMenuListOptions' opts
                 dis = TextDisplay optText x y s col
 
 updateScrollListOptions :: FontSize -> Int -> Int -> BlockDrawInfo -> ScrollListOptions -> ToRender
-updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off)) = r `mappend` fixedR
+updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off)) = rend
     where
         p' = p - off
         h = sp + floor (fh * fromIntegral s)
         scrollHeight = h * end
-        end = min mx (getOptSize opts)
+        optCount = getOptSize opts
+        end = min mx optCount
+        indicatorHeight = fromIntegral (scrollHeight - sp)
+        moveAmt = indicatorHeight `div` fromIntegral optCount
+        darkHeight = moveAmt * fromIntegral end
+        rx = fromIntegral (x - 10)
+        ry = fromIntegral y + (fromIntegral off * moveAmt)
+        rect = DRectangle Gray rx (fromIntegral y) 4 (moveAmt * fromIntegral optCount)
+        rect2 = DRectangle DarkGray rx ry 4 darkHeight
         (r, cur) = case opts of
                     BasicSOALOpts (OALOpts oal c) -> (updateSelOneListOptions fs d p' bdi $ OALOpts (take mx (drop off oal)) c, c)
                     BasicMSLOpts mo@(MSLOpts msl _ _ _) -> (updateMultiListOptions fs d p' bdi $ mo { mslOpts = take mx (drop off msl) }, CursorRect White)
         fixedR = updateSelOneListOptions fs d (p - (end + off)) (bdi { blockY = y + scrollHeight })  $ OALOpts fixedOpts cur
+        rend = addRectangle (addRectangle r d 1 rect `mappend` fixedR) d 2 rect2
