@@ -170,6 +170,7 @@ updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opt
         darkHeight = moveAmt * fromIntegral end
         rx = fromIntegral (x - 10)
         ry = fromIntegral y + (fromIntegral off * moveAmt)
+        -- height is recalculated because of rounding errors with division with integers
         rect = DRectangle Gray rx (fromIntegral y) 4 (moveAmt * fromIntegral optCount)
         rect2 = DRectangle DarkGray rx ry 4 darkHeight
         (r, cur) = case opts of
