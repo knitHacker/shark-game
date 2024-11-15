@@ -71,11 +71,13 @@ updateGameMenu :: FontSize -> Int -> Menu -> ToRender
 updateGameMenu fs d (Menu v opts) = updateGameView d v <> updateMenuOptions fs d opts
 
 updateMenuOptions :: FontSize -> Int -> MenuOptions -> ToRender
-updateMenuOptions _ _ (MenuOptions (SelOneListOpts (OALOpts _ _ _ _ [] _)) _ _) = renderEmpty
-updateMenuOptions fs d (MenuOptions (SelOneListOpts oalOpt) p _) = updateSelOneListOptions fs d p oalOpt
-updateMenuOptions _ _ (MenuOptions (SelMultiListOpts (MSLOpts _ _ _ _ [] _ _ _)) _ _) = renderEmpty
-updateMenuOptions fs d (MenuOptions (SelMultiListOpts mslOpt) p _) = updateMultiListOptions fs d p mslOpt
-
+updateMenuOptions fs d mopts@(MenuOptions _ bdi p)
+    | optionLength mopts == 0 = renderEmpty
+    | otherwise =
+        case menuOptions mopts of
+            (SelOneListOpts oalOpt) -> updateSelOneListOptions fs d p bdi oalOpt
+            (SelMultiListOpts mslOpt) -> updateMultiListOptions fs d p bdi mslOpt
+            (ScrollListOpts slOpt) -> updateScrollListOptions fs d p bdi slOpt
 
 getTextRectangle :: Color -> CInt -> CInt -> Int -> Int -> Int -> Int -> DrawRectangle
 getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
@@ -87,11 +89,10 @@ getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
         w = fromIntegral textL + (2 * xAdj)
         h = fromIntegral textH + (2 * yAdj)
 
-updateSelOneListOptions :: FontSize -> Int -> Int -> OneActionListOptions -> ToRender
-updateSelOneListOptions _ _ _ (OALOpts _ _ _ _ [] _) = renderEmpty
-updateSelOneListOptions (fw, fh) d pos (OALOpts x y s sp ma curs) = r'
+updateSelOneListOptions :: FontSize -> Int -> Int -> BlockDrawInfo -> OneActionListOptions -> ToRender
+updateSelOneListOptions (fw, fh) d pos (BlockDrawInfo x y s sp) (OALOpts ma curs) = r'
     where
-        r = updateListCursor d oX yPos' cL (h - sp) s sp curs
+        r = if pos >= 0 && pos < length ma then updateListCursor d oX yPos' cL (h - sp) s sp curs else renderEmpty
         r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions opts s h oX oY
         opts = (\mo -> (menuOptionText mo, if menuOptionEnabled mo then Blue else Gray)) <$> ma
         yPos = y + (h * pos)
@@ -106,7 +107,7 @@ updateListCursor :: Int -> CInt -> CInt -> Int -> Int -> Int -> Int -> CursorTyp
 updateListCursor d x y _ _ _ sp (CursorPointer tE) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
     where
         x' = x - 20
-        y' = y - 2
+        y' = y - 3
         t = texture tE
         tW = textureWidth tE
         tH = textureHeight tE
@@ -116,9 +117,8 @@ updateListCursor d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 
     where
         rect = getTextRectangle c x y tl th r sp
 
-
-updateMultiListOptions :: FontSize -> Int -> Int -> MultiSelectListOptions -> ToRender
-updateMultiListOptions fs d pos (MSLOpts x y s sp mo _ _ backM) =
+updateMultiListOptions :: FontSize -> Int -> Int -> BlockDrawInfo -> MultiSelectListOptions -> ToRender
+updateMultiListOptions fs d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ _ backM) =
     case backM of
         Nothing -> updateSelectedOptions fs s sp renderEmpty pos 0 d mo' x' y'
         Just b -> updateSelectedOptions fs s sp renderEmpty pos 0 d (moBack b) x' y'
@@ -149,10 +149,22 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' 
                 hRect = getTextRectangle hlC x yPos tlen tH s sp
 
 updateMenuListOptions :: [(T.Text, Color)] -> Int -> Int -> CInt -> CInt -> [TextDisplay]
-updateMenuListOptions opts s h x y = updateMenuListOptions' opts y
+updateMenuListOptions opts s h x = updateMenuListOptions' opts
     where
         updateMenuListOptions' [] _ = []
         updateMenuListOptions' ((optText, col):tl) y = dis : updateMenuListOptions' tl newY
             where
                 newY = y + fromIntegral h
                 dis = TextDisplay optText x y s col
+
+updateScrollListOptions :: FontSize -> Int -> Int -> BlockDrawInfo -> ScrollListOptions -> ToRender
+updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off)) = r `mappend` fixedR
+    where
+        p' = p - off
+        h = sp + floor (fh * fromIntegral s)
+        scrollHeight = h * end
+        end = min mx (getOptSize opts)
+        (r, cur) = case opts of
+                    BasicSOALOpts (OALOpts oal c) -> (updateSelOneListOptions fs d p' bdi $ OALOpts (take mx (drop off oal)) c, c)
+                    BasicMSLOpts mo@(MSLOpts msl _ _ _) -> (updateMultiListOptions fs d p' bdi $ mo { mslOpts = take mx (drop off msl) }, CursorRect White)
+        fixedR = updateSelOneListOptions fs d (p - (end + off)) (bdi { blockY = y + scrollHeight })  $ OALOpts fixedOpts cur

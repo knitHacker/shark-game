@@ -1,4 +1,3 @@
-{-# LANGUAGE Strict #-}
 {-# LANGUAGE InstanceSigs #-}
 
 {-# LANGUAGE FlexibleInstances #-}
@@ -9,6 +8,7 @@
 
 module GameState.Types
     ( BasicView(..)
+    , BlockDrawInfo(..)
     , CursorType(..)
     , GamePlayState(..)
     , GameState(..)
@@ -18,10 +18,14 @@ module GameState.Types
     , MenuAction(..)
     , MenuOptions(..)
     , MenuOptionType(..)
+    , MenuScroll(..)
+    , TextOption(..)
+    , BasicOption(..)
     , MultiSelectListOptions(..)
     , OverlayMenu(..)
     , OneActionListOptions(..)
     , SelectOption(..)
+    , ScrollListOptions(..)
     , TimeoutView(..)
     , View(..)
     , getNextMenu
@@ -30,8 +34,10 @@ module GameState.Types
     , reDraw
     , selOneOpts
     , selMultOpts
+    , scrollOpts
     , toggleMultiOption
     , optionScroll
+    , getOptSize
     ) where
 
 import Control.Lens
@@ -116,11 +122,8 @@ data TimeoutView = TimeoutView
     , timeoutAction :: !GamePlayState
     }
 
-mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptionType -> Int -> Menu
-mkMenu words imgs opts pos = Menu (View words imgs []) (MenuOptions opts pos Nothing)
-
-mkMenuScroll :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptionType -> Int -> Int -> Menu
-mkMenuScroll words imgs opts pos m = Menu (View words imgs []) (MenuOptions opts pos (Just $ optionScroll m))
+mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptions -> Menu
+mkMenu words imgs = Menu (View words imgs [])
 
 data View = View
     { texts :: ![TextDisplay]
@@ -142,23 +145,32 @@ data SelectOption = SelectOption
     }
 
 data OneActionListOptions = OALOpts
-    { oalXPos :: !Int
-    , oalYPos :: !Int
-    , oalSize :: !Int
-    , oalSpace :: !Int
-    , oalOpts :: ![MenuAction]
+    { oalOpts :: ![MenuAction]
     , oalCursor :: !CursorType
     }
 
 data MultiSelectListOptions = MSLOpts
-    { mslXPos :: !Int
-    , mslYPos :: !Int
-    , mslSize :: !Int
-    , mslSpace :: !Int
-    , mslOpts :: ![SelectOption]
+    { mslOpts :: ![SelectOption]
     , mslAction :: [T.Text] -> Int -> GamePlayState
     , mslContinueAction :: [T.Text] -> GamePlayState
     , mslBackActionM :: !(Maybe GamePlayState)
+    }
+
+data TextOption = TextOption
+    { textOptionTexts :: ![[T.Text]]
+    , textOptionIndent :: !Int
+    , textOptionSpace :: !Int
+    }
+
+data BasicOption =
+      BasicSOALOpts OneActionListOptions
+    | BasicMSLOpts MultiSelectListOptions
+    | BasicTextOpts TextOption
+
+data ScrollListOptions = SLOpts
+    { sLScrollOpts :: BasicOption
+    , sLFixedOpts :: [MenuAction]
+    , sLScroll :: MenuScroll
     }
 
 data MenuScroll = Scroll
@@ -169,35 +181,69 @@ data MenuScroll = Scroll
 optionScroll :: Int -> MenuScroll
 optionScroll max = Scroll max 0
 
+data BlockDrawInfo = BlockDrawInfo
+    { blockX :: !Int
+    , blockY :: !Int
+    , blockSize :: !Int
+    , blockSpace :: !Int
+    }
+
 data MenuOptions = MenuOptions
     { menuOptions :: !MenuOptionType
-    , currentPos :: !Int
-    , menuScroll :: Maybe MenuScroll
+    , menuOptBlockInfo :: !BlockDrawInfo
+    , cursorPosition :: !Int
     }
 
 data MenuOptionType =
       SelOneListOpts OneActionListOptions
     | SelMultiListOpts MultiSelectListOptions
+    | ScrollListOpts ScrollListOptions
     -- todo options at given positions
 
+selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction] -> CursorType -> Int -> MenuOptions
+selOneOpts x y s sp opts curs = MenuOptions (SelOneListOpts $ OALOpts opts curs) (BlockDrawInfo x y s sp)
 
-selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction] -> CursorType -> MenuOptionType
-selOneOpts x y s sp opts curs = SelOneListOpts $ OALOpts x y s sp opts curs
+selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
+            -> ([T.Text] -> Int -> GamePlayState)
+            -> ([T.Text] -> GamePlayState)
+            -> Maybe GamePlayState -> Int -> MenuOptions
+selMultOpts x y s sp opts up act back = MenuOptions (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
-selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption] -> ([T.Text] -> Int -> GamePlayState) -> ([T.Text] -> GamePlayState) -> Maybe GamePlayState -> MenuOptionType
-selMultOpts x y s sp opts up act back = SelMultiListOpts $ MSLOpts x y s sp opts up act back
+scrollOpts :: Int -> Int -> Int -> Int -> BasicOption -> [MenuAction] -> MenuScroll -> Int -> MenuOptions
+scrollOpts x y s sp opts fixed scroll = MenuOptions (ScrollListOpts $ SLOpts opts fixed scroll) (BlockDrawInfo x y s sp)
 
 getNextMenu :: MenuOptions -> Maybe GamePlayState
-getNextMenu (MenuOptions (SelOneListOpts opts) pos _) = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
-        where
-            opt = oalOpts opts !! pos
-getNextMenu (MenuOptions (SelMultiListOpts opts) pos _)
+getNextMenu (MenuOptions (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
+getNextMenu (MenuOptions (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
+getNextMenu (MenuOptions (ScrollListOpts (SLOpts opts fixed _)) _ pos)
+    | pos < optLen = getNextOpt opts pos
+    | otherwise = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
+    where
+        optLen = getOptSize opts
+        opt = fixed !! (pos - optLen)
+
+getNextOpt :: BasicOption-> Int -> Maybe GamePlayState
+getNextOpt (BasicSOALOpts opts) pos = getNextOALOpts opts pos
+getNextOpt (BasicMSLOpts opts) pos = getNextMSLOpts opts pos
+getNextOpt _ _ = Nothing
+
+getOptSize :: BasicOption -> Int
+getOptSize (BasicSOALOpts opts) = length $ oalOpts opts
+getOptSize (BasicMSLOpts opts) = length $ mslOpts opts
+getOptSize (BasicTextOpts to) = length $ textOptionTexts to
+
+getNextOALOpts :: OneActionListOptions -> Int -> Maybe GamePlayState
+getNextOALOpts (OALOpts opts _) pos = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
+    where
+        opt = opts !! pos
+
+getNextMSLOpts :: MultiSelectListOptions -> Int -> Maybe GamePlayState
+getNextMSLOpts opts pos
     | pos < len = Just $ mslAction opts selected pos
     | len == pos = Just $ mslContinueAction opts selected
-    | otherwise =
-        case mslBackActionM opts of
-            Nothing -> Just $ mslAction opts selected pos
-            Just back -> Just back
+    | otherwise = case mslBackActionM opts of
+                    Nothing -> Just $ mslAction opts selected pos
+                    Just back -> Just back
     where
         len = length (mslOpts opts)
         opts' = toggleMultiOption opts pos
@@ -206,6 +252,10 @@ getNextMenu (MenuOptions (SelMultiListOpts opts) pos _)
 optionLength :: MenuOptions -> Int
 optionLength (MenuOptions (SelOneListOpts opts) _ _) = length $ oalOpts opts
 optionLength (MenuOptions (SelMultiListOpts opts) _ _) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
+optionLength (MenuOptions (ScrollListOpts opts) _ _) = length (sLFixedOpts opts) + case sLScrollOpts opts of
+    BasicSOALOpts oal -> length $ oalOpts oal
+    BasicMSLOpts msl -> 1 + length (mslOpts msl) + if isJust (mslBackActionM msl) then 1 else 0
+    BasicTextOpts to -> length $ textOptionTexts to
 
 toggleMultiOption :: MultiSelectListOptions -> Int -> MultiSelectListOptions
 toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle o else o) <$> zip [0..] (mslOpts opt)}

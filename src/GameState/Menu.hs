@@ -19,21 +19,38 @@ import Data.Maybe (isJust, fromMaybe)
 import qualified Data.Text as T
 
 import Debug.Trace
+import GameState.Menu.GameMenus (mainMenu)
 
-
+-- TODO: Learn about the lens library
 incrementMenuCursor :: Menu -> Menu
-incrementMenuCursor m@(Menu _ opts@(MenuOptions _ p _))
-    | p < len - 1 = m { options = opts { currentPos = p + 1 } }
-    | otherwise = m
+incrementMenuCursor m@(Menu _ mo@(MenuOptions (ScrollListOpts sl@(SLOpts _ fx (Scroll mx off))) _ p))
+    | p >= len - 1 = m
+    | p + off < end - 1 || off >= scrollLen - end = m { options = mo { cursorPosition = p + 1 } }
+    | otherwise = m { options = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off + 1) })
+                                   , cursorPosition = p + 1 }
+                    }
     where
-        len = optionLength opts
+        len = optionLength mo
+        fxLen = length fx
+        scrollLen = len - fxLen
+        end = min mx len
+
+incrementMenuCursor m@(Menu _ mo@(MenuOptions _ _ p))
+    | p >= optionLength mo - 1 = m
+    | otherwise = m { options = mo { cursorPosition = p + 1 } }
 
 decrementMenuCursor :: Menu -> Menu
-decrementMenuCursor m@(Menu _ (MenuOptions _ 0 _)) = m
-decrementMenuCursor m@(Menu _ opt@(MenuOptions _ p _))
-    | optionLength opt >  0 = m { options = opt { currentPos = p - 1 }}
-    | otherwise = m
-
+decrementMenuCursor m@(Menu _ mo@(MenuOptions (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p))
+    | p == 0 = m
+    | p > off = m { options = mo { cursorPosition = p - 1 } }
+    | otherwise = m { options = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off - 1) })
+                                   , cursorPosition = p - 1 }
+                    }
+    where
+        opts = options m
+decrementMenuCursor m@(Menu _ mo@(MenuOptions _ _ p))
+    | p == 0 = m
+    | otherwise = m { options = mo { cursorPosition = p - 1 } }
 
 updateGameStateInMenu :: Maybe OverlayMenu -> Menu -> InputState -> Maybe (Either GameView GamePlayState)
 updateGameStateInMenu _ _ (InputState Nothing _) = Nothing
@@ -73,8 +90,8 @@ withPause gps gd (BasicTimeoutView m) = GameTimeout (Just (pauseMenu gps gd)) m
 pauseMenu :: GamePlayState -> GameData -> OverlayMenu
 pauseMenu gps gd = Overlay 20 20 200 200 Gray menu
     where
-        menu = mkMenu words [] menuOpt 0
-        menuOpt = SelOneListOpts $ OALOpts 50 120 5 15 opts $ CursorRect White
+        menu = mkMenu words [] menuOpt
+        menuOpt = MenuOptions (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
         words = [ TextDisplay "Game Menu" 30 30 10 Black
                 ]
         opts = [ MenuAction "Continue" True gps
