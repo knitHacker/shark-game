@@ -27,9 +27,9 @@ import GameState.Types
 import Debug.Trace
 
 mainMenu :: Maybe GameData -> GameConfigs -> OutputHandles -> Menu
-mainMenu gdM cfgs outs = mkMenu words [] optEntry 0
+mainMenu gdM cfgs outs = mkMenu words [] optEntry
     where
-        optEntry = selOneOpts 80 180 3 2 menuOpts cursor
+        optEntry = selOneOpts 80 180 3 2 menuOpts cursor 0
         cursor = CursorPointer $ textures outs M.! "green_arrow"
         words = [ TextDisplay "Shark" 10 10 14 Gray
                 , TextDisplay "Research" 20 60 14 Gray
@@ -45,7 +45,7 @@ mainMenu gdM cfgs outs = mkMenu words [] optEntry 0
 
 
 introPage :: GameData -> Menu
-introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White)) 0
+introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -66,7 +66,7 @@ introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White)) 0
 
 
 researchCenterMenu :: GameData -> OutputHandles -> Menu
-researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts mc) 0
+researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts mc 0)
     where
         funds = gameDataFunds gd
         mc = CursorRect White

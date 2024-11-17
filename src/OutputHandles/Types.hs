@@ -51,7 +51,7 @@ instance Semigroup ToRender where
     where
         m2' = M.mapKeys (\(a, b, c) -> (a, b, c + n1)) m2
 
-data Color = White | Gray | Black | Red | Blue | Green | Yellow
+data Color = White | Gray | DarkGray | Black | Red | Blue | DarkBlue | Green | Yellow
 
 data Draw = DrawTexture DrawTexture
           | DrawRectangle DrawRectangle

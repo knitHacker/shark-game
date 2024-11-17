@@ -26,8 +26,9 @@ import qualified Data.Text as T
 import Debug.Trace
 
 mapMenu :: GameData -> GameConfigs -> Menu
-mapMenu gd cfgs = mkMenu words [] (selOneOpts 15 120 4 8 opts' mc) 0
+mapMenu gd cfgs = mkMenu words [] options
     where
+        options = scrollOpts 15 120 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] (optionScroll 4) 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 10 10 8 White
@@ -35,10 +36,9 @@ mapMenu gd cfgs = mkMenu words [] (selOneOpts 15 120 4 8 opts' mc) 0
                 ]
         opts = (\(loc, txt) -> MenuAction txt True (TripEquipmentSelect gd loc [] 0)) <$> locs
         rtOpt = MenuAction "Return to Lab" True $ ResearchCenter gd
-        opts' = opts ++ [rtOpt]
 
 equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu
-equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] (selMultOpts 15 130 3 6 opts' update act (Just back)) pos
+equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] (selMultOpts 15 130 3 6 opts' update act (Just back) pos)
     where
         locO = siteLocations (sharkCfgs cfgs) M.! loc
         eq = equipment $ sharkCfgs cfgs
@@ -64,7 +64,7 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] (selMultOpts 15 130 3 6
 
 
 reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> Menu
-reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White)) 0
+reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White) 0)
     where
         trip = tripInfo (sharkCfgs cfgs) loc eqs
         funds = gameDataFunds gd
@@ -117,7 +117,7 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
 
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Menu
-sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White)) 0
+sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White) 0)
     where
         typeText sf = T.append (T.append "You " (getData (findEquipment sf) infoType)) " a "
         sharkText sf = getData (findSpecies sf) sharkName
@@ -133,7 +133,7 @@ sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cur
         opts = [ MenuAction "Continue Trip" True nextState ]
 
 tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu
-tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (CursorRect White)) 0
+tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (CursorRect White) 0)
     where
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)

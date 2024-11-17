@@ -55,10 +55,12 @@ drawLine r (ox, oy) (tx, ty) =
 color :: Color -> Font.Color
 color White  = SDL.V4 maxBound maxBound maxBound maxBound
 color Gray   = SDL.V4 (div maxBound 2) (div maxBound 2) (div maxBound 2) (div maxBound 2)
+color DarkGray = SDL.V4 (div maxBound 3) (div maxBound 3) (div maxBound 3) (div maxBound 3)
 color Black  = SDL.V4 0 0 0 0
 color Red    = SDL.V4 maxBound 0 0 maxBound
 color Green  = SDL.V4 0 maxBound 0 maxBound
 color Blue   = SDL.V4 0 0 maxBound maxBound
+color DarkBlue = SDL.V4 0 0 (div maxBound 3) (div maxBound 3)
 color Yellow = SDL.V4 maxBound maxBound 0 maxBound
 
 

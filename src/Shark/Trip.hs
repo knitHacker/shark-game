@@ -80,7 +80,7 @@ executeTrip cfgs gd trip (TripAttempt mnth eq) =
         loc = entryData (tripDestination trip)
         (gd', caughtP) = getRandomPercent gd
         caughtAnything = eqChance > caughtP
-        (_, sharkChances) = traceShowId $ foldl (\(p, ls) (s, c) -> (p + c, ls ++ [(s, p+c)])) (0, []) (sharksFound loc)
+        (_, sharkChances) = foldl (\(p, ls) (s, c) -> (p + c, ls ++ [(s, p+c)])) (0, []) (sharksFound loc)
         (gd'', sharkChoice) = getRandomPercent gd'
         sharkMatch m (s, p)
             | isJust m = m
