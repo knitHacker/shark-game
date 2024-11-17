@@ -34,7 +34,7 @@
             "showText": "Reef",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
-            "sharksFound": [["blacktipReef", 50], ["tiger", 50]]
+            "sharksFound": [["blacktipReef", 80], ["tiger", 20]]
         },
         "mangroves": {
             "showText": "Mangroves",

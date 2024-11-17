@@ -158,7 +158,9 @@ updateMenuListOptions opts s h x = updateMenuListOptions' opts
                 dis = TextDisplay optText x y s col
 
 updateScrollListOptions :: FontSize -> Int -> Int -> BlockDrawInfo -> ScrollListOptions -> ToRender
-updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off)) = rend
+updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off))
+    | optCount <= mx = r `mappend` fixedR
+    | otherwise = rend
     where
         p' = p - off
         h = sp + floor (fh * fromIntegral s)
