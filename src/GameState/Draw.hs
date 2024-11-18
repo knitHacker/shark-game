@@ -173,8 +173,8 @@ updateScrollListOptions fs@(fw, fh) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opt
         rx = fromIntegral (x - 10)
         ry = fromIntegral y + (fromIntegral off * moveAmt)
         -- height is recalculated because of rounding errors with division with integers
-        rect = DRectangle Gray rx (fromIntegral y) 4 (moveAmt * fromIntegral optCount)
-        rect2 = DRectangle DarkGray rx ry 4 darkHeight
+        rect = DRectangle DarkGray rx (fromIntegral y - 1) 4 (moveAmt * fromIntegral optCount + 2)
+        rect2 = DRectangle Gray rx ry 4 darkHeight
         (r, cur) = case opts of
                     BasicSOALOpts (OALOpts oal c) -> (updateSelOneListOptions fs d p' bdi $ OALOpts (take mx (drop off oal)) c, c)
                     BasicMSLOpts mo@(MSLOpts msl _ _ _) -> (updateMultiListOptions fs d p' bdi $ mo { mslOpts = take mx (drop off msl) }, CursorRect White)
