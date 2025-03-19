@@ -12,7 +12,7 @@
             "timeAdded": 1,
             "price": 20,
             "infoType": "caught",
-            "effectiveness": 30
+            "effectiveness": 60
         },
         "snorkelGear": {
             "text": "Snorkel Gear",
@@ -120,6 +120,15 @@
         }
     },
     "research": {
+        "blue_0": {
+            "researchPaperName": "Blue Shark Population",
+            "researchDescription": "Blue sharks are open ocean sharks that are found in both temperate and tropical waters.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "blue": [{ "dataType": "observed", "reqCount": 6}]
+            },
+            "researchDepends": []
+        },
         "nurse_0": {
             "researchPaperName": "Nurse Shark Sizes",
             "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 700lbs. They are brownish with two barbels on their snout.",

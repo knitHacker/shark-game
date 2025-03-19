@@ -24,7 +24,7 @@ import Data.Word ( Word32 )
 import Control.Concurrent
 
 framesPerSecond :: Word32
-framesPerSecond = 60
+framesPerSecond = 45
 
 -- Time for a frame
 frameTime :: Word32
