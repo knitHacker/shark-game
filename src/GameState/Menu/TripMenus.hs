@@ -29,7 +29,7 @@ import Debug.Trace
 mapMenu :: GameData -> GameConfigs -> Menu
 mapMenu gd cfgs = mkMenu words [] options
     where
-        options = scrollOpts 15 120 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] (optionScroll 4) 0
+        options = scrollOpts 15 120 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] 4 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 10 10 8 White

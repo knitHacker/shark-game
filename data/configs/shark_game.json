@@ -26,7 +26,7 @@
             "timeAdded": 2,
             "price": 100,
             "infoType": "observed",
-            "effectiveness": 70
+            "effectiveness": 90
         }
     },
     "siteLocations": {
@@ -46,7 +46,7 @@
             "showText": "Open Ocean",
             "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "scubaGear"],
-            "sharksFound": [["blue", 50], ["oceanicWhitetip", 50]]
+            "sharksFound": [["blue", 60], ["oceanicWhitetip", 40]]
         },
         "seaGrass": {
             "showText": "Sea Grass",
