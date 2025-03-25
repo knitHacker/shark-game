@@ -12,7 +12,10 @@ module GameState.Menu.DataReviewMenu
     , awardGrantMenu
     ) where
 
+import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as M
+import Data.Maybe (fromMaybe)
+import qualified Data.List as L
 import qualified Data.Text as T
 
 import Util
@@ -32,36 +35,42 @@ topReviewMenu gd cfgs = mkMenu words [] (selOneOpts 20 60 3 20 opts mc 0)
         mc = CursorRect White
         words = [ TextDisplay "Data Review" 10 10 10 White
                 ]
-        opts = [ MenuAction "Sharks" True $ SharkReviewTop gd
+        opts = [ MenuAction "Sharks" True $ SharkReviewTop gd Nothing
                , MenuAction "Research" True $ ResearchReviewTop gd
                , MenuAction "Return to Research Center" True $ ResearchCenter gd
                ]
 
 
-topReviewSharksMenu :: GameData -> GameConfigs -> Menu
-topReviewSharksMenu gd cfgs = mkMenu words [] options
+topReviewSharksMenu :: GameData -> Maybe T.Text -> GameConfigs -> Menu
+topReviewSharksMenu gd mPrev cfgs = mkMenu words [] options
     where
         sharksInfo = sharks $ sharkCfgs cfgs
         mc = CursorRect White
+        sharkKeys = zip (M.keys (gameDataFoundSharks gd)) [0..]
         words = [ TextDisplay "Data Review" 10 10 10 White
                 , TextDisplay "Discovered Sharks" 15 60 5 Green
                 ]
-        opts = (\s -> MenuAction (sharkName (sharksInfo M.! s)) True (SharkReview gd (getEntry sharksInfo s))) <$> M.keys (gameDataFoundSharks gd)
+        opts = (\(s, _) -> MenuAction (sharkName (sharksInfo M.! s)) True (SharkReview gd (getEntry sharksInfo s))) <$> sharkKeys
         otherOpts = [ MenuAction "Back" True $ DataReviewTop gd ]
-        options = scrollOpts 20 90 3 20 (BasicSOALOpts (OALOpts opts mc)) otherOpts (optionScroll 4) 0
+        cursorIdx = case mPrev of
+            Nothing -> 0
+            Just p -> fromMaybe 0 $ L.lookup p sharkKeys
+        options = scrollOpts 20 90 3 20 (BasicSOALOpts (OALOpts opts mc)) otherOpts 4 cursorIdx
 
 sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> OutputHandles -> Menu
-sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') [] (selOneOpts 30 180 3 20 [returnOpt] mc 0)
+sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') imgs (selOneOpts 30 220 3 20 [returnOpt] mc 0)
     where
+        img = textures outs ! getData sharkEntry sharkImage
+        imgs = [(80, 35, 0.4, img)]
         locs = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         locsTxt = T.concat ["Locations: ", T.intercalate ", " locs]
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
         mc = CursorRect White
         infoCnts = getInfoCounts sharkFinds
-        returnOpt = MenuAction "Back" True $ SharkReviewTop gd
+        returnOpt = MenuAction "Back" True $ SharkReviewTop gd (Just (entryKey sharkEntry))
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
-        (locWords, end) = wrapText outs locsTxt 20 40 120 2 3 Blue
+        (locWords, end) = wrapText outs locsTxt 20 125 120 2 3 Blue
         words = [ TextDisplay (getData sharkEntry sharkName) 10 10 5 White
                 , TextDisplay sightingText 20 (end + 20) 3 White
                 ]

@@ -19,6 +19,7 @@ import Shark.Types
 import Shark.Trip
 import Shark.Util
 
+import Data.Map ((!))
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -28,7 +29,7 @@ import Debug.Trace
 mapMenu :: GameData -> GameConfigs -> Menu
 mapMenu gd cfgs = mkMenu words [] options
     where
-        options = scrollOpts 15 120 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] (optionScroll 4) 0
+        options = scrollOpts 15 120 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] 4 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 10 10 8 White
@@ -116,19 +117,20 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
                             Just sf -> tp { tripTries = tl, sharkFinds = sharkFinds tp ++ [sf]}
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
 
-sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Menu
-sharkFoundMenu gd sfM tp cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White) 0)
+sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> OutputHandles -> Menu
+sharkFoundMenu gd sfM tp cfgs outs = mkMenu words imgs (selOneOpts 80 220 3 4 opts (CursorRect White) 0)
     where
         typeText sf = T.append (T.append "You " (getData (findEquipment sf) infoType)) " a "
         sharkText sf = getData (findSpecies sf) sharkName
-        words = case sfM of
-                    Nothing -> [ TextDisplay "No Shark" 40 10 10 White
+        sharkImg sf = getData (findSpecies sf) sharkImage
+        (words, imgs) = case sfM of
+                    Nothing -> ([ TextDisplay "No Shark" 40 10 10 White
                                , TextDisplay "Found" 70 50 10 White
                                , TextDisplay "Better luck next time!" 20 100 5 White
-                               ]
-                    Just sf -> [ TextDisplay (typeText sf) 10 10 8 White
-                               , TextDisplay (sharkText sf) 20 80 5 Blue
-                               ]
+                               ], [(70, 115, 0.5, textures outs ! "empty_net")])
+                    Just sf -> ([ TextDisplay (typeText sf) 10 10 8 White
+                               , TextDisplay (sharkText sf) 20 70 5 Blue
+                               ], [(70, 100, 0.5, textures outs ! sharkImg sf)])
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" True nextState ]
 

@@ -80,10 +80,10 @@ moveToNextState gps cfgs inputs outs =
         TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> return $ menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
         TripProgress gd tp -> return $ withPause gps gd $ BasicTimeoutView $ tripProgressMenu gd tp cfgs inputs
-        SharkFound gd sf tp -> return $ GameMenu Nothing $ sharkFoundMenu gd sf tp cfgs
+        SharkFound gd sf tp -> return $ GameMenu Nothing $ sharkFoundMenu gd sf tp cfgs outs
         TripResults gd tp -> return $ GameMenu Nothing $ tripResultsMenu gd tp cfgs
         DataReviewTop gd -> return $ menuWithPause gd $ topReviewMenu gd cfgs
-        SharkReviewTop gd -> return $ menuWithPause gd $ topReviewSharksMenu gd cfgs
+        SharkReviewTop gd mP -> return $ menuWithPause gd $ topReviewSharksMenu gd mP cfgs
         SharkReview gd se -> return $ menuWithPause gd $ sharkReviewMenu gd se cfgs outs
         ResearchReviewTop gd -> return $ menuWithPause gd $ topLabMenu gd cfgs
         OpenResearchMenu gd -> return $ menuWithPause gd $ openResearchMenu gd cfgs

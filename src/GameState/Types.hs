@@ -96,7 +96,7 @@ data GamePlayState =
     | SharkFound GameData (Maybe SharkFind) TripState
     | TripResults GameData TripState
     | DataReviewTop GameData
-    | SharkReviewTop GameData
+    | SharkReviewTop GameData (Maybe T.Text)
     | SharkReview GameData (DataEntry SharkInfo)
     | ResearchReviewTop GameData
     | OpenResearchMenu GameData
@@ -122,12 +122,12 @@ data TimeoutView = TimeoutView
     , timeoutAction :: !GamePlayState
     }
 
-mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptions -> Menu
+mkMenu :: [TextDisplay] -> [(Int, Int, Double, TextureEntry)] -> MenuOptions -> Menu
 mkMenu words imgs = Menu (View words imgs [])
 
 data View = View
     { texts :: ![TextDisplay]
-    , imgs :: ![(Int, Int, TextureEntry)]
+    , imgs :: ![(Int, Int, Double, TextureEntry)]
     , rects :: ![(Color, Int, Int, Int, Int)]
     }
 
@@ -209,8 +209,8 @@ selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
             -> Maybe GamePlayState -> Int -> MenuOptions
 selMultOpts x y s sp opts up act back = MenuOptions (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
-scrollOpts :: Int -> Int -> Int -> Int -> BasicOption -> [MenuAction] -> MenuScroll -> Int -> MenuOptions
-scrollOpts x y s sp opts fixed scroll = MenuOptions (ScrollListOpts $ SLOpts opts fixed scroll) (BlockDrawInfo x y s sp)
+scrollOpts :: Int -> Int -> Int -> Int -> BasicOption -> [MenuAction] -> Int -> Int -> MenuOptions
+scrollOpts x y s sp opts fixed maxScroll pos = MenuOptions (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll pos)) (BlockDrawInfo x y s sp) pos
 
 getNextMenu :: MenuOptions -> Maybe GamePlayState
 getNextMenu (MenuOptions (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
