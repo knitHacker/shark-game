@@ -64,8 +64,9 @@ updateGameView d (View words imgs rs) = r''
         r = foldl (\rend td -> addText rend d 1 td) renderEmpty words
         r' = foldl (\rend t -> addTexture rend d 0 (toDraw t )) r imgs
         r'' = foldl (\rend (c, x, y, w, h) -> addRectangle rend d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r' rs
-        toDraw (x, y, tE) = DTexture (texture tE) (fromIntegral x) (fromIntegral y)
-                                     (fromIntegral (textureWidth tE)) (fromIntegral (textureHeight tE)) Nothing
+        toDraw :: (Int, Int, Double, TextureEntry) -> DrawTexture
+        toDraw (x, y, s, tE) = DTexture (texture tE) (fromIntegral x) (fromIntegral y)
+                                        (floor ((fromIntegral (textureWidth tE)) * s)) (floor ((fromIntegral (textureHeight tE)) * s)) Nothing
 
 updateGameMenu :: FontSize -> Int -> Menu -> ToRender
 updateGameMenu fs d (Menu v opts) = updateGameView d v <> updateMenuOptions fs d opts

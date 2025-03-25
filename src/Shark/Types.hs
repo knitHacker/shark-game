@@ -63,8 +63,19 @@ instance FromJSON GameLocation
 instance ToJSON GameLocation
 
 
+data SharkFact = SharkFact
+    { sharkFactTitle :: T.Text
+    , sharkFactInfo :: T.Text
+    , sharkFactRevealDepends :: [T.Text]
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON SharkFact
+instance ToJSON SharkFact
+
 data SharkInfo = SharkInfo
     { sharkName :: T.Text
+    , sharkImage :: T.Text
+    , sharkFacts :: [SharkFact]
     } deriving (Generic, Show, Eq)
 
 instance FromJSON SharkInfo

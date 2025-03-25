@@ -122,12 +122,12 @@ data TimeoutView = TimeoutView
     , timeoutAction :: !GamePlayState
     }
 
-mkMenu :: [TextDisplay] -> [(Int, Int, TextureEntry)] -> MenuOptions -> Menu
+mkMenu :: [TextDisplay] -> [(Int, Int, Double, TextureEntry)] -> MenuOptions -> Menu
 mkMenu words imgs = Menu (View words imgs [])
 
 data View = View
     { texts :: ![TextDisplay]
-    , imgs :: ![(Int, Int, TextureEntry)]
+    , imgs :: ![(Int, Int, Double, TextureEntry)]
     , rects :: ![(Color, Int, Int, Int, Int)]
     }
 

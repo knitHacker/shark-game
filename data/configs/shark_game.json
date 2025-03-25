@@ -64,6 +64,7 @@
     "sharks": {
         "blacktipReef": {
             "sharkName": "Blacktip Reef Shark",
+            "sharkImage": "bad_shark",
             "sharkFacts": [ {
                 "sharkFactTitle": "Shark Size",
                 "sharkFactInfo": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs.",
@@ -71,52 +72,84 @@
             } ]
         },
         "whitetipReef": {
-            "sharkName": "Whitetip Reef Shark"
+            "sharkName": "Whitetip Reef Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "blacktip": {
-            "sharkName": "Blacktip Shark"
+            "sharkName": "Blacktip Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "nurse": {
-            "sharkName": "Nurse Shark"
+            "sharkName": "Nurse Shark",
+            "sharkImage": "nurse_shark",
+            "sharkFacts": []
         },
         "lemon": {
-            "sharkName": "Lemon Shark"
+            "sharkName": "Lemon Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "blue": {
-            "sharkName": "Blue Shark"
+            "sharkName": "Blue Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "oceanicWhitetip": {
-            "sharkName": "Oceanic Whitetip Shark"
+            "sharkName": "Oceanic Whitetip Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "tiger": {
-            "sharkName": "Tiger Shark"
+            "sharkName": "Tiger Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "sandbar": {
-            "sharkName": "Sandbar Shark"
+            "sharkName": "Sandbar Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "leopard": {
-            "sharkName": "Leopard Shark"
+            "sharkName": "Leopard Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "bonnethead": {
-            "sharkName": "Bonnethead Shark"
+            "sharkName": "Bonnethead Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "zebra": {
-            "sharkName": "Zebra Shark"
+            "sharkName": "Zebra Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "epaulette": {
-            "sharkName": "Epaulette Shark"
+            "sharkName": "Epaulette Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "swell": {
-            "sharkName": "Swell Shark"
+            "sharkName": "Swell Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "white": {
-            "sharkName": "Great White Shark"
+            "sharkName": "Great White Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "sevengill": {
-            "sharkName": "Sevengill Shark"
+            "sharkName": "Sevengill Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         },
         "horn": {
-            "sharkName": "Horn Shark"
+            "sharkName": "Horn Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         }
     },
     "research": {

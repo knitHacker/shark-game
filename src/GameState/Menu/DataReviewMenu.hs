@@ -12,6 +12,7 @@ module GameState.Menu.DataReviewMenu
     , awardGrantMenu
     ) where
 
+import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -51,8 +52,10 @@ topReviewSharksMenu gd cfgs = mkMenu words [] options
         options = scrollOpts 20 90 3 20 (BasicSOALOpts (OALOpts opts mc)) otherOpts (optionScroll 4) 0
 
 sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> OutputHandles -> Menu
-sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') [] (selOneOpts 30 180 3 20 [returnOpt] mc 0)
+sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') imgs (selOneOpts 30 220 3 20 [returnOpt] mc 0)
     where
+        img = textures outs ! getData sharkEntry sharkImage
+        imgs = [(80, 35, 0.4, img)]
         locs = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         locsTxt = T.concat ["Locations: ", T.intercalate ", " locs]
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
@@ -61,7 +64,7 @@ sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') [] (selOne
         returnOpt = MenuAction "Back" True $ SharkReviewTop gd
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
-        (locWords, end) = wrapText outs locsTxt 20 40 120 2 3 Blue
+        (locWords, end) = wrapText outs locsTxt 20 125 120 2 3 Blue
         words = [ TextDisplay (getData sharkEntry sharkName) 10 10 5 White
                 , TextDisplay sightingText 20 (end + 20) 3 White
                 ]

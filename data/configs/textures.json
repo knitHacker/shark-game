@@ -3,5 +3,20 @@
         "sizeX": 16,
         "sizeY": 16,
         "file": "assets/images/arrow.png"
+    },
+    "empty_net": {
+        "sizeX": 200,
+        "sizeY": 200,
+        "file": "assets/images/empty_net_white.png"
+    },
+    "nurse_shark": {
+        "sizeX": 200,
+        "sizeY": 200,
+        "file": "assets/images/nurse_shark.png"
+    },
+    "bad_shark": {
+        "sizeX": 200,
+        "sizeY": 200,
+        "file": "assets/images/shark_placeholder.png"
     }
 }
