@@ -14,6 +14,11 @@
         "sizeY": 200,
         "file": "assets/images/nurse_shark.png"
     },
+    "blue_shark": {
+        "sizeX": 200,
+        "sizeY": 200,
+        "file": "assets/images/blue_shark.png"
+    },
     "bad_shark": {
         "sizeX": 200,
         "sizeY": 200,

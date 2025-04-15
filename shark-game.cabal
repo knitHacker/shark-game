@@ -23,6 +23,7 @@ extra-source-files:
     data/configs/state.json
     data/configs/textures.json
     assets/images/arrow.png
+    assets/images/blue_shark.png
     assets/images/empty_net_white.png
     assets/images/nurse_shark.png
     assets/images/shark_placeholder.png
@@ -35,6 +36,7 @@ data-files:
     data/configs/shark_game.json
     assets/images/arrow.png
     assets/images/nurse_shark.png
+    assets/images/blue_shark.png
     assets/images/shark_placeholder.png
     assets/images/empty_net_white.png
     assets/fonts/InsightSansSSi.ttf

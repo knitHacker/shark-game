@@ -20,6 +20,7 @@ data-files:
 - data/configs/shark_game.json
 - assets/images/arrow.png
 - assets/images/nurse_shark.png
+- assets/images/blue_shark.png
 - assets/images/shark_placeholder.png
 - assets/images/empty_net_white.png
 - assets/fonts/InsightSansSSi.ttf
