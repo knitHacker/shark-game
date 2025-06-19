@@ -93,7 +93,7 @@
         },
         "blue": {
             "sharkName": "Blue Shark",
-            "sharkImage": "bad_shark",
+            "sharkImage": "blue_shark",
             "sharkFacts": []
         },
         "oceanicWhitetip": {
