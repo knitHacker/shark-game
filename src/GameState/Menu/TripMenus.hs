@@ -102,7 +102,7 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
-        v w = View (words ++ w) [] [backRect, progressRect]
+        v w = View (words ++ w) [] [backRect, progressRect] Nothing
         progX = 30
         progY = 150
         progH = 20

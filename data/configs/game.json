@@ -2,8 +2,8 @@
     "debug": true,
     "debugOutlineTexture": false,
     "debugHitboxes": false,
-    "windowSizeX": 1200,
-    "windowSizeY": 1000,
+    "windowSizeX": 1500,
+    "windowSizeY": 1200,
     "boardSizeX": 250,
     "boardSizeY": 250
 }

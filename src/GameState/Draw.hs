@@ -59,7 +59,7 @@ updateTimeoutView :: Int -> TimeoutView -> ToRender
 updateTimeoutView d tov = updateGameView d (timeoutView tov)
 
 updateGameView :: Int -> View -> ToRender
-updateGameView d (View words imgs rs) = r''
+updateGameView d (View words imgs rs scroll) = r''
     where
         r = foldl (\rend td -> addText rend d 1 td) renderEmpty words
         r' = foldl (\rend t -> addTexture rend d 0 (toDraw t )) r imgs

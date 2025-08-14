@@ -30,6 +30,7 @@ module GameState.Types
     , View(..)
     , getNextMenu
     , mkMenu
+    , mkScrollMenu
     , optionLength
     , reDraw
     , selOneOpts
@@ -59,6 +60,7 @@ import Configs
 import Util
 import SDL (MouseScrollDirection(ScrollFlipped))
 import Data.IntMap (update)
+import Data.Text (Text)
 
 instance Show Unique where
     show:: Unique -> String
@@ -124,12 +126,21 @@ data TimeoutView = TimeoutView
     }
 
 mkMenu :: [TextDisplay] -> [(Int, Int, Double, TextureEntry)] -> MenuOptions -> Menu
-mkMenu words imgs = Menu (View words imgs [])
+mkMenu words imgs = Menu (View words imgs [] Nothing)
+
+mkScrollMenu :: [TextDisplay] -> [(Int, Int, Double, TextureEntry)] -> Int -> Int -> MenuOptions -> Menu
+mkScrollMenu words imgs maxScroll scrollPos = Menu (View words imgs [] (Just $ ViewScroll maxScroll scrollPos))
+
+data ViewScroll = ViewScroll
+    { viewMax :: !Int
+    , scrollOffset :: !Int
+    }
 
 data View = View
     { texts :: ![TextDisplay]
     , imgs :: ![(Int, Int, Double, TextureEntry)]
     , rects :: ![(Color, Int, Int, Int, Int)]
+    , viewScroll :: !(Maybe ViewScroll)
     }
 
 data MenuAction = MenuAction

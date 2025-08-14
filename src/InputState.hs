@@ -43,6 +43,9 @@ data KeyPress
 
 data InputState = InputState !(Maybe KeyboardInputs) !Int64
 
+--data MouseInputs :: Mouse
+--    { scrollAmt :: }
+
 data KeyboardInputs = Keyboard
     { inputStateQuit :: !Bool
     , inputStateDirection :: !(Maybe Direction)
@@ -121,8 +124,14 @@ payloadToIntent (SDL.Event _ (SDL.KeyboardEvent k)) ts =
         Nothing -> InputState Nothing ts
         Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) ts
         Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) ts
+payloadToIntent (SDL.Event _ (SDL.MouseWheelEvent mwd)) ts
+    | getScroll mwd == 1 = InputState (Just (Keyboard False (Just DUp) Nothing False)) ts
+    | getScroll mwd == -1 = InputState (Just (Keyboard False (Just DDown) Nothing False)) ts
 payloadToIntent (SDL.Event _ _) ts = InputState Nothing ts
 
+
+getScroll :: SDL.MouseWheelEventData -> Int
+getScroll (SDL.MouseWheelEventData _ _ (SDL.V2 _ y) _) = fromIntegral y
 
 getKey :: SDL.KeyboardEventData -> Maybe (Bool, Either KeyPress Direction)
 getKey (SDL.KeyboardEventData _ SDL.Released _ _) = Nothing
