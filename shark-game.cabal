@@ -61,6 +61,7 @@ library
       GameState.Menu
       GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
+      GameState.Menu.LabMenus
       GameState.Menu.TripMenus
       GameState.Types
       InputState

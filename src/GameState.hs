@@ -13,6 +13,7 @@ import GameState.Menu
 import GameState.Menu.GameMenus
 import GameState.Menu.TripMenus
 import GameState.Menu.DataReviewMenu
+import GameState.Menu.LabMenus
 import SaveData
 import Configs
 
@@ -91,6 +92,7 @@ moveToNextState gps cfgs inputs outs =
         InvestigateResearchMenu gd rd -> return $ menuWithPause gd $ investigateResearchMenu gd rd cfgs
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs outs
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs outs
+        LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd outs
         _ -> undefined
     where
         menuWithPause gd bm = withPause gps gd $ BasicMenu bm

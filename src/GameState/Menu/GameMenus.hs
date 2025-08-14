@@ -81,5 +81,5 @@ researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4
         fundWords = oneLine outs fundTxts 35 90 2
         opts = [ MenuAction "Plan Research Trip" True $ TripDestinationSelect gd
                , MenuAction "Review Data" True $ DataReviewTop gd
-               , MenuAction "Lab Management" False ComingSoon
+               , MenuAction "Lab Management" True $ LabManagement gd
                ]

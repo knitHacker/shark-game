@@ -7,6 +7,20 @@
             "infoType": "observed",
             "effectiveness": 5
         },
+        "drumLine": {
+            "text": "Drum Line",
+            "timeAdded": 1,
+            "price": 100,
+            "infoType": "caught",
+            "effectiveness": 80
+        },
+        "longLine": {
+            "text": "Long Line",
+            "timeAdded": 1,
+            "price": 150,
+            "infoType": "caught",
+            "effectiveness": 90
+        },
         "fishingGear": {
             "text": "Fishing Gear",
             "timeAdded": 1,
@@ -45,7 +59,7 @@
         "openOcean": {
             "showText": "Open Ocean",
             "requiredEquipment": ["boat"],
-            "allowedEquipment": ["fishingGear", "scubaGear"],
+            "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
             "sharksFound": [["blue", 60], ["oceanicWhitetip", 40]]
         },
         "seaGrass": {
