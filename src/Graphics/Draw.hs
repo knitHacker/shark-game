@@ -27,21 +27,17 @@ updateTimeoutView :: Graphics -> Int -> TimeoutView a -> ToRender
 updateTimeoutView gr d tov = updateGameView gr d (timeoutView tov)
 
 updateGameViewScroll :: Graphics -> Int -> ViewScroll -> ToRender
-updateGameViewScroll gr d (ViewScroll subView off maxH)
+updateGameViewScroll gr d (ViewScroll subView off maxH (ScrollData yStart scrollHeight viewHeight step xs))
     | yEnd == 0 = r
     | otherwise = r'''
     where
         fs = graphicsFontSize gr
         r = updateGameView gr d subView
-        x = getRenderMinX r
-        yStart = getRenderMinY r
-        yEnd = getRenderMaxY fs r
-        step = 10
+        yEnd = yStart + scrollHeight
         offY = step * off
-        viewHeight = maxH - yStart
         r' = moveRenderY r (-offY)
         r'' = clipYRender fs r' yStart maxH
-        r''' = addScrollRects r'' (d+1) (x - 8) yStart viewHeight yEnd step off
+        r''' = addScrollRects r'' (d + 1) (xs - 8) yStart viewHeight yEnd step off
 
 updateGameView :: Graphics -> Int -> View -> ToRender
 updateGameView gr d (View words imgs rs scrollM) = r'''
@@ -92,8 +88,8 @@ updateSelOneListOptions gr@(Graphics _ (fw, fh)) d pos (BlockDrawInfo x y s sp) 
         oX = fromIntegral x
         oY = fromIntegral y
         opt = ma !! pos
-        cL = fw * fromIntegral (s * T.length (menuOptionText opt))
-        h = sp + fh * fromIntegral s
+        cL = ceiling $ fw * fromIntegral (s * T.length (menuOptionText opt))
+        h = sp + ceiling (fh * fromIntegral s)
 
 updateListCursor :: Graphics -> Int -> CInt -> CInt -> Int -> Int -> Int -> Int -> CursorType -> ToRender
 updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
@@ -101,8 +97,6 @@ updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 
         (TextureInfo tW tH) = graphicsTextures gr ! t
         x' = x - 20
         y' = y - 3
-        --tW = fromIntegral w
-        --tH = fromIntegral h
         w = fromIntegral tW
         h = fromIntegral tH
 updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 rect
@@ -130,15 +124,16 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' 
                 r' = addText rend d 2 td
                 r'' = if selectSelected h || cp == pos then addRectangle r' d 1 hRect else r'
                 str = selectOptionText h
-                tlen = fw * fromIntegral (T.length str * s)
+                tlen = ceiling (fw * fromIntegral (T.length str * s))
                 tH = fh * fromIntegral s
                 td = TextDisplay str x yPos s Blue
                 hlC
                     | cp == pos = Yellow
                     | changeable h = White
                     | otherwise = Gray
-                yPos' = yPos + fromIntegral (sp + tH)
-                hRect = getTextRectangle hlC x yPos tlen tH s sp
+                tHI = ceiling tH
+                yPos' = yPos + fromIntegral (sp + tHI)
+                hRect = getTextRectangle hlC x yPos tlen tHI s sp
 
 updateMenuListOptions :: [(T.Text, Color)] -> Int -> Int -> CInt -> CInt -> [TextDisplay]
 updateMenuListOptions opts s h x = updateMenuListOptions' opts
@@ -179,7 +174,7 @@ updateScrollListOptions gr@(Graphics _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s
     | otherwise = rend
     where
         p' = p - off
-        h = sp + fh * fromIntegral s
+        h = sp + ceiling (fh * fromIntegral s)
         scrollHeight = h * end
         optCount = getOptSize opts
         end = min mx optCount

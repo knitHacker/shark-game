@@ -18,6 +18,8 @@ import OutputHandles.Types
 import OutputHandles.Text
 
 
+import Debug.Trace
+
 renderEmpty :: ToRender
 renderEmpty = mempty
 
@@ -34,7 +36,7 @@ getRenderMaxY fs rend = maximum $ getMaxY <$> renderDraws rend
     where
         getMaxY (DrawTexture dt) = fromIntegral $ drawPosY dt + drawHeight dt
         getMaxY (DrawRectangle dr) = fromIntegral $ rectPosY dr + rectHeight dr
-        getMaxY (DrawTextDisplay td) = fromIntegral $ wordsPosY td + fromIntegral (heightTextDisplay fs td)
+        getMaxY (DrawTextDisplay td) = fromIntegral $ wordsPosY td + ceiling (heightTextDisplay fs td)
 
 getRenderMinX :: ToRender -> Int
 getRenderMinX rend = minimum $ getMinR <$> renderDraws rend
@@ -48,7 +50,7 @@ getRenderMaxX fs rend = maximum $ getMaxR <$> renderDraws rend
     where
         getMaxR (DrawTexture dt) = fromIntegral $ drawPosX dt + drawWidth dt
         getMaxR (DrawRectangle dr) = fromIntegral $ rectPosX dr + rectWidth dr
-        getMaxR (DrawTextDisplay td) = fromIntegral $ wordsPosX td + fromIntegral (widthTextDisplay fs td)
+        getMaxR (DrawTextDisplay td) = fromIntegral $ wordsPosX td + ceiling (widthTextDisplay fs td)
 
 moveRenderY :: ToRender -> Int -> ToRender
 moveRenderY r 0 = r
@@ -75,5 +77,5 @@ clipYRender fs rends startY endY = filterDraws clip rends
             | otherwise = Just d
         clip d@(DrawTextDisplay td)
             | wordsPosY td < startY' = Nothing
-            | wordsPosY td + fromIntegral (heightTextDisplay fs td) > endY' = Nothing
+            | wordsPosY td + ceiling (heightTextDisplay fs td) > endY' = Nothing
             | otherwise = Just d

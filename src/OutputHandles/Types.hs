@@ -32,7 +32,7 @@ import SDL.Font (height)
 
 import Debug.Trace
 
-type FontSize = (Int, Int)
+type FontSize = (Double, Double)
 
 -- first number is layer number
 -- third number is priority

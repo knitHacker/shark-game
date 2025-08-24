@@ -15,7 +15,7 @@ module Graphics.Menu
 
 import qualified Data.Text as T
 import Data.Map.Strict ((!))
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, catMaybes)
 
 import OutputHandles.Types
 import OutputHandles.Text
@@ -28,24 +28,45 @@ isMenuScrollable (Menu (View _ _ _ (Just _)) _) = True
 isMenuScrollable _ = False
 
 mkMenu :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe ViewScroll -> MenuOptions a -> Menu a
-mkMenu words images scrollM opts = Menu (View words images [] scrollM) opts
+mkMenu words images scrollM = Menu (View words images [] scrollM)
 
-mkScrollView :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> ViewScroll
-mkScrollView words images h step = ViewScroll (View words images [] Nothing) 0 h
+mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe ViewScroll
+mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY <$> sdM
+    where
+        v = View words images [] Nothing
+        sdM = mkScrollData graphics v offset maxY step
 
-getViewSize :: Graphics -> View -> (Int, Int)
-getViewSize (Graphics tm fs) (View txts imgs rects Nothing) = (w, h)
+mkScrollData :: Graphics -> View -> Int -> Int -> Int -> Maybe ScrollData
+mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
+    where
+        mkScrollData' ((startX, startY), (w, h)) = ScrollData startY (maxY - startY) h step startX
+
+getViewSize :: Graphics -> View -> Maybe ((Int, Int), (Int, Int))
+getViewSize _ (View [] [] [] Nothing) = Nothing
+getViewSize (Graphics tm fs) (View txts imgs rects Nothing) = Just ((x, y), (w, h))
     where
         imgRects = (\(x, y, s, tE) ->
                         let (TextureInfo tw th) = (tm ! tE)
                         in (x, y, round ((fromIntegral tw) * s), round ((fromIntegral th) * s))
                      ) <$> imgs
-        txMinY = getTextMinY txts
-        txMaxY = getTextMaxY fs txts
-        txMinX = getTextMinX txts
-        txMaxX = getTextMaxX fs txts
-
-        (w, h) = undefined
+        txMinYM = getTextMinY txts
+        txMaxYM = getTextMaxY fs txts
+        txMinXM = getTextMinX txts
+        txMaxXM = getTextMaxX fs txts
+        rcMinYM = if null rects then Nothing else Just (minimum $ map (\(_, _, y, _, _) -> y) rects)
+        rcMaxYM = if null rects then Nothing else Just (maximum $ map (\(_, _, y, _, h) -> y + h) rects)
+        rcMinXM = if null rects then Nothing else Just (minimum $ map (\(_, x, _, _, _) -> x) rects)
+        rcMaxXM = if null rects then Nothing else Just (maximum $ map (\(_, x, _, w, _) -> x + w) rects)
+        imgMinYM = if null imgs then Nothing else Just (minimum $ map (\(_, y, _, _) -> y) imgs)
+        imgMaxYM = if null imgs then Nothing else Just (maximum $ map (\(_, y, r, tE) -> let (TextureInfo _ th) = (tm ! tE)
+                                                                                         in round (fromIntegral th * r) + y) imgs)
+        imgMinXM = if null imgs then Nothing else Just (minimum $ map (\(x, _, _, _) -> x) imgs)
+        imgMaxXM = if null imgs then Nothing else Just (maximum $ map (\(x, _, r, tE) -> let (TextureInfo tw _ ) = (tm ! tE)
+                                                                                         in round (fromIntegral tw * r) + x) imgs)
+        x = minimum $ catMaybes [imgMinXM, rcMinXM, txMinXM]
+        y = minimum $ catMaybes [imgMinYM, rcMinYM, txMinYM]
+        w = (maximum $ catMaybes [imgMaxXM, rcMaxXM, txMaxXM]) - x
+        h = (maximum $ catMaybes [imgMaxYM, rcMaxYM, txMaxYM]) - y
 
 selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction a] -> CursorType -> Int -> MenuOptions a
 selOneOpts x y s sp opts curs = MenuOptions (SelOneListOpts $ OALOpts opts curs) (BlockDrawInfo x y s sp)
@@ -142,9 +163,10 @@ decrementMenuCursor m@(Menu _ mo@(MenuOptions _ _ p))
     | otherwise = m { options = mo { cursorPosition = p - 1 } }
 
 scrollMenu :: Menu a -> Int -> Menu a
-scrollMenu m@(Menu v@(View txts imgs rts (Just vs)) opts) sAmt = m { menuView = v { viewScroll = Just (ViewScroll (scrollMaxHeight vs) sAmt) } }
+scrollMenu m@(Menu v@(View txts imgs rts (Just vs)) opts) sAmt = m { menuView = v { viewScroll = Just (vs { scrollOffset = newOffset }) } }
     where
-        newOff = undefined
-        scrollUpdate = undefined
+        sd = scrollData vs
+        maxSteps = ceiling $ (fromIntegral (vHeight sd)) / (fromIntegral (step sd))
+        newOffset = max 0 $ min (scrollOffset vs - sAmt) maxSteps
 scrollMenu m _ = m
 

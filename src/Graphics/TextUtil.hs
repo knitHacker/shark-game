@@ -14,10 +14,10 @@ import qualified Data.Text as T
 import Graphics.Types
 import OutputHandles.Types
 
-fontWidth :: Graphics -> Int
+fontWidth :: Graphics -> Double
 fontWidth (Graphics _ (w, _)) = w
 
-fontHeight :: Graphics -> Int
+fontHeight :: Graphics -> Double
 fontHeight (Graphics _ (_, h)) = h
 
 wrapText :: Graphics -> T.Text -> Int -> Int -> Int -> Int -> Int -> Color -> ([TextDisplay], Int)
@@ -27,12 +27,12 @@ wrapText outs txt x yStart width lineSpace fontScale c = (wrapped, fromIntegral 
         breakToWords = T.words txt
         (ls, last) = foldl makeLines ([], "") breakToWords
         lines = ls ++ [last]
-        maxLetters = fromIntegral width `div` (fontWidth outs * fromIntegral fontScale)
+        maxLetters = floor $ fromIntegral width / (fontWidth outs * fromIntegral fontScale)
         makeLines (ls, curr) w
             | T.length curr == 0 = (ls, w)
             | T.length curr + T.length w <= maxLetters = (ls, T.concat [curr, " ", w])
             | otherwise = (ls ++ [curr], w)
-        yAdjust = lineSpace + (fontHeight outs * fromIntegral fontScale)
+        yAdjust = lineSpace + ceiling (fontHeight outs * fromIntegral fontScale)
         makeTextDisplays (ts, y) line = (ts ++ [TextDisplay line (fromIntegral x) y fontScale c], y + fromIntegral yAdjust)
 
 
@@ -53,6 +53,6 @@ oneLine outs txts x y space = fst $ foldl makeTextDisplays ([], fromIntegral x) 
     where
         makeTextDisplays (ts, x') (txt, c, fontScale) =
             let letterWidth = fontWidth outs * fromIntegral fontScale
-                lineLength = (T.length txt) * letterWidth
-                spacing = space * letterWidth
+                lineLength = ceiling $ (fromIntegral (T.length txt)) * letterWidth
+                spacing = floor $ fromIntegral space * letterWidth
             in (ts ++ [TextDisplay txt x' (fromIntegral y) fontScale c], x' + fromIntegral lineLength + fromIntegral spacing)

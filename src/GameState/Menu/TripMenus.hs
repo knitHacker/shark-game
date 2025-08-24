@@ -137,8 +137,8 @@ sharkFoundMenu gd sfM tp cfgs = mkMenu words imgs Nothing (selOneOpts 80 220 3 4
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" True nextState ]
 
-tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu GamePlayState
-tripResultsMenu gd tp cfgs = mkMenu words [] scrollVM (selOneOpts 60 200 3 4 opts (CursorRect White) 0)
+tripResultsMenu :: GameData -> TripState -> GameConfigs -> Graphics -> Menu GamePlayState
+tripResultsMenu gd tp cfgs gr = mkMenu words [] scrollVM (selOneOpts 60 200 3 4 opts (CursorRect White) 0)
     where
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
@@ -148,6 +148,5 @@ tripResultsMenu gd tp cfgs = mkMenu words [] scrollVM (selOneOpts 60 200 3 4 opt
                                , TextDisplay (T.append "at " (monthToText (findMonth sf))) 50 (65 + (i * 40)) 3 White
                                ]
         sharkFindsTxt = concatMap findDisplays $ zip [0..] (sharkFinds tp)
-        scrollVM = if length sharkFindsTxt > 0 then Just (mkScrollView sharkFindsTxt [] 190 0) else Nothing
+        scrollVM = mkScrollView gr sharkFindsTxt [] 0 190 5
         opts = [ MenuAction "Back to Research Center" True (ResearchCenter gd') ]
-

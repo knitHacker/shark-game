@@ -13,23 +13,23 @@ import qualified Data.Text as T
 import OutputHandles.Types
 
 
-heightTextDisplay :: FontSize -> TextDisplay -> Int
+heightTextDisplay :: FontSize -> TextDisplay -> Double
 heightTextDisplay (_, fh) td = fromIntegral (wordsSize td) * fh
 
-widthTextDisplay :: FontSize -> TextDisplay -> Int
-widthTextDisplay (fw, _) td = fromIntegral (T.length (wordsText td)) * fw
+widthTextDisplay :: FontSize -> TextDisplay -> Double
+widthTextDisplay (fw, _) td = fromIntegral (wordsSize td * (T.length (wordsText td))) * fw
 
-getTextMinY :: [TextDisplay] -> Int
-getTextMinY ts = minimum $ map (fromIntegral . wordsPosY) ts
+getTextMinY :: [TextDisplay] -> Maybe Int
+getTextMinY ts = if null ts then Nothing else Just (minimum $ map (fromIntegral . wordsPosY) ts)
 
-getTextMinX :: [TextDisplay] -> Int
-getTextMinX ts = minimum $ map (fromIntegral . wordsPosX) ts
+getTextMinX :: [TextDisplay] -> Maybe Int
+getTextMinX ts = if null ts then Nothing else Just (minimum $ map (fromIntegral . wordsPosX) ts)
 
-getTextMaxY :: FontSize -> [TextDisplay] -> Int
-getTextMaxY fs ts = maximum $ map (\t -> fromIntegral (wordsPosY t) + heightTextDisplay fs t) ts
+getTextMaxY :: FontSize -> [TextDisplay] -> Maybe Int
+getTextMaxY fs ts = if null ts then Nothing else Just $ ceiling (maximum $ map (\t -> fromIntegral (wordsPosY t) + heightTextDisplay fs t) ts)
 
-getTextMaxX :: FontSize -> [TextDisplay] -> Int
-getTextMaxX fs ts = maximum $ map (\t -> fromIntegral (wordsPosX t) + widthTextDisplay fs t) ts
+getTextMaxX :: FontSize -> [TextDisplay] -> Maybe Int
+getTextMaxX fs ts = if null ts then Nothing else Just $ ceiling (maximum $ map (\t -> fromIntegral (wordsPosX t) + widthTextDisplay fs t) ts)
 
 addText :: ToRender -> Int -> Int -> TextDisplay -> ToRender
 addText rend depth priority td = addDraw rend depth priority (DrawTextDisplay td)

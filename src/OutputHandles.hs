@@ -48,12 +48,9 @@ getFontSize outs =
         size <-Font.size (font outs) " "
         let rX = ratioX outs
             rY = ratioY outs
-            size' = (round $ fromIntegral (fst size) / rX, round $ fromIntegral (snd size) / rY)
+            size' = (fromIntegral (fst size) / rX, fromIntegral (snd size) / rY)
         print size'
         return size'
-
-getTextSize :: T.Text -> OutputHandles -> IO FontSize
-getTextSize txt out = Font.size (font out) txt
 
 initOutputHandles :: TextureFileMap -> GameConfigs -> IO OutputHandles
 initOutputHandles textCfgs cfgs = do
