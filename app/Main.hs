@@ -18,6 +18,6 @@ main :: IO ()
 main = do
     (tm, configs) <- initConfigs
     outs <- initOutputHandles tm configs
-    appEnvData <- initAppEnvData configs outs
+    appEnvData <- initAppEnvData tm configs outs
     time <- getSystemTime
     runGame 0 time appEnvData

@@ -5,20 +5,20 @@ module OutputHandles.Types
     , OutputRead(..)
     , Draw(..)
     , Color(..)
-    , TextureEntry(..)
     , Draws
     , ToRender
     , TextDisplay(..)
     , TextureMap
     , DrawRectangle(..)
     , DrawTexture(..)
-    , renderEmpty
+    , FontSize
+    , Image
+    , lengthDraws
     , renderDebugs
     , renderDraws
-    , addTexture
-    , addRectangle
-    , addText
-    , getFontSize
+    , mapDraws
+    , filterDraws
+    , addDraw
     ) where
 
 import Foreign.C.Types ( CInt )
@@ -28,6 +28,11 @@ import Control.Monad ()
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import SDL.Font (height)
+
+import Debug.Trace
+
+type FontSize = (Int, Int)
 
 -- first number is layer number
 -- third number is priority
@@ -35,11 +40,33 @@ type Position = (Int, Int, Int)
 
 type Draws = M.Map Position Draw
 
+type Image = T.Text
+
 data ToRender = ToRender
     { nextId :: !Int
     , draws :: !Draws
     , drawDebugs :: ![(Int, Int, Int, Int)]
     }
+
+lengthDraws :: ToRender -> Int
+lengthDraws (ToRender _ ds _) = M.size ds
+
+renderDebugs :: ToRender -> [(Int, Int, Int, Int)]
+renderDebugs = drawDebugs
+
+renderDraws :: ToRender -> [Draw]
+renderDraws rend = M.elems $ draws rend
+
+mapDraws :: (Draw -> Draw) -> ToRender -> ToRender
+mapDraws f (ToRender n ds dbs) = ToRender n (M.map f ds) dbs
+
+filterDraws :: (Draw -> Maybe Draw) -> ToRender -> ToRender
+filterDraws f (ToRender n ds dbs) = ToRender n (M.mapMaybe f ds) dbs
+
+addDraw :: ToRender -> Int -> Int -> Draw -> ToRender
+addDraw (ToRender n ds dbs) depth priority d = ToRender (n + 1) ds' dbs
+    where
+        ds' = M.insert (depth, priority, n) d ds
 
 instance Monoid ToRender where
     mempty :: ToRender
@@ -51,24 +78,24 @@ instance Semigroup ToRender where
     where
         m2' = M.mapKeys (\(a, b, c) -> (a, b, c + n1)) m2
 
-data Color = White | Gray | DarkGray | Black | Red | Blue | DarkBlue | Green | Yellow
+data Color = White
+           | Gray
+           | DarkGray
+           | Black
+           | Red
+           | Blue
+           | DarkBlue
+           | Green
+           | Yellow
+           | OtherColor !Font.Color
 
 data Draw = DrawTexture DrawTexture
           | DrawRectangle DrawRectangle
           | DrawTextDisplay TextDisplay
 
-renderEmpty :: ToRender
-renderEmpty = ToRender 0 M.empty []
-
-renderDebugs :: ToRender -> [(Int, Int, Int, Int)]
-renderDebugs = drawDebugs
-
-renderDraws :: ToRender -> [Draw]
-renderDraws rend = M.elems $ draws rend
-
 
 data DrawTexture = DTexture
-    { drawTexture :: !SDL.Texture
+    { drawTexture :: !Image -- Possible error, might not exist in the texture map
     , drawPosX :: !CInt
     , drawPosY :: !CInt
     , drawWidth :: !CInt
@@ -92,44 +119,17 @@ data TextDisplay = TextDisplay
     , wordsColor :: !Color
     }
 
-
-data TextureEntry = TextureEntry
-    { textureWidth :: !Int
-    , textureHeight :: !Int
-    , texture :: !SDL.Texture
-    }
-
-addTexture :: ToRender -> Int -> Int -> DrawTexture -> ToRender
-addTexture (ToRender n ds dbs) depth priority dt = ToRender (n + 1) ds' dbs
-    where
-        ds' = M.insert (depth, priority, n) (DrawTexture dt) ds
-
-addRectangle :: ToRender -> Int -> Int -> DrawRectangle -> ToRender
-addRectangle (ToRender n ds dbs) depth priority dr = ToRender (n + 1) ds' dbs
-    where
-        ds' = M.insert (depth, priority, n) (DrawRectangle dr) ds
-
-addText :: ToRender -> Int -> Int -> TextDisplay -> ToRender
-addText (ToRender n ds dbs) depth priority td = ToRender (n + 1) ds' dbs
-    where
-        ds' = M.insert (depth, priority, n) (DrawTextDisplay td) ds
-
-type TextureMap = M.Map T.Text TextureEntry
-
-getFontSize :: OutputHandles -> (Double, Double)
-getFontSize outs = (fontWidth outs, fontHeight outs)
+type TextureMap = M.Map Image SDL.Texture
 
 data OutputHandles = OutputHandles
     { window :: SDL.Window
     , renderer :: SDL.Renderer
     , textures :: TextureMap
+    -- Probably want this to be a map eventually because you want more than one font
     , font :: Font.Font
-    , fontWidth :: Double
-    , fontHeight :: Double
     , ratioX :: Double
     , ratioY :: Double
     }
-
 
 class Monad m => OutputRead m where
     getOutputs :: m OutputHandles

@@ -4,6 +4,7 @@ module OutputHandles
     ( initOutputHandles
     , cleanupOutputHandles
     , executeDraw
+    , getFontSize
     ) where
 
 
@@ -23,19 +24,15 @@ import Data.Maybe (catMaybes)
 import Paths_shark_game ()
 import Configs
 import OutputHandles.Types
-    ( OutputHandles(OutputHandles, font, renderer, window),
-      OutputRead,
-      TextureEntry(TextureEntry),
-      ToRender )
 import OutputHandles.Draw
 import Env.Files            (getGameFullPath)
 
 
+import Debug.Trace
+
 fontFile :: FilePath
 fontFile = "assets/fonts/saxmono.ttf"
 --fontFile = "assets/fonts/InsightSansSSi.ttf"
-
-type TextureMap = M.Map T.Text TextureEntry
 
 rendererConfig :: SDL.RendererConfig
 rendererConfig = SDL.RendererConfig
@@ -43,6 +40,20 @@ rendererConfig = SDL.RendererConfig
   , SDL.rendererTargetTexture = False
   }
 
+-- Get the font size
+-- Only works because the font is monospaced
+getFontSize :: OutputHandles -> IO FontSize
+getFontSize outs =
+    do
+        size <-Font.size (font outs) " "
+        let rX = ratioX outs
+            rY = ratioY outs
+            size' = (round $ fromIntegral (fst size) / rX, round $ fromIntegral (snd size) / rY)
+        print size'
+        return size'
+
+getTextSize :: T.Text -> OutputHandles -> IO FontSize
+getTextSize txt out = Font.size (font out) txt
 
 initOutputHandles :: TextureFileMap -> GameConfigs -> IO OutputHandles
 initOutputHandles textCfgs cfgs = do
@@ -55,12 +66,11 @@ initOutputHandles textCfgs cfgs = do
     -- clears the screen
     initWindow r
     font <- Font.load fontPath 16
-    (w, h) <- Font.size font " "
     b <- Font.isMonospace font
     textList <- mapM (loadTexture r) $ M.toList textCfgs
     let textures = M.fromList textList
     print $ fst <$> M.toList textures
-    return $ OutputHandles window r textures font ((fromIntegral w) / ratioX) ((fromIntegral h) / ratioY) ratioX ratioY
+    return $ OutputHandles window r textures font ratioX ratioY
     where
         gCfgs = settingCfgs cfgs
         screenWidth = fromIntegral $ windowSizeX gCfgs
@@ -70,11 +80,11 @@ initOutputHandles textCfgs cfgs = do
         ratioX = fromIntegral screenWidth / fromIntegral boardX
         ratioY = fromIntegral screenHeight / fromIntegral boardY
 
-loadTexture :: SDL.Renderer -> (T.Text, TextureCfg) -> IO (T.Text, TextureEntry)
+loadTexture :: SDL.Renderer -> (T.Text, TextureCfg) -> IO (T.Text, SDL.Texture)
 loadTexture r (name, textureCfg) = do
     path <- getGameFullPath $ file textureCfg
     t <- SDL.Image.loadTexture r path
-    return (name, TextureEntry (sizeX textureCfg) (sizeY textureCfg) t)
+    return (name, t)
 
 cleanupOutputHandles :: OutputHandles -> IO ()
 cleanupOutputHandles outs = do

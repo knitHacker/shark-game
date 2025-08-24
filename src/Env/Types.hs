@@ -11,12 +11,11 @@ import Configs
 import OutputHandles.Types
 import InputState
 import GameState.Types
+import Graphics.Types
 
-import Control.Monad.Reader          (MonadReader, ReaderT, asks)
+import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad
-import Control.Monad.IO.Class        (MonadIO)
-
-
+import Control.Monad.IO.Class (MonadIO)
 
 
 data AppEnvData = AppEnvData

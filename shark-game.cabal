@@ -58,15 +58,21 @@ library
       GameState.Collision.BoundBox
       GameState.Collision.RTree
       GameState.Draw
-      GameState.Menu
       GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
       GameState.Menu.LabMenus
       GameState.Menu.TripMenus
       GameState.Types
+      Graphics
+      Graphics.Draw
+      Graphics.Menu
+      Graphics.TextUtil
+      Graphics.Types
       InputState
       OutputHandles
       OutputHandles.Draw
+      OutputHandles.Images
+      OutputHandles.Text
       OutputHandles.Types
       OutputHandles.Util
       SaveData

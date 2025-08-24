@@ -26,11 +26,14 @@ import Shark.Types
 import Shark.Review
 import GameState.Types
 import SaveData
+import Graphics.Types
+import Graphics.Menu
+import Graphics.TextUtil
 
 import Debug.Trace
 
-topReviewMenu :: GameData -> GameConfigs -> Menu
-topReviewMenu gd cfgs = mkMenu words [] (selOneOpts 20 60 3 20 opts mc 0)
+topReviewMenu :: GameData -> GameConfigs -> Menu GamePlayState
+topReviewMenu gd cfgs = mkMenu words [] Nothing (selOneOpts 20 60 3 20 opts mc 0)
     where
         mc = CursorRect White
         words = [ TextDisplay "Data Review" 10 10 10 White
@@ -41,8 +44,8 @@ topReviewMenu gd cfgs = mkMenu words [] (selOneOpts 20 60 3 20 opts mc 0)
                ]
 
 
-topReviewSharksMenu :: GameData -> Maybe T.Text -> GameConfigs -> Menu
-topReviewSharksMenu gd mPrev cfgs = mkMenu words [] options
+topReviewSharksMenu :: GameData -> Maybe T.Text -> GameConfigs -> Menu GamePlayState
+topReviewSharksMenu gd mPrev cfgs = mkMenu words [] Nothing options
     where
         sharksInfo = sharks $ sharkCfgs cfgs
         mc = CursorRect White
@@ -57,10 +60,10 @@ topReviewSharksMenu gd mPrev cfgs = mkMenu words [] options
             Just p -> fromMaybe 0 $ L.lookup p sharkKeys
         options = scrollOpts 20 90 3 20 (BasicSOALOpts (OALOpts opts mc)) otherOpts 4 cursorIdx
 
-sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> OutputHandles -> Menu
-sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') imgs (selOneOpts 30 220 3 20 [returnOpt] mc 0)
+sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> Graphics -> Menu GamePlayState
+sharkReviewMenu gd sharkEntry cfgs gr = mkMenu (locWords ++ words') imgs Nothing (selOneOpts 30 220 3 20 [returnOpt] mc 0)
     where
-        img = textures outs ! getData sharkEntry sharkImage
+        img = getData sharkEntry sharkImage
         imgs = [(80, 35, 0.4, img)]
         locs = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         locsTxt = T.concat ["Locations: ", T.intercalate ", " locs]
@@ -70,14 +73,14 @@ sharkReviewMenu gd sharkEntry cfgs outs = mkMenu (locWords ++ words') imgs (selO
         returnOpt = MenuAction "Back" True $ SharkReviewTop gd (Just (entryKey sharkEntry))
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
-        (locWords, end) = wrapText outs locsTxt 20 125 120 2 3 Blue
+        (locWords, end) = wrapText gr locsTxt 20 125 120 2 3 Blue
         words = [ TextDisplay (getData sharkEntry sharkName) 10 10 5 White
-                , TextDisplay sightingText 20 (end + 20) 3 White
+                , TextDisplay sightingText 20 (fromIntegral (end + 20)) 3 White
                 ]
-        (_, words') = foldl (\(y, l) t -> (y + 20, l ++ [TextDisplay t 30 y 3 White])) (end + 40, words) countTxts
+        (_, words') = foldl (\(y, l) t -> (y + 20, l ++ [TextDisplay t 30 y 3 White])) (fromIntegral (end + 40), words) countTxts
 
-topLabMenu :: GameData -> GameConfigs -> Menu
-topLabMenu gd cfgs = mkMenu words [] (selOneOpts 20 90 3 20 opts mc 0)
+topLabMenu :: GameData -> GameConfigs -> Menu GamePlayState
+topLabMenu gd cfgs = mkMenu words [] Nothing (selOneOpts 20 90 3 20 opts mc 0)
     where
         mc = CursorRect White
         words = [ TextDisplay "Research Lab" 10 10 10 White
@@ -87,8 +90,8 @@ topLabMenu gd cfgs = mkMenu words [] (selOneOpts 20 90 3 20 opts mc 0)
                , MenuAction "Back" True $ DataReviewTop gd
                ]
 
-openResearchMenu :: GameData -> GameConfigs -> Menu
-openResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++ otherOpts) mc 0)
+openResearchMenu :: GameData -> GameConfigs -> Menu GamePlayState
+openResearchMenu gd cfgs = mkMenu words' [] Nothing (selOneOpts 20 90 3 20 (opts ++ otherOpts) mc 0)
     where
         sCfgs = sharkCfgs cfgs
         availResearch = filter (\r -> M.notMember (entryKey r) (gameDataResearchComplete gd)) (getKnownResearch sCfgs gd)
@@ -100,8 +103,8 @@ openResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++ othe
         otherOpts = [ MenuAction "Back" True $ ResearchReviewTop gd ]
         words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 20 60 2 Red] else words
 
-completedResearchMenu :: GameData -> GameConfigs -> Menu
-completedResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++ otherOpts) mc 0)
+completedResearchMenu :: GameData -> GameConfigs -> Menu GamePlayState
+completedResearchMenu gd cfgs = mkMenu words' [] Nothing (selOneOpts 20 90 3 20 (opts ++ otherOpts) mc 0)
     where
         mc = CursorRect White
         availResearch = filter (\r -> M.member (entryKey r) (gameDataResearchComplete gd)) $ getKnownResearch (sharkCfgs cfgs) gd
@@ -112,8 +115,8 @@ completedResearchMenu gd cfgs = mkMenu words' [] (selOneOpts 20 90 3 20 (opts ++
         otherOpts = [ MenuAction "Back" True $ ResearchReviewTop gd ]
         words' = if null research then words ++ [TextDisplay "No completed research" 20 60 2 Red] else words
 
-investigateResearchMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Menu
-investigateResearchMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 180 3 20 [completeOpt, returnOpt] mc 0)
+investigateResearchMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Menu GamePlayState
+investigateResearchMenu gd researchEntry cfgs = mkMenu words' [] Nothing (selOneOpts 10 180 3 20 [completeOpt, returnOpt] mc 0)
     where
         reqs = getResearchRequirements (sharkCfgs cfgs) gd researchEntry
         mc = CursorRect White
@@ -130,8 +133,8 @@ investigateResearchMenu gd researchEntry cfgs = mkMenu words' [] (selOneOpts 10 
                         sharkHeader = TextDisplay sN 25 y 3 White
                         (infoRqs, y'') = foldl (\(l', y') (it, gsd, c) -> (l' ++ [TextDisplay (T.concat [T.toTitle it, " ", T.pack (show (length gsd)), "/", T.pack (show c)]) 30 y' 2 White], y' + 10)) ([], y + 20) rrs
 
-awardGrantMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> OutputHandles -> Menu
-awardGrantMenu gd researchEntry cfgs outs = mkMenu words' [] (selOneOpts 10 180 3 20 [returnOpt] mc 0)
+awardGrantMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> Menu GamePlayState
+awardGrantMenu gd researchEntry cfgs gr = mkMenu words' [] Nothing (selOneOpts 10 180 3 20 [returnOpt] mc 0)
     where
         mc = CursorRect White
         returnOpt = MenuAction "Continue" True $ ResearchReviewTop gd
@@ -139,11 +142,11 @@ awardGrantMenu gd researchEntry cfgs outs = mkMenu words' [] (selOneOpts 10 180 
         words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
                 , TextDisplay grantText 20 40 2 Green
                 ]
-        (descr, _) = wrapText outs (getData researchEntry researchDescription) 20 60 120 4 3 White
+        (descr, _) = wrapText gr (getData researchEntry researchDescription) 20 60 120 4 3 White
         words' = words ++ descr
 
-completedResearchReviewMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> OutputHandles -> Menu
-completedResearchReviewMenu gd researchEntry cfgs outs = mkMenu words' [] (selOneOpts 10 180 3 20 [returnOpt] mc 0)
+completedResearchReviewMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> Menu GamePlayState
+completedResearchReviewMenu gd researchEntry cfgs gr = mkMenu words' [] Nothing (selOneOpts 10 180 3 20 [returnOpt] mc 0)
     where
         mc = CursorRect White
         returnOpt = MenuAction "Back" True $ CompletedResearchMenu gd
@@ -151,5 +154,5 @@ completedResearchReviewMenu gd researchEntry cfgs outs = mkMenu words' [] (selOn
         words = [ TextDisplay (getData researchEntry researchPaperName) 10 10 5 White
                 , TextDisplay grantText 20 40 3 Green
                 ]
-        (descr, _) = wrapText outs (getData researchEntry researchDescription) 20 60 200 4 2 White
+        (descr, _) = wrapText gr (getData researchEntry researchDescription) 20 60 200 4 2 White
         words' = words ++ descr

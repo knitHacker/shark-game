@@ -23,11 +23,14 @@ import Data.Map ((!))
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
+import Graphics.Types
+import Graphics.Menu
+import Graphics.TextUtil
 
 import Debug.Trace
 
-mapMenu :: GameData -> GameConfigs -> Menu
-mapMenu gd cfgs = mkMenu words [] options
+mapMenu :: GameData -> GameConfigs -> Menu GamePlayState
+mapMenu gd cfgs = mkMenu words [] Nothing options
     where
         options = scrollOpts 15 120 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] 4 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
@@ -38,8 +41,8 @@ mapMenu gd cfgs = mkMenu words [] options
         opts = (\(loc, txt) -> MenuAction txt True (TripEquipmentSelect gd loc [] 0)) <$> locs
         rtOpt = MenuAction "Return to Lab" True $ ResearchCenter gd
 
-equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu
-equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] (selMultOpts 15 130 3 6 opts' update act (Just back) pos)
+equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu GamePlayState
+equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15 130 3 6 opts' update act (Just back) pos)
     where
         locO = siteLocations (sharkCfgs cfgs) M.! loc
         eq = equipment $ sharkCfgs cfgs
@@ -64,8 +67,8 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] (selMultOpts 15 130 3 6
         back = TripDestinationSelect gd
 
 
-reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> Menu
-reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (CursorRect White) 0)
+reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> Menu GamePlayState
+reviewTripMenu gd loc eqs cfgs = mkMenu words [] Nothing (selOneOpts 80 185 3 4 opts (CursorRect White) 0)
     where
         trip = tripInfo (sharkCfgs cfgs) loc eqs
         funds = gameDataFunds gd
@@ -90,8 +93,8 @@ reviewTripMenu gd loc eqs cfgs = mkMenu words [] (selOneOpts 80 185 3 4 opts (Cu
                , MenuAction "Abort Trip" True (ResearchCenter gd)
                ]
 
-tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> TimeoutView
-tripProgressMenu gd tp cfgs (InputState _ ts) =
+tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> TimeoutView GamePlayState
+tripProgressMenu gd tp cfgs (InputState _ _ ts) =
     case tripTries tp of
         [] -> TimeoutView ts 0 (v []) $ TripResults gd tp
         (ta@(TripAttempt mn h):tl) ->
@@ -117,8 +120,8 @@ tripProgressMenu gd tp cfgs (InputState _ ts) =
                             Just sf -> tp { tripTries = tl, sharkFinds = sharkFinds tp ++ [sf]}
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
 
-sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> OutputHandles -> Menu
-sharkFoundMenu gd sfM tp cfgs outs = mkMenu words imgs (selOneOpts 80 220 3 4 opts (CursorRect White) 0)
+sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Menu GamePlayState
+sharkFoundMenu gd sfM tp cfgs = mkMenu words imgs Nothing (selOneOpts 80 220 3 4 opts (CursorRect White) 0)
     where
         typeText sf = T.append (T.append "You " (getData (findEquipment sf) infoType)) " a "
         sharkText sf = getData (findSpecies sf) sharkName
@@ -127,23 +130,24 @@ sharkFoundMenu gd sfM tp cfgs outs = mkMenu words imgs (selOneOpts 80 220 3 4 op
                     Nothing -> ([ TextDisplay "No Shark" 40 10 10 White
                                , TextDisplay "Found" 70 50 10 White
                                , TextDisplay "Better luck next time!" 20 100 5 White
-                               ], [(70, 115, 0.5, textures outs ! "empty_net")])
+                               ], [(70, 115, 0.5, "empty_net")])
                     Just sf -> ([ TextDisplay (typeText sf) 10 10 8 White
                                , TextDisplay (sharkText sf) 20 70 5 Blue
-                               ], [(70, 100, 0.5, textures outs ! sharkImg sf)])
+                               ], [(70, 100, 0.5, sharkImg sf)])
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" True nextState ]
 
-tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu
-tripResultsMenu gd tp cfgs = mkMenu words [] (selOneOpts 60 200 3 4 opts (CursorRect White) 0)
+tripResultsMenu :: GameData -> TripState -> GameConfigs -> Menu GamePlayState
+tripResultsMenu gd tp cfgs = mkMenu words [] scrollVM (selOneOpts 60 200 3 4 opts (CursorRect White) 0)
     where
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
-        words = TextDisplay "Trip Complete!" 10 10 8 White : sharkFindsTxt
+        words = [TextDisplay "Trip Complete!" 10 10 8 White]
         findText sf = T.concat [getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) infoType]
         findDisplays (i, sf) = [ TextDisplay (findText sf) 30 (50 + (i * 40)) 3 White
                                , TextDisplay (T.append "at " (monthToText (findMonth sf))) 50 (65 + (i * 40)) 3 White
                                ]
         sharkFindsTxt = concatMap findDisplays $ zip [0..] (sharkFinds tp)
+        scrollVM = if length sharkFindsTxt > 0 then Just (mkScrollView sharkFindsTxt [] 190 0) else Nothing
         opts = [ MenuAction "Back to Research Center" True (ResearchCenter gd') ]
 

@@ -20,20 +20,10 @@ import qualified SDL.Font as Font
 import Control.Monad ( when )
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Map.Strict as M
+import Data.Map.Strict ((!))
 
 import Configs
 import OutputHandles.Types
-    ( Color(..)
-    , Draw(..)
-    , DrawRectangle(..)
-    , DrawTexture(..)
-    , OutputHandles(renderer, ratioX, ratioY, font)
-    , OutputRead(..)
-    , TextDisplay(..)
-    , ToRender
-    , renderDebugs
-    , renderDraws
-    )
 
 mkRect :: a -> a -> a -> a-> SDL.Rectangle a
 mkRect x y w h = SDL.Rectangle o z
@@ -62,6 +52,7 @@ color Green  = SDL.V4 0 maxBound 0 maxBound
 color Blue   = SDL.V4 0 0 maxBound maxBound
 color DarkBlue = SDL.V4 0 0 (div maxBound 3) (div maxBound 3)
 color Yellow = SDL.V4 maxBound maxBound 0 maxBound
+color (OtherColor c) = c
 
 
 setColor :: (MonadIO m) => SDL.Renderer -> Color -> m ()
@@ -90,7 +81,7 @@ drawAll drawings = do
         debugs' = scaleDebugs ratX ratY <$> debugs
     SDL.clear r
     setColor r Red
-    mapM_ (draw (font outs) drawOutline r) drawings'
+    mapM_ (draw (textures outs) (font outs) drawOutline r) drawings'
     setColor r Yellow
     when drawDbgs $ mapM_ (drawDebug r) debugs'
     setColor r Black
@@ -111,17 +102,18 @@ drawText r font wd = do
     where
         textScale = wordsSize wd
 
-draw :: MonadIO m => Font.Font -> Bool -> SDL.Renderer -> Draw -> m ()
-draw _ showRect r (DrawTexture dt) = drawTextureNow showRect r dt
-draw _ showRect r (DrawRectangle dr) = drawRectangleNow showRect r dr
-draw f showRect r (DrawTextDisplay td) = drawText r f td
+draw :: MonadIO m => TextureMap -> Font.Font -> Bool -> SDL.Renderer -> Draw -> m ()
+draw tm _ showRect r (DrawTexture dt) = drawTextureNow tm showRect r dt
+draw _ _ showRect r (DrawRectangle dr) = drawRectangleNow showRect r dr
+draw _ f showRect r (DrawTextDisplay td) = drawText r f td
 
-drawTextureNow :: MonadIO m => Bool -> SDL.Renderer -> DrawTexture -> m ()
-drawTextureNow showRect r d = do
-    SDL.copy r (drawTexture d) (drawMask d) (Just pos)
+drawTextureNow :: MonadIO m => TextureMap -> Bool -> SDL.Renderer -> DrawTexture -> m ()
+drawTextureNow texMap showRect r d = do
+    SDL.copy r texture (drawMask d) (Just pos)
     when showRect $ SDL.drawRect r (Just pos)
     where
         pos = mkRect (drawPosX d) (drawPosY d) (drawWidth d) (drawHeight d)
+        texture = texMap ! (drawTexture d)
 
 drawRectangleNow :: MonadIO m => Bool -> SDL.Renderer -> DrawRectangle -> m ()
 drawRectangleNow showRect r d = do

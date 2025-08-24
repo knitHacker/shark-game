@@ -11,11 +11,14 @@ import OutputHandles.Util
 import SaveData
 import GameState.Types
 import Shark.Trip
+import Graphics.Types
+import Graphics.TextUtil
+import Graphics.Menu
 
 import qualified Data.Text as T
 
-labTopMenu :: GameData -> OutputHandles -> Menu
-labTopMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts mc 0)
+labTopMenu :: GameData -> Graphics -> Menu GamePlayState
+labTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 160 4 15 opts mc 0)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
@@ -25,7 +28,7 @@ labTopMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts
                 , TextDisplay "Center" 40 45 10 White
                 , TextDisplay dateTxt2 55 120 3 Green
                 ]
-        fundWords = oneLine outs fundTxts 35 90 2
+        fundWords = oneLine gr fundTxts 35 90 2
         opts = [ MenuAction "Fundraising" False ComingSoon
                , MenuAction "Fleet Management" False ComingSoon
                , MenuAction "Equipment Management" False ComingSoon
@@ -34,8 +37,8 @@ labTopMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts
 -- To make sure the user doesn't get stuck with no money they can "host" a fundraiser
 -- This will give a small amount of money but also will add a new name for a donor to
 -- the research center's name
-fundraiserTopMenu :: GameData -> OutputHandles -> Menu
-fundraiserTopMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts mc 0)
+fundraiserTopMenu :: GameData -> Graphics -> Menu GamePlayState
+fundraiserTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 160 4 15 opts mc 0)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
@@ -45,7 +48,7 @@ fundraiserTopMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 
                 , TextDisplay "Center" 40 45 10 White
                 , TextDisplay dateTxt 35 105 3 White
                 ]
-        fundWords = oneLine outs fundTxts 35 90 2
+        fundWords = oneLine gr fundTxts 35 90 2
         opts = [ MenuAction "Host Fundraiser" False ComingSoon
                , MenuAction "Fleet Management" False ComingSoon
                , MenuAction "Equipment Management" False ComingSoon

@@ -1,49 +1,79 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module OutputHandles.Util
-    ( wrapText
-    , wrapTexts
-    , adjustTexts
-    , oneLine
+    ( renderEmpty
+    , getRenderMinY
+    , getRenderMaxY
+    , getRenderMinX
+    , getRenderMaxX
+    , moveRenderY
+    , clipYRender
     ) where
 
 import Foreign.C.Types ( CInt )
 import qualified Data.Text as T
+import qualified Data.Map.Strict as M
 
 import OutputHandles.Types
+import OutputHandles.Text
 
-wrapText :: OutputHandles -> T.Text -> CInt -> CInt -> CInt -> CInt -> Int -> Color -> ([TextDisplay], CInt)
-wrapText outs txt x yStart width lineSpace fontScale c = foldl makeTextDisplays ([], yStart) lines
+
+renderEmpty :: ToRender
+renderEmpty = mempty
+
+getRenderMinY :: ToRender -> Int
+getRenderMinY rend = minimum $ getMinY <$> renderDraws rend
     where
-        breakToWords = T.words txt
-        (ls, last) = foldl makeLines ([], "") breakToWords
-        lines = ls ++ [last]
-        maxLetters = floor $ fromIntegral width / (fontWidth outs * fromIntegral fontScale)
-        makeLines (ls, curr) w
-            | T.length curr == 0 = (ls, w)
-            | T.length curr + T.length w <= maxLetters = (ls, T.concat [curr, " ", w])
-            | otherwise = (ls ++ [curr], w)
-        yAdjust = lineSpace + floor (fontHeight outs * fromIntegral fontScale)
-        makeTextDisplays (ts, y) line = (ts ++ [TextDisplay line x y fontScale c], y + yAdjust)
+        getMinY :: Draw -> Int
+        getMinY (DrawTexture dt) = fromIntegral $ drawPosY dt
+        getMinY (DrawRectangle dr) = fromIntegral $ rectPosY dr
+        getMinY (DrawTextDisplay td) = fromIntegral $ wordsPosY td
 
-
-wrapTexts :: OutputHandles -> [T.Text] -> CInt -> CInt -> CInt -> CInt -> Int -> Color -> ([TextDisplay], CInt)
-wrapTexts outs txts x yStart width lineSpace fontScale c = foldl makeTextDisplays ([], yStart) txts
+getRenderMaxY :: FontSize -> ToRender -> Int
+getRenderMaxY fs rend = maximum $ getMaxY <$> renderDraws rend
     where
-        makeTextDisplays (ts, y) txt = let (newTs, newY) = wrapText outs txt x y width lineSpace fontScale c in (ts ++ newTs, newY)
+        getMaxY (DrawTexture dt) = fromIntegral $ drawPosY dt + drawHeight dt
+        getMaxY (DrawRectangle dr) = fromIntegral $ rectPosY dr + rectHeight dr
+        getMaxY (DrawTextDisplay td) = fromIntegral $ wordsPosY td + fromIntegral (heightTextDisplay fs td)
 
-adjustTexts :: OutputHandles -> [(TextDisplay, CInt, CInt)] -> ([TextDisplay], CInt)
-adjustTexts outs txts = foldl makeTextDisplays ([], 0) txts
+getRenderMinX :: ToRender -> Int
+getRenderMinX rend = minimum $ getMinR <$> renderDraws rend
     where
-        makeTextDisplays (ts, y) (TextDisplay txt x _ fontScale c, width, lineSpace) =
-            let (newTs, newY) = wrapText outs txt x y width lineSpace fontScale c
-            in (ts ++ newTs, newY)
+        getMinR (DrawTexture dt) = fromIntegral $ drawPosX dt
+        getMinR (DrawRectangle dr) = fromIntegral $ rectPosX dr
+        getMinR (DrawTextDisplay td) = fromIntegral $ wordsPosX td
 
-oneLine :: OutputHandles -> [(T.Text, Color, Int)] -> CInt -> CInt -> CInt -> [TextDisplay]
-oneLine outs txts x y space = fst $ foldl makeTextDisplays ([], x) txts
+getRenderMaxX :: FontSize -> ToRender -> Int
+getRenderMaxX fs rend = maximum $ getMaxR <$> renderDraws rend
     where
-        makeTextDisplays (ts, x') (txt, c, fontScale) =
-            let letterWidth = floor $ (fontWidth outs * fromIntegral fontScale)
-                lineLength = fromIntegral (T.length txt) * letterWidth
-                spacing = space * letterWidth
-            in (ts ++ [TextDisplay txt x' y fontScale c], x' + lineLength + spacing)
+        getMaxR (DrawTexture dt) = fromIntegral $ drawPosX dt + drawWidth dt
+        getMaxR (DrawRectangle dr) = fromIntegral $ rectPosX dr + rectWidth dr
+        getMaxR (DrawTextDisplay td) = fromIntegral $ wordsPosX td + fromIntegral (widthTextDisplay fs td)
+
+moveRenderY :: ToRender -> Int -> ToRender
+moveRenderY r 0 = r
+moveRenderY rend off = mapDraws move rend
+    where
+        move (DrawTexture dt) = DrawTexture $ dt { drawPosY = drawPosY dt + fromIntegral off }
+        move (DrawRectangle dr) = DrawRectangle $ dr { rectPosY = rectPosY dr + fromIntegral off }
+        move (DrawTextDisplay td) = DrawTextDisplay $ td { wordsPosY = wordsPosY td + fromIntegral off }
+
+clipYRender :: FontSize -> ToRender -> Int -> Int -> ToRender
+clipYRender fs rends startY endY = filterDraws clip rends
+    where
+        startY' = fromIntegral startY
+        endY' = fromIntegral endY
+        clip d@(DrawTexture dt)
+            | drawPosY dt < startY' = Nothing
+            | drawPosY dt + drawHeight dt > endY' = Nothing
+            -- todo: need to update / add mask to only show partial image
+            | otherwise = Just d
+        clip d@(DrawRectangle dr)
+            | rectPosY dr < startY' = Nothing
+            | rectPosY dr + rectHeight dr > endY' = Nothing
+            -- Can I even cut off a rect?
+            | otherwise = Just d
+        clip d@(DrawTextDisplay td)
+            | wordsPosY td < startY' = Nothing
+            | wordsPosY td + fromIntegral (heightTextDisplay fs td) > endY' = Nothing
+            | otherwise = Just d

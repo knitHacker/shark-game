@@ -1,0 +1,198 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+module Graphics.Draw
+    ( updateBasicView
+    , updateTimeoutView
+    , updateGameMenu
+    , updateGameView
+    ) where
+
+import Foreign.C.Types ( CInt )
+import qualified Data.Text as T
+import qualified Data.Map.Strict as M
+import Data.Map.Strict ((!))
+
+import OutputHandles.Types
+import OutputHandles.Images
+import OutputHandles.Text
+import OutputHandles.Util
+import Graphics.Types
+import Graphics.Menu
+
+updateBasicView :: Graphics -> Int -> BasicView a -> ToRender
+updateBasicView gr d (BasicMenu m) = updateGameMenu gr d m
+updateBasicView gr d (BasicTimeoutView tov) = updateTimeoutView gr d tov
+
+updateTimeoutView :: Graphics -> Int -> TimeoutView a -> ToRender
+updateTimeoutView gr d tov = updateGameView gr d (timeoutView tov)
+
+updateGameViewScroll :: Graphics -> Int -> ViewScroll -> ToRender
+updateGameViewScroll gr d (ViewScroll subView off maxH)
+    | yEnd == 0 = r
+    | otherwise = r'''
+    where
+        fs = graphicsFontSize gr
+        r = updateGameView gr d subView
+        x = getRenderMinX r
+        yStart = getRenderMinY r
+        yEnd = getRenderMaxY fs r
+        step = 10
+        offY = step * off
+        viewHeight = maxH - yStart
+        r' = moveRenderY r (-offY)
+        r'' = clipYRender fs r' yStart maxH
+        r''' = addScrollRects r'' (d+1) (x - 8) yStart viewHeight yEnd step off
+
+updateGameView :: Graphics -> Int -> View -> ToRender
+updateGameView gr d (View words imgs rs scrollM) = r'''
+    where
+        r = foldl (\rend td -> addText rend d 1 td) renderEmpty words
+        r' = foldl (\rend t -> addTexture rend d 0 (toDraw t )) r imgs
+        r'' = foldl (\rend (c, x, y, w, h) -> addRectangle rend d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r' rs
+        toDraw :: (Int, Int, Double, Image) -> DrawTexture
+        toDraw (x, y, s, tE) =
+            let (TextureInfo w h) = (graphicsTextures gr ! tE)
+            in DTexture tE (fromIntegral x) (fromIntegral y)
+                                        (floor ((fromIntegral w) * s)) (floor ((fromIntegral h) * s)) Nothing
+        r''' = case scrollM of
+                Nothing -> r''
+                Just scroll -> r'' <> updateGameViewScroll gr d scroll
+
+
+updateGameMenu :: Graphics -> Int -> Menu a -> ToRender
+updateGameMenu gr d (Menu v opts) = updateGameView gr d v <> updateMenuOptions gr d opts
+
+updateMenuOptions :: Graphics -> Int -> MenuOptions a -> ToRender
+updateMenuOptions gr d mopts@(MenuOptions _ bdi p)
+    | optionLength mopts == 0 = renderEmpty
+    | otherwise =
+        case menuOptions mopts of
+            (SelOneListOpts oalOpt) -> updateSelOneListOptions gr d p bdi oalOpt
+            (SelMultiListOpts mslOpt) -> updateMultiListOptions gr d p bdi mslOpt
+            (ScrollListOpts slOpt) -> updateScrollListOptions gr d p bdi slOpt
+
+getTextRectangle :: Color -> CInt -> CInt -> Int -> Int -> Int -> Int -> DrawRectangle
+getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
+    where
+        xAdj = max 1 (fromIntegral fSize)
+        yAdj = max 2 (min (floor (fromIntegral (sp - 1) / 2)) (fromIntegral (div (textH - 1) 2)))
+        x' = fromIntegral $ x - xAdj
+        y' = fromIntegral $ y - yAdj
+        w = fromIntegral textL + (2 * xAdj)
+        h = fromIntegral textH + (2 * yAdj)
+
+updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
+updateSelOneListOptions gr@(Graphics _ (fw, fh)) d pos (BlockDrawInfo x y s sp) (OALOpts ma curs) = r'
+    where
+        r = if pos >= 0 && pos < length ma then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
+        r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions opts s h oX oY
+        opts = (\mo -> (menuOptionText mo, if menuOptionEnabled mo then Blue else Gray)) <$> ma
+        yPos = y + (h * pos)
+        yPos' = fromIntegral yPos
+        oX = fromIntegral x
+        oY = fromIntegral y
+        opt = ma !! pos
+        cL = fw * fromIntegral (s * T.length (menuOptionText opt))
+        h = sp + fh * fromIntegral s
+
+updateListCursor :: Graphics -> Int -> CInt -> CInt -> Int -> Int -> Int -> Int -> CursorType -> ToRender
+updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
+    where
+        (TextureInfo tW tH) = graphicsTextures gr ! t
+        x' = x - 20
+        y' = y - 3
+        --tW = fromIntegral w
+        --tH = fromIntegral h
+        w = fromIntegral tW
+        h = fromIntegral tH
+updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 rect
+    where
+        rect = getTextRectangle c x y tl th r sp
+
+updateMultiListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> MultiSelectListOptions a -> ToRender
+updateMultiListOptions (Graphics _ fs) d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ _ backM) =
+    case backM of
+        Nothing -> updateSelectedOptions fs s sp renderEmpty pos 0 d mo' x' y'
+        Just b -> updateSelectedOptions fs s sp renderEmpty pos 0 d (moBack b) x' y'
+    where
+        x' = fromIntegral x
+        y' = fromIntegral y
+        mo' = mo ++ [SelectOption "Continue" "" False False]
+        moBack b = mo' ++ [SelectOption "Back" "" False False]
+
+updateSelectedOptions :: FontSize -> Int -> Int -> ToRender -> Int -> Int -> Int -> [SelectOption] -> CInt -> CInt -> ToRender
+updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' r curp opts
+    where
+        updateSelectedOptions' :: ToRender -> Int -> [SelectOption] -> CInt -> ToRender
+        updateSelectedOptions' rend _ [] _ = rend
+        updateSelectedOptions' rend pos (h:tl) yPos = updateSelectedOptions' r'' (pos + 1) tl yPos'
+            where
+                r' = addText rend d 2 td
+                r'' = if selectSelected h || cp == pos then addRectangle r' d 1 hRect else r'
+                str = selectOptionText h
+                tlen = fw * fromIntegral (T.length str * s)
+                tH = fh * fromIntegral s
+                td = TextDisplay str x yPos s Blue
+                hlC
+                    | cp == pos = Yellow
+                    | changeable h = White
+                    | otherwise = Gray
+                yPos' = yPos + fromIntegral (sp + tH)
+                hRect = getTextRectangle hlC x yPos tlen tH s sp
+
+updateMenuListOptions :: [(T.Text, Color)] -> Int -> Int -> CInt -> CInt -> [TextDisplay]
+updateMenuListOptions opts s h x = updateMenuListOptions' opts
+    where
+        updateMenuListOptions' [] _ = []
+        updateMenuListOptions' ((optText, col):tl) y = dis : updateMenuListOptions' tl newY
+            where
+                newY = y + fromIntegral h
+                dis = TextDisplay optText x y s col
+
+-- Add the scroll rectangle visual on the side.
+-- parameters
+--  - render to add to
+--  - depth for layering
+--  - x start position for bar
+--  - y start positing for scroll area
+--  - height of the visible area
+--  - the full height of the area if it wasn't scrolled
+--  - height of step when you scroll down
+--  - current offset (number of steps) down in the scroll
+addScrollRects :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender
+addScrollRects r d x y height fullH step offset
+    -- No scroll bar if the area fits
+    | fullH <= height = r
+    | otherwise = addRectangle (addRectangle r d 1 rect) d 2 rect2
+    where
+        allSteps = fullH `div` step
+        seenSteps = height `div` step
+        ratio = fromIntegral seenSteps / fromIntegral allSteps
+        subH = floor (fromIntegral height * ratio)
+        subStart = fromIntegral $ y + step * offset
+        rect = DRectangle DarkGray (fromIntegral x) (fromIntegral (y - 1)) 4 (fromIntegral (step * seenSteps + 2))
+        rect2 = DRectangle Gray (fromIntegral x) subStart 4 (fromIntegral subH)
+
+updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender
+updateScrollListOptions gr@(Graphics _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off))
+    | optCount <= mx = r `mappend` fixedR
+    | otherwise = rend
+    where
+        p' = p - off
+        h = sp + fh * fromIntegral s
+        scrollHeight = h * end
+        optCount = getOptSize opts
+        end = min mx optCount
+        indicatorHeight = fromIntegral (scrollHeight - sp)
+        moveAmt = indicatorHeight `div` fromIntegral optCount
+        darkHeight = moveAmt * fromIntegral end
+        rx = fromIntegral (x - 10)
+        ry = fromIntegral y + (fromIntegral off * moveAmt)
+        -- height is recalculated because of rounding errors with division with integers
+        rect = DRectangle DarkGray rx (fromIntegral y - 1) 4 (moveAmt * fromIntegral optCount + 2)
+        rect2 = DRectangle Gray rx ry 4 darkHeight
+        (r, cur) = case opts of
+                    BasicSOALOpts (OALOpts oal c) -> (updateSelOneListOptions gr d p' bdi $ OALOpts (take mx (drop off oal)) c, c)
+                    BasicMSLOpts mo@(MSLOpts msl _ _ _) -> (updateMultiListOptions gr d p' bdi $ mo { mslOpts = take mx (drop off msl) }, CursorRect White)
+        fixedR = updateSelOneListOptions gr d (p - (end + off)) (bdi { blockY = y + scrollHeight })  $ OALOpts fixedOpts cur
+        rend = addRectangle (addRectangle r d 1 rect `mappend` fixedR) d 2 rect2

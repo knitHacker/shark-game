@@ -23,14 +23,17 @@ import OutputHandles.Types
 import OutputHandles.Util
 
 import GameState.Types
+import Graphics.Types
+import Graphics.Menu
+import Graphics.TextUtil
 
 import Debug.Trace
 
-mainMenu :: Maybe GameData -> GameConfigs -> OutputHandles -> Menu
-mainMenu gdM cfgs outs = mkMenu words [] optEntry
+mainMenu :: Maybe GameData -> GameConfigs -> Menu GamePlayState
+mainMenu gdM cfgs = mkMenu words [] Nothing optEntry
     where
         optEntry = selOneOpts 80 180 3 2 menuOpts cursor 0
-        cursor = CursorPointer $ textures outs M.! "green_arrow"
+        cursor = CursorPointer "green_arrow"
         words = [ TextDisplay "Shark" 10 10 14 Gray
                 , TextDisplay "Research" 20 60 14 Gray
                 , TextDisplay "Press ENTER to select" 50 150 3 White
@@ -44,8 +47,8 @@ mainMenu gdM cfgs outs = mkMenu words [] optEntry
                 Just cg -> [continueGame cg, newGame, exitOpt]
 
 
-introPage :: GameData -> Menu
-introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
+introPage :: GameData -> Menu GamePlayState
+introPage gd = mkMenu words [] Nothing (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -65,8 +68,8 @@ introPage gd = mkMenu words [] (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
 
 
 
-researchCenterMenu :: GameData -> OutputHandles -> Menu
-researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4 15 opts mc 0)
+researchCenterMenu :: GameData -> Graphics -> Menu GamePlayState
+researchCenterMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 160 4 15 opts mc 0)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
@@ -78,7 +81,7 @@ researchCenterMenu gd outs = mkMenu (words ++ fundWords) [] (selOneOpts 15 160 4
                 , TextDisplay dateTxt 35 105 3 White
                 , TextDisplay dateTxt2 55 120 3 Green
                 ]
-        fundWords = oneLine outs fundTxts 35 90 2
+        fundWords = oneLine gr fundTxts 35 90 2
         opts = [ MenuAction "Plan Research Trip" True $ TripDestinationSelect gd
                , MenuAction "Review Data" True $ DataReviewTop gd
                , MenuAction "Lab Management" True $ LabManagement gd
