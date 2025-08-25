@@ -10,7 +10,7 @@ module Env
 
 
 import Env.Types ( AppEnv(..), AppEnvData(AppEnvData) )
-import Configs ( GameConfigs )
+import Configs ( TextureFileMap, GameConfigs )
 import OutputHandles.Types ( OutputHandles )
 import InputState ( initInputState )
 import GameState ( initGameState )
@@ -18,10 +18,10 @@ import GameState ( initGameState )
 import Control.Monad.Reader     (runReaderT)
 
 
-initAppEnvData :: GameConfigs -> OutputHandles -> IO AppEnvData
-initAppEnvData cfgs outs = do
+initAppEnvData :: TextureFileMap -> GameConfigs -> OutputHandles -> IO AppEnvData
+initAppEnvData tm cfgs outs = do
     inputs <- initInputState
-    game <- initGameState cfgs outs
+    game <- initGameState tm cfgs outs
     return $ AppEnvData cfgs outs inputs game
 
 

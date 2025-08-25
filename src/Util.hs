@@ -1,6 +1,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Util
     ( DataEntry(..)
@@ -13,9 +14,16 @@ module Util
 import GHC.Generics ( Generic )
 import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
+import Data.Unique ( Unique, hashUnique )
+import Control.Monad.IO.Class ()
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+
+
+instance Show Unique where
+    show :: Unique -> String
+    show = show . hashUnique
 
 data DataEntry a = Entry
     { entryKey :: T.Text
