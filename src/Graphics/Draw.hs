@@ -19,6 +19,8 @@ import OutputHandles.Util
 import Graphics.Types
 import Graphics.Menu
 
+import Debug.Trace
+
 updateBasicView :: Graphics -> Int -> BasicView a -> ToRender
 updateBasicView gr d (BasicMenu m) = updateGameMenu gr d m
 updateBasicView gr d (BasicTimeoutView tov) = updateTimeoutView gr d tov
@@ -26,18 +28,37 @@ updateBasicView gr d (BasicTimeoutView tov) = updateTimeoutView gr d tov
 updateTimeoutView :: Graphics -> Int -> TimeoutView a -> ToRender
 updateTimeoutView gr d tov = updateGameView gr d (timeoutView tov)
 
+-- Add the scroll rectangle visual on the side.
+-- parameters
+--  - render to add to
+--  - depth for layering
+--  - x start position for bar
+--  - y start positing for scroll area
+--  - height of the visible area
+--  - the full height of the area if it wasn't scrolled
+--  - height of step when you scroll down
+--  - current offset (number of steps) down in the scroll
+addScrollRects :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender
+addScrollRects r d x y fullHeight scrollHeight barHeight offH
+    -- No scroll bar if the area fits
+    | fullHeight < scrollHeight = r
+    | otherwise = addRectangle (addRectangle r d 1 rect) d 2 rect2
+    where
+        maxBarY = y + scrollHeight - barHeight
+        subStart = fromIntegral $ min (fromIntegral $ y + offH) maxBarY
+        rect = DRectangle DarkGray (fromIntegral x) (fromIntegral (y - 1)) 4 (fromIntegral (scrollHeight + 2))
+        rect2 = DRectangle Gray (fromIntegral x) subStart 4 (fromIntegral barHeight)
+
+
 updateGameViewScroll :: Graphics -> Int -> ViewScroll -> ToRender
-updateGameViewScroll gr d (ViewScroll subView off maxH (ScrollData yStart scrollHeight viewHeight step xs))
-    | yEnd == 0 = r
-    | otherwise = r'''
+updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart yStart viewHeight scrollHeight barHeight maxOff)) = r'''
     where
         fs = graphicsFontSize gr
         r = updateGameView gr d subView
-        yEnd = yStart + scrollHeight
-        offY = step * off
-        r' = moveRenderY r (-offY)
-        r'' = clipYRender fs r' yStart maxH
-        r''' = addScrollRects r'' (d + 1) (xs - 8) yStart viewHeight yEnd step off
+        offH = step * off
+        r' = moveRenderY r (-offH)
+        r'' = clipYRender fs r' yStart maxY
+        r''' = addScrollRects r'' (d + 1) (xStart - 8) yStart viewHeight scrollHeight barHeight offH
 
 updateGameView :: Graphics -> Int -> View -> ToRender
 updateGameView gr d (View words imgs rs scrollM) = r'''
@@ -143,30 +164,6 @@ updateMenuListOptions opts s h x = updateMenuListOptions' opts
             where
                 newY = y + fromIntegral h
                 dis = TextDisplay optText x y s col
-
--- Add the scroll rectangle visual on the side.
--- parameters
---  - render to add to
---  - depth for layering
---  - x start position for bar
---  - y start positing for scroll area
---  - height of the visible area
---  - the full height of the area if it wasn't scrolled
---  - height of step when you scroll down
---  - current offset (number of steps) down in the scroll
-addScrollRects :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender
-addScrollRects r d x y height fullH step offset
-    -- No scroll bar if the area fits
-    | fullH <= height = r
-    | otherwise = addRectangle (addRectangle r d 1 rect) d 2 rect2
-    where
-        allSteps = fullH `div` step
-        seenSteps = height `div` step
-        ratio = fromIntegral seenSteps / fromIntegral allSteps
-        subH = floor (fromIntegral height * ratio)
-        subStart = fromIntegral $ y + step * offset
-        rect = DRectangle DarkGray (fromIntegral x) (fromIntegral (y - 1)) 4 (fromIntegral (step * seenSteps + 2))
-        rect2 = DRectangle Gray (fromIntegral x) subStart 4 (fromIntegral subH)
 
 updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender
 updateScrollListOptions gr@(Graphics _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off))

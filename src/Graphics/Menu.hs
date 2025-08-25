@@ -23,6 +23,8 @@ import Graphics.Types
 import InputState
 import Data.IntMap (update)
 
+import Debug.Trace
+
 isMenuScrollable :: Menu a -> Bool
 isMenuScrollable (Menu (View _ _ _ (Just _)) _) = True
 isMenuScrollable _ = False
@@ -31,7 +33,7 @@ mkMenu :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe ViewScroll -> Me
 mkMenu words images scrollM = Menu (View words images [] scrollM)
 
 mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe ViewScroll
-mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY <$> sdM
+mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY step <$> sdM
     where
         v = View words images [] Nothing
         sdM = mkScrollData graphics v offset maxY step
@@ -39,7 +41,11 @@ mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY <
 mkScrollData :: Graphics -> View -> Int -> Int -> Int -> Maybe ScrollData
 mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
     where
-        mkScrollData' ((startX, startY), (w, h)) = ScrollData startY (maxY - startY) h step startX
+        mkScrollData' ((startX, startY), (w, h)) =
+            let h2 = maxY - startY
+                h4 = floor $ (fromIntegral h2^2) / (fromIntegral h)
+                maxStep = ceiling $ (fromIntegral (h2 - h4)) / (fromIntegral step)
+            in ScrollData startX startY h h2 h4 maxStep
 
 getViewSize :: Graphics -> View -> Maybe ((Int, Int), (Int, Int))
 getViewSize _ (View [] [] [] Nothing) = Nothing
@@ -166,7 +172,6 @@ scrollMenu :: Menu a -> Int -> Menu a
 scrollMenu m@(Menu v@(View txts imgs rts (Just vs)) opts) sAmt = m { menuView = v { viewScroll = Just (vs { scrollOffset = newOffset }) } }
     where
         sd = scrollData vs
-        maxSteps = ceiling $ (fromIntegral (vHeight sd)) / (fromIntegral (step sd))
-        newOffset = max 0 $ min (scrollOffset vs - sAmt) maxSteps
+        newOffset = max 0 $ min (scrollOffset vs - sAmt) (scrollMaxOffset sd)
 scrollMenu m _ = m
 

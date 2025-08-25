@@ -49,7 +49,6 @@ getFontSize outs =
         let rX = ratioX outs
             rY = ratioY outs
             size' = (fromIntegral (fst size) / rX, fromIntegral (snd size) / rY)
-        print size'
         return size'
 
 initOutputHandles :: TextureFileMap -> GameConfigs -> IO OutputHandles

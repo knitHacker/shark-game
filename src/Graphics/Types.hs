@@ -60,17 +60,19 @@ data TimeoutView a = TimeoutView
     }
 
 data ScrollData = ScrollData
-    { startY :: !Int
-    , scrollHeight :: !Int
+    { startX :: !Int
+    , startY :: !Int
     , vHeight :: !Int
-    , step :: !Int
-    , startX :: !Int
+    , scrollHeight :: !Int
+    , barHeight :: !Int
+    , scrollMaxOffset :: !Int
     }
 
 data ViewScroll = ViewScroll
     { subView :: View
     , scrollOffset :: !Int
     , scrollMaxY :: !Int
+    , scrollStep :: !Int
     , scrollData :: !ScrollData
     }
 
