@@ -1,12 +1,31 @@
 {
-    "equipment": {
-        "boat": {
-            "text": "Boat",
-            "timeAdded": 1,
-            "price": 50,
-            "infoType": "observed",
-            "effectiveness": 5
+    "boats": {
+        "smallBoat": {
+            "boatName": "Small Boat",
+            "boatDescription": "A small boat for shallow waters.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass"],
+            "boatEquipmentSlots": 1,
+            "boatFuelCost": 10,
+            "boatPrice": 100
         },
+        "mediumBoat": {
+            "boatName": "Medium Boat",
+            "boatDescription": "A medium-sized boat for various conditions.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean"],
+            "boatEquipmentSlots": 2,
+            "boatFuelCost": 20,
+            "boatPrice": 2000
+        },
+        "largeBoat": {
+            "boatName": "Large Boat",
+            "boatDescription": "A large boat for deep waters.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest"],
+            "boatEquipmentSlots": 4,
+            "boatFuelCost": 30,
+            "boatPrice": 30000
+        }
+    },
+    "equipment": {
         "drumLine": {
             "text": "Drum Line",
             "timeAdded": 1,

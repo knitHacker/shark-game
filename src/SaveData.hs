@@ -7,6 +7,7 @@ module SaveData
     ( GameData(..)
     , GameSharkData(..)
     , ResearchCompleteInfo(..)
+    , GameDataEquipment(..)
     , SharkIndex
     , startNewGame
     , getRandomPercent
@@ -78,6 +79,14 @@ getRandomElem gd ls = runST $ do
 
 type SharkIndex = Int
 
+data GameDataEquipment = GameEquipment
+    { gameBoat :: T.Text
+    , gameOwnedEquipment :: [T.Text]
+    } deriving (Show, Eq, Generic)
+
+instance FromJSON GameDataEquipment
+instance ToJSON GameDataEquipment
+
 data GameSharkData = GameShark
     { gameSharkMonth :: Int
     , gameSharkSpecies :: T.Text
@@ -107,6 +116,7 @@ data GameData = GameData
     , gameDataSharks :: M.Map SharkIndex GameSharkData
     , gameDataFoundSharks :: M.Map T.Text [SharkIndex]
     , gameDataResearchComplete :: M.Map T.Text ResearchCompleteInfo
+    , gameDataEquipment :: GameDataEquipment
     }
 
 
@@ -118,6 +128,7 @@ data GameSaveData = GameSaveData
     , saveSharkIndex :: SharkIndex
     , saveSharks :: M.Map SharkIndex GameSharkData
     , saveResearchComplete :: M.Map T.Text ResearchCompleteInfo
+    , saveDataEquipment :: GameDataEquipment
     } deriving (Show, Eq, Generic)
 
 
@@ -134,20 +145,22 @@ startNewGame = do
     let fn = path L.++ "/file" L.++ show name L.++ ".save"
     putStrLn fn
     s <- save g
-    return $ GameData fn s [] 0 0 0 M.empty M.empty M.empty
+    return $ GameData fn s [] 0 0 0 M.empty M.empty M.empty $ GameEquipment "smallBoat" []
 
 sortSharks :: M.Map SharkIndex GameSharkData -> M.Map T.Text [SharkIndex]
 sortSharks = M.foldlWithKey' (\m i sd -> M.insertWith (L.++) (gameSharkSpecies sd) [i] m) M.empty
 
 convertSave :: String -> GameSaveData -> GameData
-convertSave fn gsd = GameData fn seed (saveFoundationNames gsd) (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks (sortSharks sSharks) (saveResearchComplete gsd)
+convertSave fn gsd = GameData fn seed (saveFoundationNames gsd)
+                              (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks
+                              (sortSharks sSharks) (saveResearchComplete gsd) (saveDataEquipment gsd)
     where
         seed = toSeed $ saveSeed gsd
         sSharks = saveSharks gsd
 
 convertBack :: GameData -> (FilePath, GameSaveData)
 convertBack gd = ( gameDataSaveFile gd
-                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd) (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd)
+                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd) (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd) (gameDataEquipment gd)
                  )
     where
         seedV = fromSeed $ gameDataSeed gd

@@ -13,6 +13,7 @@ module Shark.Types
     , TripInfo(..)
     , ResearchReq(..)
     , ResearchData(..)
+    , Boat(..)
     , checkPlayConfigs
     ) where
 
@@ -23,6 +24,18 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import Util
+
+data Boat = Boat
+    { boatName :: T.Text
+    , boatDescription :: T.Text
+    , boatReachableBiomes :: [T.Text]
+    , boatEquipmentSlots :: Int
+    , boatFuelCost :: Int
+    , boatPrice :: Int
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON Boat
+instance ToJSON Boat
 
 data TripAttempt = TripAttempt
     { attemptMonth :: Int
@@ -104,7 +117,8 @@ checkPlayConfigs :: PlayConfigs -> Bool
 checkPlayConfigs cfgs = and $ checkGameLocation <$> siteLocations cfgs
 
 data PlayConfigs = PlayConfigs
-    { equipment :: M.Map T.Text GameEquipment
+    { boats :: M.Map T.Text Boat
+    , equipment :: M.Map T.Text GameEquipment
     , siteLocations :: M.Map T.Text GameLocation
     , sharks :: M.Map T.Text SharkInfo
     , research :: M.Map T.Text ResearchData
