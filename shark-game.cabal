@@ -24,9 +24,12 @@ extra-source-files:
     data/configs/textures.json
     assets/images/arrow.png
     assets/images/blue_shark.png
+    assets/images/boat_default.png
+    assets/images/dock.png
     assets/images/empty_net_white.png
     assets/images/nurse_shark.png
     assets/images/shark_placeholder.png
+    assets/images/water.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 data-files:
@@ -39,6 +42,7 @@ data-files:
     assets/images/blue_shark.png
     assets/images/shark_placeholder.png
     assets/images/empty_net_white.png
+    assets/images/boat_default.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 

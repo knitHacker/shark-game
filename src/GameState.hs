@@ -96,7 +96,8 @@ moveToNextState gps cfgs inputs gr =
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
-        _ -> undefined
+        FleetManagement gd -> return $ menuWithPause gd $ fleetManagementTopMenu gd cfgs gr
+        ComingSoon -> undefined
     where
         menuWithPause gd bm = withPause gps gd $ BasicMenu bm
 

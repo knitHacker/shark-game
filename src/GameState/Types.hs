@@ -53,6 +53,7 @@ data GamePlayState =
     | AwardGrantMenu GameData (DataEntry ResearchData)
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
+    | FleetManagement GameData
     | ComingSoon
 
 

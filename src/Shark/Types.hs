@@ -32,6 +32,7 @@ data Boat = Boat
     , boatEquipmentSlots :: Int
     , boatFuelCost :: Int
     , boatPrice :: Int
+    , boatImage :: T.Text
     } deriving (Generic, Show, Eq)
 
 instance FromJSON Boat

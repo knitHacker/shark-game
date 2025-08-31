@@ -6,7 +6,8 @@
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass"],
             "boatEquipmentSlots": 1,
             "boatFuelCost": 10,
-            "boatPrice": 100
+            "boatPrice": 100,
+            "boatImage": "default_boat"
         },
         "mediumBoat": {
             "boatName": "Medium Boat",
@@ -14,7 +15,8 @@
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean"],
             "boatEquipmentSlots": 2,
             "boatFuelCost": 20,
-            "boatPrice": 2000
+            "boatPrice": 2000,
+            "boatImage": "default_boat"
         },
         "largeBoat": {
             "boatName": "Large Boat",
@@ -22,7 +24,8 @@
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest"],
             "boatEquipmentSlots": 4,
             "boatFuelCost": 30,
-            "boatPrice": 30000
+            "boatPrice": 30000,
+            "boatImage": "default_boat"
         }
     },
     "equipment": {

@@ -23,5 +23,20 @@
         "sizeX": 200,
         "sizeY": 200,
         "file": "assets/images/shark_placeholder.png"
+    },
+    "default_boat": {
+        "sizeX": 300,
+        "sizeY": 200,
+        "file": "assets/images/boat_default.png"
+    },
+    "water": {
+        "sizeX": 500,
+        "sizeY": 400,
+        "file": "assets/images/water.png"
+    },
+    "dock": {
+        "sizeX": 500,
+        "sizeY": 400,
+        "file": "assets/images/dock.png"
     }
 }
