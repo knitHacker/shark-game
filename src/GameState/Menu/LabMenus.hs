@@ -34,10 +34,10 @@ labTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 140 4 1
                 , TextDisplay "Management" 40 45 10 White
                 ]
         fundWords = oneLine gr fundTxts 35 90 2
-        opts = [ MenuAction "Fundraising" False ComingSoon
-               , MenuAction "Fleet Management" True $ FleetManagement gd
-               , MenuAction "Equipment Management" False ComingSoon
-               , MenuAction "Return to Research Center" True $ ResearchCenter gd
+        opts = [ MenuAction "Fundraising" Nothing
+               , MenuAction "Fleet Management" $ Just $ FleetManagement gd
+               , MenuAction "Equipment Management" Nothing
+               , MenuAction "Return to Research Center" $ Just $ ResearchCenter gd
                ]
 
 -- To make sure the user doesn't get stuck with no money they can "host" a fundraiser
@@ -55,8 +55,8 @@ fundraiserTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 
                 , TextDisplay dateTxt 35 105 3 White
                 ]
         fundWords = oneLine gr fundTxts 35 90 2
-        opts = [ MenuAction "Host Fundraiser" False ComingSoon
-               , MenuAction "Equipment Management" False ComingSoon
+        opts = [ MenuAction "Host Fundraiser" Nothing
+               , MenuAction "Equipment Management" Nothing
                ]
 
 
@@ -80,6 +80,6 @@ fleetManagementTopMenu gd cfgs gr = mkMenu words imgs Nothing (selOneOpts 15 190
                , (150, 105, 0.35, boatI)
                , (115, 85, 0.25, "dock")
                ]
-        opts = [ MenuAction "Boat Store" False ComingSoon
-               , MenuAction "Return to Management" True $ LabManagement gd
+        opts = [ MenuAction "Boat Store" Nothing
+               , MenuAction "Return to Management" $ Just $ LabManagement gd
                ]

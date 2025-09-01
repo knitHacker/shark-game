@@ -11,6 +11,7 @@ import Foreign.C.Types ( CInt )
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
+import Data.Maybe (isJust)
 
 import OutputHandles.Types
 import OutputHandles.Images
@@ -103,7 +104,7 @@ updateSelOneListOptions gr@(Graphics _ (fw, fh)) d pos (BlockDrawInfo x y s sp) 
     where
         r = if pos >= 0 && pos < length ma then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
         r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions opts s h oX oY
-        opts = (\mo -> (menuOptionText mo, if menuOptionEnabled mo then Blue else Gray)) <$> ma
+        opts = (\mo -> (menuOptionText mo, if isJust $ menuNextState mo then Blue else Gray)) <$> ma
         yPos = y + (h * pos)
         yPos' = fromIntegral yPos
         oX = fromIntegral x

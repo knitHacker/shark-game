@@ -41,14 +41,14 @@ instance ToJSON Boat
 data TripAttempt = TripAttempt
     { attemptMonth :: Int
     , attemptEqipment :: DataEntry GameEquipment
-    }
+    } deriving (Show, Eq)
 
 data TripState = TripState
     { trip :: TripInfo
     , tripTries :: [TripAttempt]
     , tripTotalTries :: Int
     , sharkFinds :: [SharkFind]
-    }
+    } deriving (Show, Eq)
 
 data GameEquipment = GameEquip
     { text :: T.Text
@@ -68,7 +68,6 @@ checkGameLocation loc = foldl (\p (_, c) -> p + c) 0 shks == 100
 
 data GameLocation = GameLoc
     { showText :: T.Text
-    , requiredEquipment :: [T.Text]
     , allowedEquipment :: [T.Text]
     , sharksFound :: [(T.Text, Int)]
     } deriving (Generic, Show, Eq)
@@ -131,7 +130,7 @@ instance ToJSON PlayConfigs
 data TripInfo = TripInfo
     { tripDestination :: DataEntry GameLocation
     , tripEquipment :: [DataEntry GameEquipment]
-    }
+    } deriving (Show, Eq)
 
 data SharkFind = SharkFind
     { findMonth :: Int

@@ -91,7 +91,7 @@ getNextMenu (MenuOptions (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
 getNextMenu (MenuOptions (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
 getNextMenu (MenuOptions (ScrollListOpts (SLOpts opts fixed _)) _ pos)
     | pos < optLen = getNextOpt opts pos
-    | otherwise = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
+    | otherwise = menuNextState opt
     where
         optLen = getOptSize opts
         opt = fixed !! (pos - optLen)
@@ -107,7 +107,7 @@ getOptSize (BasicMSLOpts opts) = length $ mslOpts opts
 getOptSize (BasicTextOpts to) = length $ textOptionTexts to
 
 getNextOALOpts :: OneActionListOptions a -> Int -> Maybe a
-getNextOALOpts (OALOpts opts _) pos = if menuOptionEnabled opt then Just $ menuNextState opt else Nothing
+getNextOALOpts (OALOpts opts _) pos = menuNextState opt
     where
         opt = opts !! pos
 

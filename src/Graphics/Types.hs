@@ -87,8 +87,7 @@ data View = View
 
 data MenuAction a = MenuAction
     { menuOptionText :: !T.Text
-    , menuOptionEnabled :: !Bool
-    , menuNextState :: !a
+    , menuNextState :: !(Maybe a)
     }
 
 data SelectOption = SelectOption

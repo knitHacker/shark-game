@@ -117,7 +117,7 @@ data GameData = GameData
     , gameDataFoundSharks :: M.Map T.Text [SharkIndex]
     , gameDataResearchComplete :: M.Map T.Text ResearchCompleteInfo
     , gameDataEquipment :: GameDataEquipment
-    }
+    } deriving (Show, Eq)
 
 
 data GameSaveData = GameSaveData

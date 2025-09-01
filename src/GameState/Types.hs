@@ -54,8 +54,7 @@ data GamePlayState =
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
     | FleetManagement GameData
-    | ComingSoon
-
+    deriving (Eq, Show)
 
 
 -- Class for reading game state from the top level monad

@@ -97,7 +97,6 @@ moveToNextState gps cfgs inputs gr =
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
         FleetManagement gd -> return $ menuWithPause gd $ fleetManagementTopMenu gd cfgs gr
-        ComingSoon -> undefined
     where
         menuWithPause gd bm = withPause gps gd $ BasicMenu bm
 
@@ -170,9 +169,9 @@ pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
         menuOpt = MenuOptions (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
         words = [ TextDisplay "Game Menu" 30 30 10 White
                 ]
-        opts = [ MenuAction "Continue" True gps
-               , MenuAction "Main Menu" True $ MainMenu gd
-               , MenuAction "Save & Exit" True (GameExitState (Just gd))
+        opts = [ MenuAction "Continue" $ Just gps
+               , MenuAction "Main Menu" $ Just $ MainMenu gd
+               , MenuAction "Save & Exit" $ Just (GameExitState (Just gd))
                ]
 
 introPageIO :: IO GameView
