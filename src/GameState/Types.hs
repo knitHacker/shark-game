@@ -54,6 +54,8 @@ data GamePlayState =
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
     | FleetManagement GameData
+    | EquipmentManagement GameData
+    | EquipmentStore GameData (Maybe (T.Text, Int, GameData))
     deriving (Eq, Show)
 
 

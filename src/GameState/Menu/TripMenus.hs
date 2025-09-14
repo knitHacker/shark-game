@@ -53,9 +53,9 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15
         aEs = allowedEquipment locO
         lupE et =
             let eqEntry = eq M.! et
-            in (et, T.append (T.append (text eqEntry) " - $") (T.pack (show (price eqEntry))))
+            in (et, T.append (T.append (equipText eqEntry) " - $") (T.pack (show (equipPrice eqEntry))))
         aEs' = lupE <$> aEs
-        cost = foldl (\s opt -> if selectSelected opt then s + price (eq M.! selectKey opt) else s) 0 opts'
+        cost = foldl (\s opt -> if selectSelected opt then s + equipPrice (eq M.! selectKey opt) else s) 0 opts'
         costTxt = T.append "Trip Current Cost: $" (T.pack (show cost))
         words = [ TextDisplay "Select Trip" 10 10 8 White
                 , TextDisplay "Equipment" 15 55 10 White
@@ -100,12 +100,12 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) =
         (ta@(TripAttempt mn h):tl) ->
             let (gd', sfM) = exec ta
                 tp' = newTrip sfM tl
-                lastText = T.concat ["month ", T.pack (show mn), ", using ", getData h text]
+                lastText = T.concat ["month ", T.pack (show mn), ", using ", getData h equipText]
             in TimeoutView ts 1 (v [TextDisplay lastText 30 60 4 Green]) $ SharkFound gd' sfM tp'
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
-        v w = View (words ++ w) [] [backRect, progressRect] Nothing
+        v w = View (words ++ w) [] [backRect, progressRect] Nothing Nothing
         progX = 30
         progY = 150
         progH = 20
@@ -123,7 +123,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) =
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Menu GamePlayState
 sharkFoundMenu gd sfM tp cfgs = mkMenu words imgs Nothing (selOneOpts 80 220 3 4 opts (CursorRect White) 0)
     where
-        typeText sf = T.append (T.append "You " (getData (findEquipment sf) infoType)) " a "
+        typeText sf = T.append (T.append "You " (getData (findEquipment sf) equipInfoType)) " a "
         sharkText sf = getData (findSpecies sf) sharkName
         sharkImg sf = getData (findSpecies sf) sharkImage
         (words, imgs) = case sfM of
@@ -143,7 +143,7 @@ tripResultsMenu gd tp cfgs gr = mkMenu words [] scrollVM (selOneOpts 60 200 3 4 
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
         words = [TextDisplay "Trip Complete!" 10 10 8 White]
-        findText sf = T.concat [getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) infoType]
+        findText sf = T.concat [getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) equipInfoType]
         findDisplays (i, sf) = [ TextDisplay (findText sf) 30 (50 + (i * 40)) 3 White
                                , TextDisplay (T.append "at " (monthToText (findMonth sf))) 50 (65 + (i * 40)) 3 White
                                ]

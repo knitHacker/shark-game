@@ -51,11 +51,12 @@ data TripState = TripState
     } deriving (Show, Eq)
 
 data GameEquipment = GameEquip
-    { text :: T.Text
-    , timeAdded :: Int
-    , price :: Int
-    , infoType :: T.Text
-    , effectiveness :: Int
+    { equipText :: T.Text
+    , equipSize :: Int
+    , equipTimeAdded :: Int
+    , equipPrice :: Int
+    , equipInfoType :: T.Text
+    , equipEffectiveness :: Int
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameEquipment

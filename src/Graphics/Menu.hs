@@ -11,6 +11,7 @@ module Graphics.Menu
     , scrollMenu
     , isMenuScrollable
     , getOptSize
+    , mkMenuPop
     ) where
 
 import qualified Data.Text as T
@@ -24,21 +25,28 @@ import InputState
 import Data.IntMap (update)
 
 import Debug.Trace
+import System.Console.GetOpt (getOpt)
 
 isMenuScrollable :: Menu a -> Bool
-isMenuScrollable (Menu (View _ _ _ (Just _)) _) = True
+isMenuScrollable (Menu (View _ _ _ (Just _) Nothing) _) = True
 isMenuScrollable _ = False
 
-mkMenu :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe ViewScroll -> MenuOptions a -> Menu a
-mkMenu words images scrollM = Menu (View words images [] scrollM)
+mkMenu :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a) -> MenuOptions a -> Menu a
+mkMenu words images scrollM = Menu (View words images [] scrollM Nothing)
 
-mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe ViewScroll
+
+mkMenuPop :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a) -> Maybe (MenuPopup a) -> MenuOptions a -> Menu a
+mkMenuPop words images scrollM popM = Menu (View words images [] scrollM popM)
+
+
+
+mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe (ViewScroll a)
 mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY step <$> sdM
     where
-        v = View words images [] Nothing
+        v = View words images [] Nothing Nothing
         sdM = mkScrollData graphics v offset maxY step
 
-mkScrollData :: Graphics -> View -> Int -> Int -> Int -> Maybe ScrollData
+mkScrollData :: Graphics -> View a -> Int -> Int -> Int -> Maybe ScrollData
 mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
     where
         mkScrollData' ((startX, startY), (w, h)) =
@@ -47,9 +55,9 @@ mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
                 maxStep = ceiling $ (fromIntegral (h2 - h4)) / (fromIntegral step)
             in ScrollData startX startY h h2 h4 maxStep
 
-getViewSize :: Graphics -> View -> Maybe ((Int, Int), (Int, Int))
-getViewSize _ (View [] [] [] Nothing) = Nothing
-getViewSize (Graphics tm fs) (View txts imgs rects Nothing) = Just ((x, y), (w, h))
+getViewSize :: Graphics -> View a -> Maybe ((Int, Int), (Int, Int))
+getViewSize _ (View [] [] [] Nothing Nothing) = Nothing
+getViewSize (Graphics tm fs) (View txts imgs rects Nothing Nothing) = Just ((x, y), (w, h))
     where
         imgRects = (\(x, y, s, tE) ->
                         let (TextureInfo tw th) = (tm ! tE)
@@ -86,6 +94,7 @@ selMultOpts x y s sp opts up act back = MenuOptions (SelMultiListOpts $ MSLOpts 
 scrollOpts :: Int -> Int -> Int -> Int -> BasicOption a -> [MenuAction a] -> Int -> Int -> MenuOptions a
 scrollOpts x y s sp opts fixed maxScroll pos = MenuOptions (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll pos)) (BlockDrawInfo x y s sp) pos
 
+
 getNextMenu :: MenuOptions a -> Maybe a
 getNextMenu (MenuOptions (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
 getNextMenu (MenuOptions (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
@@ -99,11 +108,13 @@ getNextMenu (MenuOptions (ScrollListOpts (SLOpts opts fixed _)) _ pos)
 getNextOpt :: BasicOption a -> Int -> Maybe a
 getNextOpt (BasicSOALOpts opts) pos = getNextOALOpts opts pos
 getNextOpt (BasicMSLOpts opts) pos = getNextMSLOpts opts pos
+getNextOpt (BasicCBOpts opts) pos = getNextCBOpts opts pos
 getNextOpt _ _ = Nothing
 
 getOptSize :: BasicOption a -> Int
 getOptSize (BasicSOALOpts opts) = length $ oalOpts opts
 getOptSize (BasicMSLOpts opts) = length $ mslOpts opts
+getOptSize (BasicCBOpts opts) = length $ colButOptActions opts
 getOptSize (BasicTextOpts to) = length $ textOptionTexts to
 
 getNextOALOpts :: OneActionListOptions a -> Int -> Maybe a
@@ -123,12 +134,19 @@ getNextMSLOpts opts pos
         opts' = toggleMultiOption opts pos
         selected = selectKey <$> filter selectSelected (mslOpts opts')
 
+getNextCBOpts :: ColumnButtonOptions a -> Int -> Maybe a
+getNextCBOpts (CBOpts _ _  _ opts) pos
+    | pos >= length opts = Nothing
+    | isJust $ colOptionAction (opts !! pos) = colOptionAction (opts !! pos)
+    | otherwise = Nothing
+
 optionLength :: MenuOptions a -> Int
 optionLength (MenuOptions (SelOneListOpts opts) _ _) = length $ oalOpts opts
 optionLength (MenuOptions (SelMultiListOpts opts) _ _) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
 optionLength (MenuOptions (ScrollListOpts opts) _ _) = length (sLFixedOpts opts) + case sLScrollOpts opts of
     BasicSOALOpts oal -> length $ oalOpts oal
     BasicMSLOpts msl -> 1 + length (mslOpts msl) + if isJust (mslBackActionM msl) then 1 else 0
+    BasicCBOpts cb -> length $ colButOptActions cb
     BasicTextOpts to -> length $ textOptionTexts to
 
 toggleMultiOption :: MultiSelectListOptions a -> Int -> MultiSelectListOptions a
@@ -169,9 +187,8 @@ decrementMenuCursor m@(Menu _ mo@(MenuOptions _ _ p))
     | otherwise = m { options = mo { cursorPosition = p - 1 } }
 
 scrollMenu :: Menu a -> Int -> Menu a
-scrollMenu m@(Menu v@(View txts imgs rts (Just vs)) opts) sAmt = m { menuView = v { viewScroll = Just (vs { scrollOffset = newOffset }) } }
+scrollMenu m@(Menu v@(View txts imgs rts (Just vs) Nothing) opts) sAmt = m { menuView = v { viewScroll = Just (vs { scrollOffset = newOffset }) } }
     where
         sd = scrollData vs
         newOffset = max 0 $ min (scrollOffset vs - sAmt) (scrollMaxOffset sd)
 scrollMenu m _ = m
-

@@ -30,39 +30,44 @@
     },
     "equipment": {
         "drumLine": {
-            "text": "Drum Line",
-            "timeAdded": 1,
-            "price": 100,
-            "infoType": "caught",
-            "effectiveness": 80
+            "equipText": "Drum Line",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 100,
+            "equipInfoType": "caught",
+            "equipEffectiveness": 80
         },
         "longLine": {
-            "text": "Long Line",
-            "timeAdded": 1,
-            "price": 150,
-            "infoType": "caught",
-            "effectiveness": 90
+            "equipText": "Long Line",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 150,
+            "equipInfoType": "caught",
+            "equipEffectiveness": 90
         },
         "fishingGear": {
-            "text": "Fishing Gear",
-            "timeAdded": 1,
-            "price": 20,
-            "infoType": "caught",
-            "effectiveness": 60
+            "equipText": "Fishing Gear",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 20,
+            "equipInfoType": "caught",
+            "equipEffectiveness": 60
         },
         "snorkelGear": {
-            "text": "Snorkel Gear",
-            "timeAdded": 1,
-            "price": 50,
-            "infoType": "observed",
-            "effectiveness": 50
+            "equipText": "Snorkel Gear",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 50,
+            "equipInfoType": "observed",
+            "equipEffectiveness": 50
         },
         "scubaGear": {
-            "text": "Scuba Gear",
-            "timeAdded": 2,
-            "price": 100,
-            "infoType": "observed",
-            "effectiveness": 90
+            "equipText": "Scuba Gear",
+            "equipSize": 2,
+            "equipTimeAdded": 2,
+            "equipPrice": 100,
+            "equipInfoType": "observed",
+            "equipEffectiveness": 90
         }
     },
     "siteLocations": {

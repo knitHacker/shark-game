@@ -97,6 +97,8 @@ moveToNextState gps cfgs inputs gr =
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
         FleetManagement gd -> return $ menuWithPause gd $ fleetManagementTopMenu gd cfgs gr
+        EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
+        EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
     where
         menuWithPause gd bm = withPause gps gd $ BasicMenu bm
 

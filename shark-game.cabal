@@ -81,6 +81,7 @@ library
       OutputHandles.Util
       SaveData
       Shark.Review
+      Shark.Store
       Shark.Trip
       Shark.Types
       Shark.Util

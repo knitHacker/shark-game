@@ -37,7 +37,7 @@ getInfoCounts = getInfoCounts' M.empty
         getInfoCounts' m [] = m
         getInfoCounts' m (h:tl) =
             let eq = findEquipment h
-                info = getData eq infoType
+                info = getData eq equipInfoType
             in getInfoCounts' (M.insertWith (+) info 1 m) tl
 
 getKnownSharks :: PlayConfigs -> GameData -> [DataEntry SharkInfo]
@@ -80,7 +80,7 @@ getResearchRequirement cfgs gd sk req = (iType, sInfos, reqCount req)
         sInfos = fst <$> L.filter (\(i, sd) -> getSharkInfo cfgs sd == iType) ((\sdi -> (sdi, getShark gd sdi)) <$> sds)
 
 getSharkInfo :: PlayConfigs -> GameSharkData -> T.Text
-getSharkInfo cfgs sd = infoType $ equipment cfgs M.! gameSharkEquipment sd
+getSharkInfo cfgs sd = equipInfoType $ equipment cfgs M.! gameSharkEquipment sd
 
 canCompleteResearch :: [ResearchReqData] -> Bool
 canCompleteResearch = all canComplete
