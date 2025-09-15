@@ -136,7 +136,7 @@ updateGameStateInMenu mM m inputs =
         (True, Just om, _, _, _) -> Just $ Left $ OverlayMenu om $ BasicMenu m
         (_, _, _, Just DUp, _) -> Just $ Left $ GameMenu mM $ decrementMenuCursor m
         (_, _, _, Just DDown, _) -> Just $ Left $ GameMenu mM $ incrementMenuCursor m
-        (_, _, True, _, _) -> Right <$> (getNextMenu $ options m)
+        (_, _, True, _, _) -> Right <$> getNextMenu m
         (_, _, _, _, Just (MouseInputs scroll)) ->
             if isMenuScrollable m
                 then Just $ Left $ GameMenu mM $ scrollMenu m scroll
@@ -154,7 +154,7 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
     case (esc, backM, selected, moveDirM) of
         (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
         (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameTimeout (Just (om' topM)) tov
-        (_, _, True, _) -> Right <$> (getNextMenu $ options topM)
+        (_, _, True, _) -> Right <$> getNextMenu topM
         (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
         (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing

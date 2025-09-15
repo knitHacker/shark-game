@@ -86,7 +86,6 @@ data View a = View
     , rects :: ![(Color, Int, Int, Int, Int)]
     -- should this be a list? probably but don't have mouse position atm
     , viewScroll :: !(Maybe (ViewScroll a))
-    , viewPopup :: !(Maybe (MenuPopup a))
     }
 
 data MenuAction a = MenuAction
@@ -177,6 +176,7 @@ data MenuOptionType a =
 data Menu a = Menu
     { menuView :: !(View a)
     , options :: !(MenuOptions a)
+    , popupMaybe :: !(Maybe (MenuPopup a))
     }
 
 data MenuPopup a = MenuPopup

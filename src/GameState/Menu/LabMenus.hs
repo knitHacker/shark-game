@@ -106,7 +106,7 @@ equipmentManagementTopMenu gd cfgs gr = mkMenu words [] Nothing (selOneOpts 15 1
                ]
 
 buyConfirm :: GameData -> GameConfigs -> (T.Text, Int, GameData) -> MenuPopup GamePlayState
-buyConfirm gd cfgs (item, price, gd') = MenuPopup m 50 50 300 200 DarkBlue
+buyConfirm gd cfgs (item, price, gd') = MenuPopup m 20 40 150 200 DarkBlue
     where
         m = mkMenu words [] Nothing (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
         funds = gameDataFunds gd
@@ -114,11 +114,11 @@ buyConfirm gd cfgs (item, price, gd') = MenuPopup m 50 50 300 200 DarkBlue
         fundTxt = T.append "Current Funds: $" (T.pack (show funds))
         itemTxt = T.append "Item Cost: $" (T.pack (show price))
         afterTxt = T.append "After Purchase: $" (T.pack (show (funds - price)))
-        words = [ TextDisplay "Confirm Purchase" 10 10 14 White
-                , TextDisplay item 15 55 10 White
-                , TextDisplay fundTxt 25 105 3 Green
-                , TextDisplay itemTxt 25 125 3 (if enoughFunds then Green else Red)
-                , TextDisplay afterTxt 25 145 3 (if enoughFunds then Green else Red)
+        words = [ TextDisplay "Confirm Purchase" 25 45 14 White
+                , TextDisplay item 25 55 10 White
+                , TextDisplay fundTxt 30 105 3 Green
+                , TextDisplay itemTxt 30 125 3 (if enoughFunds then Green else Red)
+                , TextDisplay afterTxt 30 145 3 (if enoughFunds then Green else Red)
                 ]
         opts = [ MenuAction "Confirm Purchase" $ if enoughFunds then Just (EquipmentStore gd' Nothing) else Nothing
                , MenuAction "Cancel" $ Just $ EquipmentStore gd Nothing
@@ -136,7 +136,7 @@ mkStoreEntry gd (k, e) = ColAction txt action
 
 
 equipmentStoreMenu :: GameData -> Maybe (T.Text, Int, GameData) -> GameConfigs -> Graphics -> Menu GamePlayState
-equipmentStoreMenu gd popupGd cfgs gr = mkMenuPop words [] Nothing pop (scrollOpts 15 80 3 8 colOpts opts 6 0)
+equipmentStoreMenu gd popupGd cfgs gr = mkMenuPop words [] Nothing (scrollOpts 15 80 3 8 colOpts opts 6 0) pop
     where
         mc = CursorRect White
         equips = equipment $ sharkCfgs cfgs

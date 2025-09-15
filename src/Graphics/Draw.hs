@@ -65,7 +65,7 @@ updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart y
 
 -- Update a generic view
 updateGameView :: Graphics -> Int -> View a -> ToRender
-updateGameView gr d (View words imgs rs scrollM popM) = r'''
+updateGameView gr d (View words imgs rs scrollM) = r'''
     where
         r = foldl (\rend td -> addText rend d 1 td) renderEmpty words
         r' = foldl (\rend t -> addTexture rend d 0 (toDraw t )) r imgs
@@ -89,7 +89,8 @@ addPopup gr d r (MenuPopup m x y w h c) = r'
 
 -- Translate a menu obeject into a render object to show it on screen
 updateGameMenu :: Graphics -> Int -> Menu a -> ToRender
-updateGameMenu gr d (Menu v opts) = updateGameView gr d v <> updateMenuOptions gr d opts
+updateGameMenu gr d (Menu v opts (Just mp)) = addPopup gr d (updateGameView gr d v <> updateMenuOptions gr d opts) mp
+updateGameMenu gr d (Menu v opts Nothing) = updateGameView gr d v <> updateMenuOptions gr d opts
 
 -- Translate the menu options into render object to draw
 updateMenuOptions :: Graphics -> Int -> MenuOptions a -> ToRender
