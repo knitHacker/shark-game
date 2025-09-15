@@ -22,6 +22,7 @@ import Data.Time.Clock.System
     ( SystemTime(systemSeconds, systemNanoseconds), getSystemTime )
 import Data.Word ( Word32 )
 import Control.Concurrent
+import Control.Arrow (ArrowApply(app))
 
 framesPerSecond :: Word32
 framesPerSecond = 45
@@ -60,7 +61,13 @@ runGame count pTime appEnvData = do
 --      -
 run :: Word32 -> SystemTime -> AppEnvData -> IO ()
 run count time appEnvData = do
-    input <- runAppEnv appEnvData stepGame
+    inputs <- runAppEnv appEnvData stepGame
+    applyInputs count time inputs appEnvData
+
+
+applyInputs :: Word32 -> SystemTime -> [InputState] -> AppEnvData -> IO ()
+applyInputs _ _ [] _ = return ()
+applyInputs count time (input:tl) appEnvData = do
     gameState' <- runAppEnv appEnvData updateGameState
     let stop = inputQuit input
         appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
@@ -74,8 +81,10 @@ run count time appEnvData = do
             cleanupOutputHandles outputs
         _ -> runGame count time appEnvData'
 
+    applyInputs count time tl appEnvData'
 
-stepGame :: AppEnv InputState
+
+stepGame :: AppEnv [InputState]
 stepGame = do
     draws <- updateWindow
     _ <- executeDraw draws

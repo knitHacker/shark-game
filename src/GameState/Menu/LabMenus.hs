@@ -88,13 +88,13 @@ fleetManagementTopMenu gd cfgs gr = mkMenu words imgs Nothing (selOneOpts 15 190
                ]
 
 equipmentManagementTopMenu :: GameData -> GameConfigs -> Graphics -> Menu GamePlayState
-equipmentManagementTopMenu gd cfgs gr = mkMenu words [] Nothing (selOneOpts 15 190 4 15 opts mc 0)
+equipmentManagementTopMenu gd cfgs gr = mkMenu words [] scrollData (selOneOpts 15 190 4 15 opts mc 0)
     where
         myEquipment = gameOwnedEquipment $ gameDataEquipment gd
         equipmentInfo = (!) (equipment (sharkCfgs cfgs)) <$> myEquipment
         mc = CursorRect White
-        equipTxts = (\e -> (equipText e) <> "\tEquipment Slots: " <> (T.pack . show $ equipSize e)) <$> equipmentInfo
-        equipDis = (\(t, i) -> TextDisplay t 20 (160 + i * 20) 3 LightGray) <$> zip equipTxts [0..]
+        equipTxts = (\e -> (equipText e) <> "    Equipment Slots: " <> (T.pack . show $ equipSize e)) <$> equipmentInfo
+        equipDis = (\(t, i) -> TextDisplay t 20 (100 + i * 20) 3 LightGray) <$> zip equipTxts [0..]
         words = [ TextDisplay "Equipment" 10 10 10 White
                 , TextDisplay "Management" 40 45 10 White
                 , TextDisplay "Owned Equipment" 10 80 4 LightGray
@@ -108,16 +108,15 @@ equipmentManagementTopMenu gd cfgs gr = mkMenu words [] Nothing (selOneOpts 15 1
 buyConfirm :: GameData -> GameConfigs -> (T.Text, Int, GameData) -> MenuPopup GamePlayState
 buyConfirm gd cfgs (item, price, gd') = MenuPopup m 20 40 150 200 DarkBlue
     where
-        m = mkMenu words [] Nothing (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
+        m = mkMenu words [] Nothing (selOneOpts 80 190 3 4 opts (CursorRect White) 0)
         funds = gameDataFunds gd
         enoughFunds = funds >= price
         fundTxt = T.append "Current Funds: $" (T.pack (show funds))
         itemTxt = T.append "Item Cost: $" (T.pack (show price))
         afterTxt = T.append "After Purchase: $" (T.pack (show (funds - price)))
-        words = [ TextDisplay "Confirm Purchase" 25 45 14 White
-                , TextDisplay item 25 55 10 White
+        words = [ TextDisplay item 25 55 9 White
                 , TextDisplay fundTxt 30 105 3 Green
-                , TextDisplay itemTxt 30 125 3 (if enoughFunds then Green else Red)
+                , TextDisplay itemTxt 30 125 3 Red
                 , TextDisplay afterTxt 30 145 3 (if enoughFunds then Green else Red)
                 ]
         opts = [ MenuAction "Confirm Purchase" $ if enoughFunds then Just (EquipmentStore gd' Nothing) else Nothing
@@ -147,6 +146,6 @@ equipmentStoreMenu gd popupGd cfgs gr = mkMenuPop words [] Nothing (scrollOpts 1
         words = [ TextDisplay "Equipment" 10 10 10 White
                 , TextDisplay "Store" 40 45 10 White
                 ]
-        opts = [ MenuAction "Leave Equipment Store" $ Just $ LabManagement gd
+        opts = [ MenuAction "Leave Equipment Store" $ Just $ EquipmentManagement gd
                ]
         pop = buyConfirm gd cfgs <$> popupGd
