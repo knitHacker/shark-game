@@ -48,7 +48,7 @@ mapMenu gd cfgs = mkMenu words [] Nothing options
 equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu GamePlayState
 equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15 130 3 6 opts' update act (Just back) pos)
     where
-        locO = (siteLocations (sharkCfgs cfgs)) M.! loc
+        locO = siteLocations (sharkCfgs cfgs) M.! loc
         eq = equipment $ sharkCfgs cfgs
         aEs = allowedEquipment locO
         lupE et =
