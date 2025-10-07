@@ -26,6 +26,8 @@ import Data.Int (Int64)
 import Data.Time.Clock.System
     ( SystemTime(..), getSystemTime )
 
+import Data.Word (Word32)
+
 import Debug.Trace
 
 data Direction
@@ -113,17 +115,16 @@ inputQuit :: InputState -> Bool
 inputQuit (InputState (Just key) _ _) = inputStateQuit key
 inputQuit _ = False
 
-updateInput :: (InputRead m, MonadIO m) => m [InputState]
-updateInput = do
+updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputState
+updateInput to = do
     input <- readInputState
     time <- liftIO getSystemTime
-    event <- SDL.pollEvent
+    event <- SDL.waitEventTimeout (fromIntegral to)
     let ts = systemSeconds time
     case event of
         (Just event) -> do
-            next <- updateInput
-            return $ payloadToIntent event ts : next
-        _ -> return [updateRepeat input ts]
+            return $ payloadToIntent event ts
+        _ -> return $ updateRepeat input ts
 
 
 payloadToIntent :: SDL.Event -> Int64 -> InputState

@@ -1,6 +1,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Configs
     ( ConfigsRead(..)
@@ -23,9 +24,12 @@ import Data.Either ()
 import Data.Word (Word32)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import System.Directory (doesFileExist)
+import Data.Default
 
 import Env.Files    (getGameFullPath)
 import Shark.Types
+import Data.Graph (path)
 
 configFile :: FilePath
 configFile = "data/configs/game.json"
@@ -71,6 +75,7 @@ data SettingConfigs = SettingConfigs
     , boardSizeY :: Int
     , windowSizeX :: Int
     , windowSizeY :: Int
+    , frameRate :: Word32
     } deriving (Generic, Show, Eq)
 
 
@@ -83,6 +88,10 @@ data StateConfigs = StateConfigs
 
 instance FromJSON StateConfigs
 instance ToJSON StateConfigs
+
+instance Default StateConfigs where
+    def :: StateConfigs
+    def = StateConfigs Nothing
 
 type TextureFileMap = M.Map T.Text TextureCfg
 
@@ -99,6 +108,16 @@ instance ToJSON Configs
 checkConfigs :: Configs -> Bool
 checkConfigs cfgs = checkPlayConfigs (pCfgs cfgs)
 
+loadOrCreate :: (FromJSON a, ToJSON a, Default a) => FilePath -> IO (Either String a)
+loadOrCreate path = do
+    exists <- doesFileExist path
+    if exists
+        then eitherDecodeFileStrict path
+        else do
+            let newState = def
+            encodeFile path newState
+            return $ Right newState
+
 initConfigs :: IO (TextureFileMap, GameConfigs)
 initConfigs = do
     gPath <- getGameFullPath configFile
@@ -106,7 +125,7 @@ initConfigs = do
     tPath <- getGameFullPath texturesFile
     texturesE <- eitherDecodeFileStrict tPath
     sPath <- getGameFullPath stateFile
-    stateE <- eitherDecodeFileStrict sPath
+    stateE <- loadOrCreate sPath
     pPath <- getGameFullPath sharkFile
     playerE <- eitherDecodeFileStrict pPath
     let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playerE
@@ -127,6 +146,11 @@ updateStateConfigs sc = do
 
 class Monad m => ConfigsRead m where
     readConfigs :: m GameConfigs
+
+    readFrameRate :: m Word32
+    readFrameRate = do
+        cfgs <- readConfigs
+        return $ frameRate $ settingCfgs cfgs
 
     debugMode :: m Bool
     debugMode = do

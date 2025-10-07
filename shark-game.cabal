@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -20,7 +20,6 @@ extra-source-files:
     ChangeLog.md
     data/configs/game.json
     data/configs/shark_game.json
-    data/configs/state.json
     data/configs/textures.json
     assets/images/arrow.png
     assets/images/blue_shark.png
@@ -35,7 +34,6 @@ extra-source-files:
 data-files:
     data/configs/game.json
     data/configs/textures.json
-    data/configs/state.json
     data/configs/shark_game.json
     assets/images/arrow.png
     assets/images/nurse_shark.png
@@ -94,6 +92,7 @@ library
       aeson >=2.0.3.0
     , base >=4.7 && <5
     , containers >=0.6.4.1
+    , data-default
     , directory >=1.3.6.0
     , lens
     , lens-aeson
@@ -120,6 +119,7 @@ executable shark-game-exe
       aeson >=2.0.3.0
     , base >=4.7 && <5
     , containers >=0.6.4.1
+    , data-default
     , directory >=1.3.6.0
     , lens
     , lens-aeson
@@ -148,6 +148,7 @@ test-suite shark-game-test
       aeson >=2.0.3.0
     , base >=4.7 && <5
     , containers >=0.6.4.1
+    , data-default
     , directory >=1.3.6.0
     , lens
     , lens-aeson

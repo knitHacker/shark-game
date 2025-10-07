@@ -26,4 +26,5 @@ cabal.project.local~
 *.swp
 *.swo
 data/saves/
+data/configs/state.json
 *.ps
