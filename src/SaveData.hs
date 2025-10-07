@@ -28,6 +28,8 @@ import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
+import System.Directory
+import System.FilePath
 
 import Data.Word
 import System.Random.MWC as R
@@ -37,7 +39,7 @@ import Data.Vector.Unboxed
 import qualified Data.List as L
 
 import Configs
-import Env.Files (getGameDirectory)
+import Env.Files (getGameDirectory, getLocalGamePath)
 import Shark.Types
 
 getRandomPercent :: GameData -> (GameData, Int)
@@ -140,12 +142,15 @@ startNewGame = do
     --g <- R.create -- apparently uses the same seed every time
     g <- createSystemRandom
     name <- uniform g :: IO Int
-    let dir = "data/saves"
-    path <- getGameDirectory dir
-    let fn = path L.++ "/file" L.++ show name L.++ ".save"
-    putStrLn fn
+    let nameStr = "shark-" L.++ show name L.++ ".save"
+    let dir = "data" </> "saves" </> nameStr
+    path <- getLocalGamePath dir
+    putStrLn path
     s <- save g
-    return $ GameData fn s [] 0 0 0 M.empty M.empty M.empty $ GameEquipment "smallBoat" []
+    let gData = GameData path s [] 0 0 0 M.empty M.empty M.empty $ GameEquipment "smallBoat" []
+    createDirectoryIfMissing True (takeDirectory path)
+    saveToFile gData
+    return gData
 
 sortSharks :: M.Map SharkIndex GameSharkData -> M.Map T.Text [SharkIndex]
 sortSharks = M.foldlWithKey' (\m i sd -> M.insertWith (L.++) (gameSharkSpecies sd) [i] m) M.empty

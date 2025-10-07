@@ -53,6 +53,7 @@ dependencies:
 - lens-aeson
 - vector
 - data-default
+- filepath
 
 library:
   source-dirs: src

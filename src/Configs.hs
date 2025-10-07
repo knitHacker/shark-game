@@ -24,12 +24,14 @@ import Data.Either ()
 import Data.Word (Word32)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import System.Directory (doesFileExist)
+import System.Directory (doesFileExist, createDirectoryIfMissing)
+import System.FilePath (takeDirectory)
 import Data.Default
 
-import Env.Files    (getGameFullPath)
+import Env.Files    (getGameFullPath, getLocalGamePath)
 import Shark.Types
 import Data.Graph (path)
+import SDL.Font (load)
 
 configFile :: FilePath
 configFile = "data/configs/game.json"
@@ -110,13 +112,15 @@ checkConfigs cfgs = checkPlayConfigs (pCfgs cfgs)
 
 loadOrCreate :: (FromJSON a, ToJSON a, Default a) => FilePath -> IO (Either String a)
 loadOrCreate path = do
-    exists <- doesFileExist path
-    if exists
-        then eitherDecodeFileStrict path
-        else do
-            let newState = def
-            encodeFile path newState
-            return $ Right newState
+        exists <- doesFileExist path
+        if exists
+            then eitherDecodeFileStrict path
+            else do
+                let dir = takeDirectory path
+                let newState = def
+                createDirectoryIfMissing True dir
+                encodeFile path newState
+                return $ Right newState
 
 initConfigs :: IO (TextureFileMap, GameConfigs)
 initConfigs = do
@@ -124,7 +128,7 @@ initConfigs = do
     configsE <- eitherDecodeFileStrict gPath
     tPath <- getGameFullPath texturesFile
     texturesE <- eitherDecodeFileStrict tPath
-    sPath <- getGameFullPath stateFile
+    sPath <- getLocalGamePath stateFile
     stateE <- loadOrCreate sPath
     pPath <- getGameFullPath sharkFile
     playerE <- eitherDecodeFileStrict pPath
@@ -141,7 +145,7 @@ toGameConfigs (Configs _ g s p) = GameConfigs g s p
 
 updateStateConfigs :: StateConfigs -> IO ()
 updateStateConfigs sc = do
-    sPath <- getGameFullPath stateFile
+    sPath <- getLocalGamePath stateFile
     encodeFile sPath sc
 
 class Monad m => ConfigsRead m where
