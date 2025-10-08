@@ -24,9 +24,11 @@ import Data.Word ( Word32 )
 import Control.Concurrent
 import Control.Arrow (ArrowApply(app))
 
+import Debug.Trace
+
 -- Time for a frame
 frameTime :: Word32 -> Word32
-frameTime fps = div 1000000000 (fps + 1)
+frameTime fps = div 1000 (fps + 1)
 
 -- Game loop that enforces a frame rate throttling
 runGame :: AppEnvData -> IO ()
@@ -56,4 +58,4 @@ stepGame = do
     draws <- updateWindow
     _ <- executeDraw draws
     fr <- readFrameRate
-    updateInput $ frameTime fr
+    updateInput $ traceShowId $ frameTime fr
