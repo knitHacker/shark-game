@@ -108,7 +108,7 @@ data OneActionListOptions a = OALOpts
 data MultiSelectListOptions a = MSLOpts
     { mslOpts :: ![SelectOption]
     , mslAction :: [T.Text] -> Int -> a
-    , mslContinueAction :: [T.Text] -> a
+    , mslContinueAction :: [T.Text] -> Maybe a
     , mslBackActionM :: !(Maybe a)
     }
 

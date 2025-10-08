@@ -48,22 +48,25 @@ mapMenu gd cfgs = mkMenu words [] Nothing options
 equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu GamePlayState
 equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15 130 3 6 opts' update act (Just back) pos)
     where
-        locO = siteLocations (sharkCfgs cfgs) M.! loc
+        myEquip = gameDataEquipment gd
+        boatInfo = boats (sharkCfgs cfgs) ! gameBoat myEquip
+        slots = boatEquipmentSlots boatInfo
+        allowedEq = allowedEquipment $ siteLocations (sharkCfgs cfgs) M.! loc
         eq = equipment $ sharkCfgs cfgs
-        aEs = allowedEquipment locO
+        aEs = filter (flip elem allowedEq) $ gameOwnedEquipment myEquip
         lupE et =
             let eqEntry = eq M.! et
-            in (et, T.append (T.append (equipText eqEntry) " - $") (T.pack (show (equipPrice eqEntry))))
+            in (et, T.concat [(equipText eqEntry), " - ", (T.pack (show (equipSize eqEntry))), " slots"])
         aEs' = lupE <$> aEs
-        cost = foldl (\s opt -> if selectSelected opt then s + equipPrice (eq M.! selectKey opt) else s) 0 opts'
-        costTxt = T.append "Trip Current Cost: $" (T.pack (show cost))
+        openSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
+        slotTxt = T.concat ["Trip Equipment Space: ", (T.pack (show openSlots)), " slots"]
         words = [ TextDisplay "Select Trip" 10 10 8 White
                 , TextDisplay "Equipment" 15 55 10 White
-                , TextDisplay costTxt 20 100 4 Green
+                , TextDisplay slotTxt 20 100 4 Green
                 ]
         opts' = (\(k, t) -> SelectOption t k (k `elem` chsn) True) <$> aEs'
         update = TripEquipmentSelect gd loc
-        act = TripReview gd loc
+        act = Just $ TripReview gd loc
         back = TripDestinationSelect gd
 
 

@@ -58,4 +58,4 @@ stepGame = do
     draws <- updateWindow
     _ <- executeDraw draws
     fr <- readFrameRate
-    updateInput $ traceShowId $ frameTime fr
+    updateInput $ frameTime fr

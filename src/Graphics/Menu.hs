@@ -40,7 +40,6 @@ mkMenuPop :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a
 mkMenuPop words images scrollM = Menu (View words images [] scrollM)
 
 
-
 mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe (ViewScroll a)
 mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY step <$> sdM
     where
@@ -88,7 +87,7 @@ selOneOpts x y s sp opts curs = MenuOptions (SelOneListOpts $ OALOpts opts curs)
 
 selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
             -> ([T.Text] -> Int -> a)
-            -> ([T.Text] -> a)
+            -> ([T.Text] -> Maybe a)
             -> Maybe a -> Int -> MenuOptions a
 selMultOpts x y s sp opts up act back = MenuOptions (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
@@ -127,7 +126,7 @@ getNextOALOpts (OALOpts opts _) pos = menuNextState opt
 getNextMSLOpts :: MultiSelectListOptions a -> Int -> Maybe a
 getNextMSLOpts opts pos
     | pos < len = Just $ mslAction opts selected pos
-    | len == pos = Just $ mslContinueAction opts selected
+    | len == pos = mslContinueAction opts selected
     | otherwise = case mslBackActionM opts of
                     Nothing -> Just $ mslAction opts selected pos
                     Just back -> Just back
