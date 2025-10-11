@@ -87,7 +87,7 @@ selOneOpts x y s sp opts curs = MenuOptions (SelOneListOpts $ OALOpts opts curs)
 
 selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
             -> ([T.Text] -> Int -> a)
-            -> ([T.Text] -> Maybe a)
+            -> Maybe ([T.Text] -> a)
             -> Maybe a -> Int -> MenuOptions a
 selMultOpts x y s sp opts up act back = MenuOptions (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
@@ -126,7 +126,7 @@ getNextOALOpts (OALOpts opts _) pos = menuNextState opt
 getNextMSLOpts :: MultiSelectListOptions a -> Int -> Maybe a
 getNextMSLOpts opts pos
     | pos < len = Just $ mslAction opts selected pos
-    | len == pos = mslContinueAction opts selected
+    | len == pos = mslContinueAction opts <*> Just selected
     | otherwise = case mslBackActionM opts of
                     Nothing -> Just $ mslAction opts selected pos
                     Just back -> Just back
@@ -153,9 +153,9 @@ optionLength (MenuOptions (ScrollListOpts opts) _ _) = length (sLFixedOpts opts)
 toggleMultiOption :: MultiSelectListOptions a -> Int -> MultiSelectListOptions a
 toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle o else o) <$> zip [0..] (mslOpts opt)}
     where
-        toggle (SelectOption t k True True) = SelectOption t k False True
-        toggle (SelectOption t k False True) = SelectOption t k True True
-        toggle sopt = sopt
+        toggle (SelectOption t k _ _ True) = SelectOption t k False False True
+        toggle sopt@(SelectOption t k _ False _) = sopt
+        toggle (SelectOption t k sel _ _ ) = SelectOption t k (not sel) True False
 
 incrementMenuCursor :: Menu a -> Menu a
 incrementMenuCursor m@(Menu _ _ (Just mp)) = m { popupMaybe = Just (mp { popupMenu = incrementMenuCursor (popupMenu mp) }) }

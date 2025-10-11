@@ -64,9 +64,9 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15
                 , TextDisplay "Equipment" 15 55 10 White
                 , TextDisplay slotTxt 20 100 4 Green
                 ]
-        opts' = (\(k, t) -> SelectOption t k (k `elem` chsn) True) <$> aEs'
+        opts' = (\(k, t) -> SelectOption t k (k `elem` chsn) True False) <$> aEs'
         update = TripEquipmentSelect gd loc
-        act = Just $ TripReview gd loc
+        act = Just $ \ls -> TripReview gd loc ls
         back = TripDestinationSelect gd
 
 

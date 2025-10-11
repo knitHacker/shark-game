@@ -97,7 +97,8 @@ data SelectOption = SelectOption
     { selectOptionText :: !T.Text
     , selectKey :: !T.Text
     , selectSelected :: !Bool
-    , changeable :: !Bool
+    , selectChangeable :: !Bool
+    , selectDisabled :: !Bool
     }
 
 data OneActionListOptions a = OALOpts
@@ -108,7 +109,7 @@ data OneActionListOptions a = OALOpts
 data MultiSelectListOptions a = MSLOpts
     { mslOpts :: ![SelectOption]
     , mslAction :: [T.Text] -> Int -> a
-    , mslContinueAction :: [T.Text] -> Maybe a
+    , mslContinueAction :: Maybe ([T.Text] -> a)
     , mslBackActionM :: !(Maybe a)
     }
 

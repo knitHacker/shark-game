@@ -143,15 +143,16 @@ updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 
 
 -- Draw the menu options for menus that you can select multiple options at a time
 updateMultiListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> MultiSelectListOptions a -> ToRender
-updateMultiListOptions (Graphics _ fs) d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ _ backM) =
+updateMultiListOptions (Graphics _ fs) d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ cM backM) =
     case backM of
         Nothing -> updateSelectedOptions fs s sp renderEmpty pos 0 d mo' x' y'
         Just b -> updateSelectedOptions fs s sp renderEmpty pos 0 d (moBack b) x' y'
     where
         x' = fromIntegral x
         y' = fromIntegral y
-        mo' = mo ++ [SelectOption "Continue" "" False False]
-        moBack b = mo' ++ [SelectOption "Back" "" False False]
+        canContinue = isJust cM
+        mo' = mo ++ [SelectOption "Continue" "" False False (not canContinue)]
+        moBack b = mo' ++ [SelectOption "Back" "" False False False]
 
 -- Differentiate between selected and unselected options and draw list of options given that info
 updateSelectedOptions :: FontSize -> Int -> Int -> ToRender -> Int -> Int -> Int -> [SelectOption] -> CInt -> CInt -> ToRender
@@ -169,7 +170,7 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' 
                 td = TextDisplay str x yPos s Blue
                 hlC
                     | cp == pos = Yellow
-                    | changeable h = White
+                    | selectChangeable h = White
                     | otherwise = Gray
                 tHI = ceiling tH
                 yPos' = yPos + fromIntegral (sp + tHI)
