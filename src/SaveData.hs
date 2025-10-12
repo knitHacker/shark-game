@@ -7,6 +7,7 @@ module SaveData
     ( GameData(..)
     , GameSharkData(..)
     , ResearchCompleteInfo(..)
+    , GameDataEquipment(..)
     , SharkIndex
     , startNewGame
     , getRandomPercent
@@ -27,6 +28,8 @@ import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
 import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
+import System.Directory
+import System.FilePath
 
 import Data.Word
 import System.Random.MWC as R
@@ -36,7 +39,7 @@ import Data.Vector.Unboxed
 import qualified Data.List as L
 
 import Configs
-import Env.Files (getGameDirectory)
+import Env.Files (getGameDirectory, getLocalGamePath)
 import Shark.Types
 
 getRandomPercent :: GameData -> (GameData, Int)
@@ -78,6 +81,14 @@ getRandomElem gd ls = runST $ do
 
 type SharkIndex = Int
 
+data GameDataEquipment = GameEquipment
+    { gameBoat :: T.Text
+    , gameOwnedEquipment :: [T.Text]
+    } deriving (Show, Eq, Generic)
+
+instance FromJSON GameDataEquipment
+instance ToJSON GameDataEquipment
+
 data GameSharkData = GameShark
     { gameSharkMonth :: Int
     , gameSharkSpecies :: T.Text
@@ -107,7 +118,8 @@ data GameData = GameData
     , gameDataSharks :: M.Map SharkIndex GameSharkData
     , gameDataFoundSharks :: M.Map T.Text [SharkIndex]
     , gameDataResearchComplete :: M.Map T.Text ResearchCompleteInfo
-    }
+    , gameDataEquipment :: GameDataEquipment
+    } deriving (Show, Eq)
 
 
 data GameSaveData = GameSaveData
@@ -118,6 +130,7 @@ data GameSaveData = GameSaveData
     , saveSharkIndex :: SharkIndex
     , saveSharks :: M.Map SharkIndex GameSharkData
     , saveResearchComplete :: M.Map T.Text ResearchCompleteInfo
+    , saveDataEquipment :: GameDataEquipment
     } deriving (Show, Eq, Generic)
 
 
@@ -129,25 +142,30 @@ startNewGame = do
     --g <- R.create -- apparently uses the same seed every time
     g <- createSystemRandom
     name <- uniform g :: IO Int
-    let dir = "data/saves"
-    path <- getGameDirectory dir
-    let fn = path L.++ "/file" L.++ show name L.++ ".save"
-    putStrLn fn
+    let nameStr = "shark-" L.++ show name L.++ ".save"
+    let dir = "data" </> "saves" </> nameStr
+    path <- getLocalGamePath dir
+    putStrLn path
     s <- save g
-    return $ GameData fn s [] 0 0 0 M.empty M.empty M.empty
+    let gData = GameData path s [] 0 0 0 M.empty M.empty M.empty $ GameEquipment "smallBoat" []
+    createDirectoryIfMissing True (takeDirectory path)
+    saveToFile gData
+    return gData
 
 sortSharks :: M.Map SharkIndex GameSharkData -> M.Map T.Text [SharkIndex]
 sortSharks = M.foldlWithKey' (\m i sd -> M.insertWith (L.++) (gameSharkSpecies sd) [i] m) M.empty
 
 convertSave :: String -> GameSaveData -> GameData
-convertSave fn gsd = GameData fn seed (saveFoundationNames gsd) (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks (sortSharks sSharks) (saveResearchComplete gsd)
+convertSave fn gsd = GameData fn seed (saveFoundationNames gsd)
+                              (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks
+                              (sortSharks sSharks) (saveResearchComplete gsd) (saveDataEquipment gsd)
     where
         seed = toSeed $ saveSeed gsd
         sSharks = saveSharks gsd
 
 convertBack :: GameData -> (FilePath, GameSaveData)
 convertBack gd = ( gameDataSaveFile gd
-                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd) (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd)
+                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd) (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd) (gameDataEquipment gd)
                  )
     where
         seedV = fromSeed $ gameDataSeed gd

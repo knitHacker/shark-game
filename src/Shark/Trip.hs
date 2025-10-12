@@ -38,31 +38,34 @@ monthToText mnths
         monthTxt 1 = "1 month"
         monthTxt n = T.pack (show n ++ " months")
 
-tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
-tripInfo cfg loc eqTxt = TripInfo locE eqEs
+tripInfo :: PlayConfigs -> T.Text -> T.Text -> [T.Text] -> TripInfo
+tripInfo cfg loc boatName eqTxt = TripInfo locE eqEs boat
     where
         locE = getEntry (siteLocations cfg) loc
         eqEs = getEntry (equipment cfg) <$> eqTxt
+        boat = getEntry (boats cfg) boatName
 
 tripCost :: TripInfo -> Int
-tripCost trip = L.sum $ flip getData price <$> tripEquipment trip
+tripCost trip = tripLength trip * tripFuelCost
+    where
+        tripFuelCost = boatFuelCost $ entryData (tripBoat trip)
 
 tripLength :: TripInfo -> Int
-tripLength trip = L.sum $ flip getData timeAdded <$> tripEquipment trip
+tripLength trip = L.sum $ flip getData equipTimeAdded <$> tripEquipment trip
 
 
-initTripProgress :: GameData -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
-initTripProgress gd loc eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
+initTripProgress :: GameData -> T.Text -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
+initTripProgress gd loc boatName eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
     where
         playCfgs = sharkCfgs cfgs
-        trip = tripInfo playCfgs loc eqKeys
+        trip = tripInfo playCfgs loc boatName eqKeys
         (gd', aType) = catchAttempts playCfgs gd trip
 
 
 catchAttempts :: PlayConfigs -> GameData -> TripInfo -> (GameData, [TripAttempt])
 catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
     where
-        months = foldl (\l ee@(Entry k eq) -> replicate (timeAdded eq) ee ++ l) [] $ tripEquipment trip
+        months = foldl (\l ee@(Entry k eq) -> replicate (equipTimeAdded eq) ee ++ l) [] $ tripEquipment trip
         (s', n) = catchAttempts' 1 (gameDataSeed gd) [] months
         catchAttempts' _ s n [] = (s, n)
         catchAttempts' i s n (h:tl) =
@@ -75,7 +78,7 @@ executeTrip cfgs gd trip (TripAttempt mnth eq) =
         Nothing -> (gd', Nothing)
         Just shark ->  (gd', Just (SharkFind (curMnth + mnth - 1) (getEntry (sharks cfgs) shark) (tripDestination trip) eq))
     where
-        eqChance = getData eq effectiveness
+        eqChance = getData eq equipEffectiveness
         curMnth = gameDataMonth gd
         loc = entryData (tripDestination trip)
         (gd', caughtP) = getRandomPercent gd

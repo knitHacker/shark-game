@@ -14,12 +14,15 @@ module Graphics.Types
     , MultiSelectListOptions(..)
     , OverlayMenu(..)
     , OneActionListOptions(..)
+    , ColumnButtonOptions(..)
+    , ColumnAction(..)
     , SelectOption(..)
     , ScrollListOptions(..)
     , TimeoutView(..)
     , View(..)
     , ViewScroll(..)
     , ScrollData(..)
+    , MenuPopup(..)
     ) where
 
 import qualified Data.Text as T
@@ -55,7 +58,7 @@ data OverlayMenu a = Overlay
 data TimeoutView a = TimeoutView
     { lastTimeout :: !Int64
     , timeoutLength :: !Int64
-    , timeoutView :: !View
+    , timeoutView :: !(View a)
     , timeoutAction :: !a
     }
 
@@ -68,8 +71,8 @@ data ScrollData = ScrollData
     , scrollMaxOffset :: !Int
     }
 
-data ViewScroll = ViewScroll
-    { subView :: View
+data ViewScroll a = ViewScroll
+    { subView :: View a
     , scrollOffset :: !Int
     , scrollMaxY :: !Int
     , scrollStep :: !Int
@@ -77,25 +80,25 @@ data ViewScroll = ViewScroll
     }
 
 
-data View = View
+data View a = View
     { texts :: ![TextDisplay]
     , imgs :: ![(Int, Int, Double, Image)]
     , rects :: ![(Color, Int, Int, Int, Int)]
     -- should this be a list? probably but don't have mouse position atm
-    , viewScroll :: !(Maybe ViewScroll)
+    , viewScroll :: !(Maybe (ViewScroll a))
     }
 
 data MenuAction a = MenuAction
     { menuOptionText :: !T.Text
-    , menuOptionEnabled :: !Bool
-    , menuNextState :: !a
+    , menuNextState :: !(Maybe a)
     }
 
 data SelectOption = SelectOption
     { selectOptionText :: !T.Text
     , selectKey :: !T.Text
     , selectSelected :: !Bool
-    , changeable :: !Bool
+    , selectChangeable :: !Bool
+    , selectDisabled :: !Bool
     }
 
 data OneActionListOptions a = OALOpts
@@ -106,8 +109,20 @@ data OneActionListOptions a = OALOpts
 data MultiSelectListOptions a = MSLOpts
     { mslOpts :: ![SelectOption]
     , mslAction :: [T.Text] -> Int -> a
-    , mslContinueAction :: [T.Text] -> a
+    , mslContinueAction :: Maybe ([T.Text] -> a)
     , mslBackActionM :: !(Maybe a)
+    }
+
+data ColumnAction a = ColAction
+    { colOptionTexts :: ![T.Text]
+    , colOptionAction :: !(Maybe a)
+    }
+
+data ColumnButtonOptions a = CBOpts
+    { colButOptText :: !T.Text
+    , colButOptWidth :: !Int
+    , colButOptHeaders :: ![T.Text]
+    , colButOptActions :: [ColumnAction a]
     }
 
 data TextOption = TextOption
@@ -120,6 +135,7 @@ data BasicOption a =
       BasicSOALOpts (OneActionListOptions a)
     | BasicMSLOpts (MultiSelectListOptions a)
     | BasicTextOpts TextOption
+    | BasicCBOpts (ColumnButtonOptions a)
 
 data ScrollListOptions a = SLOpts
     { sLScrollOpts :: BasicOption a
@@ -159,8 +175,18 @@ data MenuOptionType a =
 --  Options for actions from this menu
 --  Cursor is the current option that is being pointed to
 data Menu a = Menu
-    { menuView :: !View
+    { menuView :: !(View a)
     , options :: !(MenuOptions a)
+    , popupMaybe :: !(Maybe (MenuPopup a))
+    }
+
+data MenuPopup a = MenuPopup
+    { popupMenu :: !(Menu a)
+    , popupX :: !Int
+    , popupY :: !Int
+    , popupWidth :: !Int
+    , popupHeight :: !Int
+    , popupColor :: !Color
     }
 
 data CursorType = CursorPointer Image | CursorRect Color

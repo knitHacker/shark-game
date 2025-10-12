@@ -22,45 +22,23 @@ import Data.Time.Clock.System
     ( SystemTime(systemSeconds, systemNanoseconds), getSystemTime )
 import Data.Word ( Word32 )
 import Control.Concurrent
+import Control.Arrow (ArrowApply(app))
 
-framesPerSecond :: Word32
-framesPerSecond = 45
+import Debug.Trace
 
 -- Time for a frame
-frameTime :: Word32
-frameTime = div 1000000000 (framesPerSecond + 1)
+frameTime :: Word32 -> Word32
+frameTime fps = div 1000 (fps + 1)
 
 -- Game loop that enforces a frame rate throttling
-runGame :: Word32 -> SystemTime -> AppEnvData -> IO ()
-runGame count pTime appEnvData = do
-    time <- getSystemTime
-    if systemSeconds time /= systemSeconds pTime
-        then do
-            -- new second, force a new frame so we just have to check
-            -- nano second part of time difference
-            run 0 time appEnvData
-        else do
-            let diff = ((systemNanoseconds time) - (systemNanoseconds pTime))
-            -- only "run" at the frame rate
-            -- this means the "frame rate" limiter limits the speed of the whole game
-            -- TODO: maybe in future push this into "output handles" so can still read inputs
-            -- in "real" time
-            if diff < frameTime
-                then do
-                    -- wait another loop cycle before running game
-                    -- TODO: a sleep for frameTime - diff?
-                    threadDelay (fromIntegral (diff `div` 1000)) -- number of microseconds
-                    runGame count pTime appEnvData
-                else
-                    -- step the state of the game
-                    run (count + 1) time appEnvData
-
--- Run the game for one loop iteration
---      - "step" the game state with the old inputs
---      -
-run :: Word32 -> SystemTime -> AppEnvData -> IO ()
-run count time appEnvData = do
+runGame :: AppEnvData -> IO ()
+runGame appEnvData = do
     input <- runAppEnv appEnvData stepGame
+    applyInputs input appEnvData
+
+
+applyInputs :: InputState -> AppEnvData -> IO ()
+applyInputs input appEnvData = do
     gameState' <- runAppEnv appEnvData updateGameState
     let stop = inputQuit input
         appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
@@ -72,11 +50,12 @@ run count time appEnvData = do
         (_, True) -> do
             outputs <- runAppEnv appEnvData getOutputs
             cleanupOutputHandles outputs
-        _ -> runGame count time appEnvData'
-
+        _ -> do
+            runGame appEnvData'
 
 stepGame :: AppEnv InputState
 stepGame = do
     draws <- updateWindow
     _ <- executeDraw draws
-    updateInput
+    fr <- readFrameRate
+    updateInput $ frameTime fr

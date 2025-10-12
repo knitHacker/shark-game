@@ -20,4 +20,4 @@ main = do
     outs <- initOutputHandles tm configs
     appEnvData <- initAppEnvData tm configs outs
     time <- getSystemTime
-    runGame 0 time appEnvData
+    runGame appEnvData

@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.37.0.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -20,25 +20,27 @@ extra-source-files:
     ChangeLog.md
     data/configs/game.json
     data/configs/shark_game.json
-    data/configs/state.json
     data/configs/textures.json
     assets/images/arrow.png
     assets/images/blue_shark.png
+    assets/images/boat_default.png
+    assets/images/dock.png
     assets/images/empty_net_white.png
     assets/images/nurse_shark.png
     assets/images/shark_placeholder.png
+    assets/images/water.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 data-files:
     data/configs/game.json
     data/configs/textures.json
-    data/configs/state.json
     data/configs/shark_game.json
     assets/images/arrow.png
     assets/images/nurse_shark.png
     assets/images/blue_shark.png
     assets/images/shark_placeholder.png
     assets/images/empty_net_white.png
+    assets/images/boat_default.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 
@@ -77,6 +79,7 @@ library
       OutputHandles.Util
       SaveData
       Shark.Review
+      Shark.Store
       Shark.Trip
       Shark.Types
       Shark.Util
@@ -89,7 +92,9 @@ library
       aeson >=2.0.3.0
     , base >=4.7 && <5
     , containers >=0.6.4.1
+    , data-default
     , directory >=1.3.6.0
+    , filepath
     , lens
     , lens-aeson
     , mtl >=2.2.2
@@ -115,7 +120,9 @@ executable shark-game-exe
       aeson >=2.0.3.0
     , base >=4.7 && <5
     , containers >=0.6.4.1
+    , data-default
     , directory >=1.3.6.0
+    , filepath
     , lens
     , lens-aeson
     , mtl >=2.2.2
@@ -143,7 +150,9 @@ test-suite shark-game-test
       aeson >=2.0.3.0
     , base >=4.7 && <5
     , containers >=0.6.4.1
+    , data-default
     , directory >=1.3.6.0
+    , filepath
     , lens
     , lens-aeson
     , mtl >=2.2.2

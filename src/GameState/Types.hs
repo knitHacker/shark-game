@@ -53,8 +53,10 @@ data GamePlayState =
     | AwardGrantMenu GameData (DataEntry ResearchData)
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
-    | ComingSoon
-
+    | FleetManagement GameData
+    | EquipmentManagement GameData
+    | EquipmentStore GameData (Maybe (T.Text, Int, GameData))
+    deriving (Eq, Show)
 
 
 -- Class for reading game state from the top level monad

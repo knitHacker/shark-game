@@ -1,76 +1,98 @@
 {
-    "equipment": {
-        "boat": {
-            "text": "Boat",
-            "timeAdded": 1,
-            "price": 50,
-            "infoType": "observed",
-            "effectiveness": 5
+    "boats": {
+        "smallBoat": {
+            "boatName": "Small Boat",
+            "boatDescription": "A small boat for shallow waters.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass"],
+            "boatEquipmentSlots": 1,
+            "boatFuelCost": 10,
+            "boatPrice": 100,
+            "boatImage": "default_boat"
         },
+        "mediumBoat": {
+            "boatName": "Medium Boat",
+            "boatDescription": "A medium-sized boat for various conditions.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean"],
+            "boatEquipmentSlots": 2,
+            "boatFuelCost": 20,
+            "boatPrice": 2000,
+            "boatImage": "default_boat"
+        },
+        "largeBoat": {
+            "boatName": "Large Boat",
+            "boatDescription": "A large boat for deep waters.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest"],
+            "boatEquipmentSlots": 4,
+            "boatFuelCost": 30,
+            "boatPrice": 30000,
+            "boatImage": "default_boat"
+        }
+    },
+    "equipment": {
         "drumLine": {
-            "text": "Drum Line",
-            "timeAdded": 1,
-            "price": 100,
-            "infoType": "caught",
-            "effectiveness": 80
+            "equipText": "Drum Line",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 100,
+            "equipInfoType": "caught",
+            "equipEffectiveness": 80
         },
         "longLine": {
-            "text": "Long Line",
-            "timeAdded": 1,
-            "price": 150,
-            "infoType": "caught",
-            "effectiveness": 90
+            "equipText": "Long Line",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 150,
+            "equipInfoType": "caught",
+            "equipEffectiveness": 90
         },
         "fishingGear": {
-            "text": "Fishing Gear",
-            "timeAdded": 1,
-            "price": 20,
-            "infoType": "caught",
-            "effectiveness": 60
+            "equipText": "Fishing Gear",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 20,
+            "equipInfoType": "caught",
+            "equipEffectiveness": 60
         },
         "snorkelGear": {
-            "text": "Snorkel Gear",
-            "timeAdded": 1,
-            "price": 50,
-            "infoType": "observed",
-            "effectiveness": 50
+            "equipText": "Snorkel Gear",
+            "equipSize": 1,
+            "equipTimeAdded": 1,
+            "equipPrice": 50,
+            "equipInfoType": "observed",
+            "equipEffectiveness": 50
         },
         "scubaGear": {
-            "text": "Scuba Gear",
-            "timeAdded": 2,
-            "price": 100,
-            "infoType": "observed",
-            "effectiveness": 90
+            "equipText": "Scuba Gear",
+            "equipSize": 2,
+            "equipTimeAdded": 2,
+            "equipPrice": 100,
+            "equipInfoType": "observed",
+            "equipEffectiveness": 90
         }
     },
     "siteLocations": {
         "reef": {
             "showText": "Reef",
-            "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
             "sharksFound": [["blacktipReef", 80], ["tiger", 20]]
         },
         "mangroves": {
             "showText": "Mangroves",
-            "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear"],
             "sharksFound": [["lemon", 50], ["nurse", 50]]
         },
         "openOcean": {
             "showText": "Open Ocean",
-            "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
             "sharksFound": [["blue", 60], ["oceanicWhitetip", 40]]
         },
         "seaGrass": {
             "showText": "Sea Grass",
-            "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear"],
             "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
         },
         "kelpForest": {
             "showText": "Kelp Forest",
-            "requiredEquipment": ["boat"],
             "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
             "sharksFound": [["leopard", 50], ["sevengill", 15], ["white", 5], ["horn", 30]]
         }

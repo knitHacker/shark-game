@@ -96,7 +96,9 @@ moveToNextState gps cfgs inputs gr =
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
-        _ -> undefined
+        FleetManagement gd -> return $ menuWithPause gd $ fleetManagementTopMenu gd cfgs gr
+        EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
+        EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
     where
         menuWithPause gd bm = withPause gps gd $ BasicMenu bm
 
@@ -134,7 +136,7 @@ updateGameStateInMenu mM m inputs =
         (True, Just om, _, _, _) -> Just $ Left $ OverlayMenu om $ BasicMenu m
         (_, _, _, Just DUp, _) -> Just $ Left $ GameMenu mM $ decrementMenuCursor m
         (_, _, _, Just DDown, _) -> Just $ Left $ GameMenu mM $ incrementMenuCursor m
-        (_, _, True, _, _) -> Right <$> (getNextMenu $ options m)
+        (_, _, True, _, _) -> Right <$> getNextMenu m
         (_, _, _, _, Just (MouseInputs scroll)) ->
             if isMenuScrollable m
                 then Just $ Left $ GameMenu mM $ scrollMenu m scroll
@@ -152,7 +154,7 @@ updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
     case (esc, backM, selected, moveDirM) of
         (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
         (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameTimeout (Just (om' topM)) tov
-        (_, _, True, _) -> Right <$> (getNextMenu $ options topM)
+        (_, _, True, _) -> Right <$> getNextMenu topM
         (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
         (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
         _ -> Nothing
@@ -169,9 +171,9 @@ pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
         menuOpt = MenuOptions (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
         words = [ TextDisplay "Game Menu" 30 30 10 White
                 ]
-        opts = [ MenuAction "Continue" True gps
-               , MenuAction "Main Menu" True $ MainMenu gd
-               , MenuAction "Save & Exit" True (GameExitState (Just gd))
+        opts = [ MenuAction "Continue" $ Just gps
+               , MenuAction "Main Menu" $ Just $ MainMenu gd
+               , MenuAction "Save & Exit" $ Just (GameExitState (Just gd))
                ]
 
 introPageIO :: IO GameView

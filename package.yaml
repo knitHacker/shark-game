@@ -16,13 +16,13 @@ extra-source-files:
 data-files:
 - data/configs/game.json
 - data/configs/textures.json
-- data/configs/state.json
 - data/configs/shark_game.json
 - assets/images/arrow.png
 - assets/images/nurse_shark.png
 - assets/images/blue_shark.png
 - assets/images/shark_placeholder.png
 - assets/images/empty_net_white.png
+- assets/images/boat_default.png
 - assets/fonts/InsightSansSSi.ttf
 - assets/fonts/saxmono.ttf
 
@@ -52,6 +52,8 @@ dependencies:
 - lens
 - lens-aeson
 - vector
+- data-default
+- filepath
 
 library:
   source-dirs: src

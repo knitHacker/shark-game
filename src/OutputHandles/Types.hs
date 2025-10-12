@@ -81,6 +81,7 @@ instance Semigroup ToRender where
 data Color = White
            | Gray
            | DarkGray
+           | LightGray
            | Black
            | Red
            | Blue

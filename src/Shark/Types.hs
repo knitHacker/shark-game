@@ -13,6 +13,7 @@ module Shark.Types
     , TripInfo(..)
     , ResearchReq(..)
     , ResearchData(..)
+    , Boat(..)
     , checkPlayConfigs
     ) where
 
@@ -24,24 +25,38 @@ import qualified Data.Text as T
 
 import Util
 
+data Boat = Boat
+    { boatName :: T.Text
+    , boatDescription :: T.Text
+    , boatReachableBiomes :: [T.Text]
+    , boatEquipmentSlots :: Int
+    , boatFuelCost :: Int
+    , boatPrice :: Int
+    , boatImage :: T.Text
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON Boat
+instance ToJSON Boat
+
 data TripAttempt = TripAttempt
     { attemptMonth :: Int
     , attemptEqipment :: DataEntry GameEquipment
-    }
+    } deriving (Show, Eq)
 
 data TripState = TripState
     { trip :: TripInfo
     , tripTries :: [TripAttempt]
     , tripTotalTries :: Int
     , sharkFinds :: [SharkFind]
-    }
+    } deriving (Show, Eq)
 
 data GameEquipment = GameEquip
-    { text :: T.Text
-    , timeAdded :: Int
-    , price :: Int
-    , infoType :: T.Text
-    , effectiveness :: Int
+    { equipText :: T.Text
+    , equipSize :: Int
+    , equipTimeAdded :: Int
+    , equipPrice :: Int
+    , equipInfoType :: T.Text
+    , equipEffectiveness :: Int
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameEquipment
@@ -54,7 +69,6 @@ checkGameLocation loc = foldl (\p (_, c) -> p + c) 0 shks == 100
 
 data GameLocation = GameLoc
     { showText :: T.Text
-    , requiredEquipment :: [T.Text]
     , allowedEquipment :: [T.Text]
     , sharksFound :: [(T.Text, Int)]
     } deriving (Generic, Show, Eq)
@@ -104,7 +118,8 @@ checkPlayConfigs :: PlayConfigs -> Bool
 checkPlayConfigs cfgs = and $ checkGameLocation <$> siteLocations cfgs
 
 data PlayConfigs = PlayConfigs
-    { equipment :: M.Map T.Text GameEquipment
+    { boats :: M.Map T.Text Boat
+    , equipment :: M.Map T.Text GameEquipment
     , siteLocations :: M.Map T.Text GameLocation
     , sharks :: M.Map T.Text SharkInfo
     , research :: M.Map T.Text ResearchData
@@ -116,7 +131,8 @@ instance ToJSON PlayConfigs
 data TripInfo = TripInfo
     { tripDestination :: DataEntry GameLocation
     , tripEquipment :: [DataEntry GameEquipment]
-    }
+    , tripBoat :: DataEntry Boat
+    } deriving (Show, Eq)
 
 data SharkFind = SharkFind
     { findMonth :: Int
