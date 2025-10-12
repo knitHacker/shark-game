@@ -45,6 +45,8 @@ mapMenu gd cfgs = mkMenu words [] Nothing options
         rtOpt = MenuAction "Return to Lab" $ Just $ ResearchCenter gd
         mkOptEntry (loc, txt) = MenuAction txt $ if loc `elem` boatReachableBiomes boatInfo then Just (TripEquipmentSelect gd loc [] 0) else Nothing
 
+-- assuming I add ability to have more than one boat, need to select boat in new menu
+
 equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Menu GamePlayState
 equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15 130 3 6 opts' update act (Just back) pos)
     where
@@ -61,7 +63,7 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15
         aEs' = lupE <$> aEs
         usedSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
         openSlots = slots - usedSlots
-        slotTxt = T.concat ["Trip Equipment Space: ", T.pack (show usedSlots), " slots"]
+        slotTxt = T.concat ["Equipment Loaded: ", T.pack (show usedSlots), " slots"]
         words = [ TextDisplay "Select Trip" 10 10 8 White
                 , TextDisplay "Equipment" 15 40 10 White
                 , TextDisplay (T.concat ["Max Slots: ", T.pack (show slots), " slots"]) 20 80 4 Green
@@ -76,23 +78,28 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15
 reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> Menu GamePlayState
 reviewTripMenu gd loc eqs cfgs = mkMenu words [] Nothing (selOneOpts 80 185 3 4 opts (CursorRect White) 0)
     where
-        trip = tripInfo (sharkCfgs cfgs) loc eqs
+        boat = gameBoat $ gameDataEquipment gd
+        boatInfo = boats (sharkCfgs cfgs) ! boat
+        trip = tripInfo (sharkCfgs cfgs) loc boat eqs
         funds = gameDataFunds gd
         tc = tripCost trip
         enoughFunds = funds >= tc
-        fundTxt = T.append "Current Funds: $" (T.pack (show funds))
-        tripTxt = T.append "Trip Cost: $" (T.pack (show tc))
-        afterTxt = T.append "After Trip: $" (T.pack (show (funds - tc)))
+        (fundTxt:tripTxt:afterTxt:_) = splitJustSpacing [ ("Current Funds: ", T.append "$" (T.pack (show funds)))
+                                                        , ("Trip Cost: ", T.append "$" (T.pack (show tc)))
+                                                        , ("After Trip: ", T.append "$" (T.pack (show (funds - tc))))
+                                                        ]
         tripLenTxt = T.append (T.append "Trip Length: " (T.pack (show (tripLength trip)))) " month(s)"
         words = [ TextDisplay "Review Trip" 10 10 8 White
-                , TextDisplay "Details" 15 55 10 White
-                , TextDisplay fundTxt 25 105 3 Green
-                , TextDisplay tripTxt 25 125 3 Red
-                , TextDisplay afterTxt 25 145 3 (if enoughFunds then Green else Red)
-                , TextDisplay tripLenTxt 25 165 3 White
+                , TextDisplay "Details" 15 40 10 White
+                , TextDisplay (T.append "Boat: " (boatName boatInfo)) 25 80 3 White
+                , TextDisplay (T.append "Fuel Cost: $" (T.pack (show (boatFuelCost boatInfo)))) 45 92 3 White
+                , TextDisplay tripLenTxt 25 110 3 White
+                , TextDisplay fundTxt 25 130 3 Green
+                , TextDisplay tripTxt 25 142 3 Red
+                , TextDisplay afterTxt 25 154 3 (if enoughFunds then Green else Red)
                 ]
         gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
-        (gd'', atmpts) = initTripProgress gd' loc eqs cfgs
+        (gd'', atmpts) = initTripProgress gd' loc boat eqs cfgs
         progress = TripProgress
         opts = [ MenuAction "Start Trip" (if enoughFunds then Just (TripProgress gd'' atmpts) else Nothing)
                , MenuAction "Back to equipment" $ Just (TripEquipmentSelect gd loc eqs 0)

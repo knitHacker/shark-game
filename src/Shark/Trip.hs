@@ -38,24 +38,27 @@ monthToText mnths
         monthTxt 1 = "1 month"
         monthTxt n = T.pack (show n ++ " months")
 
-tripInfo :: PlayConfigs -> T.Text -> [T.Text] -> TripInfo
-tripInfo cfg loc eqTxt = TripInfo locE eqEs
+tripInfo :: PlayConfigs -> T.Text -> T.Text -> [T.Text] -> TripInfo
+tripInfo cfg loc boatName eqTxt = TripInfo locE eqEs boat
     where
         locE = getEntry (siteLocations cfg) loc
         eqEs = getEntry (equipment cfg) <$> eqTxt
+        boat = getEntry (boats cfg) boatName
 
 tripCost :: TripInfo -> Int
-tripCost trip = L.sum $ flip getData equipPrice <$> tripEquipment trip
+tripCost trip = tripLength trip * tripFuelCost
+    where
+        tripFuelCost = boatFuelCost $ entryData (tripBoat trip)
 
 tripLength :: TripInfo -> Int
 tripLength trip = L.sum $ flip getData equipTimeAdded <$> tripEquipment trip
 
 
-initTripProgress :: GameData -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
-initTripProgress gd loc eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
+initTripProgress :: GameData -> T.Text -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
+initTripProgress gd loc boatName eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
     where
         playCfgs = sharkCfgs cfgs
-        trip = tripInfo playCfgs loc eqKeys
+        trip = tripInfo playCfgs loc boatName eqKeys
         (gd', aType) = catchAttempts playCfgs gd trip
 
 

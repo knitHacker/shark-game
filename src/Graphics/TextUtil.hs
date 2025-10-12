@@ -7,6 +7,8 @@ module Graphics.TextUtil
     , wrapTexts
     , adjustTexts
     , oneLine
+    , rightJustSpacing
+    , splitJustSpacing
     ) where
 
 import qualified Data.Text as T
@@ -42,7 +44,7 @@ wrapTexts outs txts x yStart width lineSpace fontScale c = foldl makeTextDisplay
         makeTextDisplays (ts, y) txt = let (newTs, newY) = wrapText outs txt x y width lineSpace fontScale c in (ts ++ newTs, newY)
 
 adjustTexts :: Graphics -> [(TextDisplay, Int, Int)] -> ([TextDisplay], Int)
-adjustTexts outs txts = foldl makeTextDisplays ([], 0) txts
+adjustTexts outs = foldl makeTextDisplays ([], 0)
     where
         makeTextDisplays (ts, y) (TextDisplay txt x _ fontScale c, width, lineSpace) =
             let (newTs, newY) = wrapText outs txt (fromIntegral x) y width lineSpace fontScale c
@@ -53,6 +55,25 @@ oneLine outs txts x y space = fst $ foldl makeTextDisplays ([], fromIntegral x) 
     where
         makeTextDisplays (ts, x') (txt, c, fontScale) =
             let letterWidth = fontWidth outs * fromIntegral fontScale
-                lineLength = ceiling $ (fromIntegral (T.length txt)) * letterWidth
+                lineLength = ceiling $ fromIntegral (T.length txt) * letterWidth
                 spacing = floor $ fromIntegral space * letterWidth
             in (ts ++ [TextDisplay txt x' (fromIntegral y) fontScale c], x' + fromIntegral lineLength + fromIntegral spacing)
+
+
+rightJustSpacing :: [T.Text] -> [T.Text]
+rightJustSpacing txts = zipWith addSpaces txts diffs
+    where
+        lengths = T.length <$> txts
+        maxLen = maximum lengths
+        diffs = (maxLen -) <$> lengths
+        addSpaces txt diff = T.append (T.replicate diff " ") txt
+
+splitJustSpacing :: [(T.Text, T.Text)] -> [T.Text]
+splitJustSpacing txts = zipWith addSpaces txts diffs
+    where
+        leftLengths = T.length <$> fst <$> txts
+        rightLengths = T.length <$> snd <$> txts
+        maxLeftLen = maximum leftLengths
+        maxRightLen = maximum rightLengths
+        diffs = zipWith (\l r -> maxLeftLen - l + maxRightLen - r) leftLengths rightLengths
+        addSpaces (txtL, txtR) diff = T.concat [txtL, T.replicate diff " ", txtR]

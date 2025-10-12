@@ -131,6 +131,7 @@ instance ToJSON PlayConfigs
 data TripInfo = TripInfo
     { tripDestination :: DataEntry GameLocation
     , tripEquipment :: [DataEntry GameEquipment]
+    , tripBoat :: DataEntry Boat
     } deriving (Show, Eq)
 
 data SharkFind = SharkFind
