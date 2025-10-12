@@ -56,17 +56,20 @@ equipmentPickMenu gd loc chsn pos cfgs = mkMenu words [] Nothing (selMultOpts 15
         aEs = filter (flip elem allowedEq) $ gameOwnedEquipment myEquip
         lupE et =
             let eqEntry = eq M.! et
-            in (et, T.concat [(equipText eqEntry), " - ", (T.pack (show (equipSize eqEntry))), " slots"])
+                eqSize = equipSize eqEntry
+            in (et, eqSize, T.concat [equipText eqEntry, " - ", T.pack (show eqSize), " slots"])
         aEs' = lupE <$> aEs
-        openSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
-        slotTxt = T.concat ["Trip Equipment Space: ", (T.pack (show openSlots)), " slots"]
+        usedSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
+        openSlots = slots - usedSlots
+        slotTxt = T.concat ["Trip Equipment Space: ", T.pack (show usedSlots), " slots"]
         words = [ TextDisplay "Select Trip" 10 10 8 White
-                , TextDisplay "Equipment" 15 55 10 White
+                , TextDisplay "Equipment" 15 40 10 White
+                , TextDisplay (T.concat ["Max Slots: ", T.pack (show slots), " slots"]) 20 80 4 Green
                 , TextDisplay slotTxt 20 100 4 Green
                 ]
-        opts' = (\(k, t) -> SelectOption t k (k `elem` chsn) True False) <$> aEs'
+        opts' = (\(k, s, t) -> SelectOption t k (k `elem` chsn) True $ s > openSlots) <$> aEs'
         update = TripEquipmentSelect gd loc
-        act = Just $ \ls -> TripReview gd loc ls
+        act = if null chsn  || usedSlots > slots then Nothing else Just $ \ls -> TripReview gd loc ls
         back = TripDestinationSelect gd
 
 

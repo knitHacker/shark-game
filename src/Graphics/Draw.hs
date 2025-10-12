@@ -167,7 +167,8 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' 
                 str = selectOptionText h
                 tlen = ceiling (fw * fromIntegral (T.length str * s))
                 tH = fh * fromIntegral s
-                td = TextDisplay str x yPos s Blue
+                textColor = if selectDisabled h then Gray else Blue
+                td = TextDisplay str x yPos s textColor
                 hlC
                     | cp == pos = Yellow
                     | selectChangeable h = White
