@@ -179,4 +179,4 @@ pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
 introPageIO :: GameConfigs -> IO GameView
 introPageIO cfgs = do
     nGame <- startNewGame cfgs
-    return $ GameMenu Nothing $ introPage nGame cfgs
+    return $ GameMenu Nothing $ introPage nGame

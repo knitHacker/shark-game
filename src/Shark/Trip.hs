@@ -65,12 +65,16 @@ initTripProgress gd loc boatName eqKeys cfgs = (gd', TripState trip aType (lengt
 catchAttempts :: PlayConfigs -> GameData -> TripInfo -> (GameData, [TripAttempt])
 catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
     where
+        mechs = mechanicsEncounter $ gameMechanics cfgs
         months = foldl (\l ee@(Entry k eq) -> replicate (equipTimeAdded eq) ee ++ l) [] $ tripEquipment trip
         (s', n) = catchAttempts' 1 (gameDataSeed gd) [] months
         catchAttempts' _ s n [] = (s, n)
         catchAttempts' i s n (h:tl) =
-            let (s', b) = getRandomBoolS s
-            in catchAttempts' (i+1) s' (n ++ (TripAttempt i h : ([TripAttempt i h | b]))) tl
+            let (s', per) = getRandomPercentS s
+                base = replicate (baseAttempts mechs) (TripAttempt i h)
+                bonusAttempt = bonusAttemptChancePercent mechs > per
+                (nextMonth, equips) = if bonusAttempt then (i+1, tl) else (i, h:tl)
+            in catchAttempts' nextMonth s' (n ++ base ++ [TripAttempt i h | bonusAttempt]) equips
 
 executeTrip :: PlayConfigs -> GameData -> TripInfo -> TripAttempt -> (GameData, Maybe SharkFind)
 executeTrip cfgs gd trip (TripAttempt mnth eq) =

@@ -6,7 +6,7 @@
             "startingEquipment": ["fishingGear", "snorkelGear"]
         },
         "mechanicsEncounter": {
-            "baseAttempts": 2,
+            "baseAttempts": 3,
             "bonusAttemptChancePercent": 20
         }
     },
