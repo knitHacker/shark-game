@@ -137,17 +137,19 @@ data GameSaveData = GameSaveData
 instance FromJSON GameSaveData
 instance ToJSON GameSaveData
 
-startNewGame :: IO GameData
-startNewGame = do
-    --g <- R.create -- apparently uses the same seed every time
+startNewGame :: GameConfigs -> IO GameData
+startNewGame cfgs = do
+    let startCfg = mechanicsStart $ gameMechanics $ sharkCfgs cfgs
     g <- createSystemRandom
     name <- uniform g :: IO Int
-    let nameStr = "shark-" L.++ show name L.++ ".save"
+    let nameStr = "shark-" L.++ show (abs name) L.++ ".save"
     let dir = "data" </> "saves" </> nameStr
     path <- getLocalGamePath dir
     putStrLn path
     s <- save g
-    let gData = GameData path s [] 0 0 0 M.empty M.empty M.empty $ GameEquipment "smallBoat" []
+    let gEq = GameEquipment (startingBoat startCfg) (startingEquipment startCfg)
+        startMoney = startingFunds startCfg
+        gData = GameData path s [] startMoney 0 0 M.empty M.empty M.empty gEq
     createDirectoryIfMissing True (takeDirectory path)
     saveToFile gData
     return gData

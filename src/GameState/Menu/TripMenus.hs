@@ -84,9 +84,9 @@ reviewTripMenu gd loc eqs cfgs = mkMenu words [] Nothing (selOneOpts 80 185 3 4 
         funds = gameDataFunds gd
         tc = tripCost trip
         enoughFunds = funds >= tc
-        (fundTxt:tripTxt:afterTxt:_) = splitJustSpacing [ ("Current Funds: ", T.append "$" (T.pack (show funds)))
-                                                        , ("Trip Cost: ", T.append "$" (T.pack (show tc)))
-                                                        , ("After Trip: ", T.append "$" (T.pack (show (funds - tc))))
+        (fundTxt:tripTxt:afterTxt:_) = splitJustSpacing [ ("Current Funds: ", showMoney funds)
+                                                        , ("Trip Cost: ", showMoney tc)
+                                                        , ("After Trip: ", showMoney (funds - tc))
                                                         ]
         tripLenTxt = T.append (T.append "Trip Length: " (T.pack (show (tripLength trip)))) " month(s)"
         words = [ TextDisplay "Review Trip" 10 10 8 White

@@ -15,6 +15,9 @@ module Shark.Types
     , ResearchData(..)
     , Boat(..)
     , checkPlayConfigs
+    , StartMechanics(..)
+    , EncounterMechanics(..)
+    , GameMechanics(..)
     ) where
 
 import GHC.Generics ( Generic )
@@ -24,6 +27,31 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import Util
+
+data StartMechanics = Mechanics
+    { startingFunds :: Int
+    , startingBoat :: T.Text
+    , startingEquipment :: [T.Text]
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON StartMechanics
+instance ToJSON StartMechanics
+
+data EncounterMechanics = Encounter
+    { baseAttempts :: Int
+    , bonusAttemptChancePercent :: Int
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON EncounterMechanics
+instance ToJSON EncounterMechanics
+
+data GameMechanics = GameMech
+    { mechanicsStart :: StartMechanics
+    , mechanicsEncounter :: EncounterMechanics
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON GameMechanics
+instance ToJSON GameMechanics
 
 data Boat = Boat
     { boatName :: T.Text
@@ -123,6 +151,7 @@ data PlayConfigs = PlayConfigs
     , siteLocations :: M.Map T.Text GameLocation
     , sharks :: M.Map T.Text SharkInfo
     , research :: M.Map T.Text ResearchData
+    , gameMechanics :: GameMechanics
     } deriving (Generic, Show, Eq)
 
 instance FromJSON PlayConfigs

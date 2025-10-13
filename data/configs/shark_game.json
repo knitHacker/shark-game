@@ -1,4 +1,15 @@
 {
+    "gameMechanics": {
+        "mechanicsStart": {
+            "startingFunds": 5000,
+            "startingBoat": "smallBoat",
+            "startingEquipment": ["fishingGear", "snorkelGear"]
+        },
+        "mechanicsEncounter": {
+            "baseAttempts": 2,
+            "bonusAttemptChancePercent": 20
+        }
+    },
     "boats": {
         "smallBoat": {
             "boatName": "Small Boat",

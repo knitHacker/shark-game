@@ -9,6 +9,7 @@ module Graphics.TextUtil
     , oneLine
     , rightJustSpacing
     , splitJustSpacing
+    , showMoney
     ) where
 
 import qualified Data.Text as T
@@ -77,3 +78,13 @@ splitJustSpacing txts = zipWith addSpaces txts diffs
         maxRightLen = maximum rightLengths
         diffs = zipWith (\l r -> maxLeftLen - l + maxRightLen - r) leftLengths rightLengths
         addSpaces (txtL, txtR) diff = T.concat [txtL, T.replicate diff " ", txtR]
+
+
+showMoney :: Int -> T.Text
+showMoney m = T.pack $ "$" ++ insertCommas nStr
+    where
+        nStr = show m
+        insertCommas ns = reverse $ insertCommas' $ reverse ns
+        insertCommas' ns
+            | length ns <= 3 = ns
+            | otherwise = take 3 ns ++ "," ++ insertCommas' (drop 3 ns)

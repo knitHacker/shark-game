@@ -77,8 +77,8 @@ moveToNextState gps cfgs inputs gr =
         GameExitState Nothing -> return GameExiting
         MainMenu gd -> do
             saveGame gd cfgs
-            return $ GameMenu Nothing $ mainMenu (Just gd) cfgs
-        IntroPage -> introPageIO
+            return $ GameMenu Nothing $ mainMenu $ Just gd
+        IntroPage -> introPageIO cfgs
         ResearchCenter gd -> return $ menuWithPause gd $ researchCenterMenu gd gr
         TripDestinationSelect gd -> return $ menuWithPause gd $ mapMenu gd cfgs
         TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
@@ -121,7 +121,7 @@ mainMenuView cfgs outs = do
                             putStrLn $ T.unpack err
                             return Nothing
                         Right gd -> return $ Just gd
-    return $ GameMenu Nothing $ mainMenu gdM cfgs
+    return $ GameMenu Nothing $ mainMenu gdM
 
 
 withPause :: GamePlayState -> GameData -> BasicView GamePlayState -> GameView
@@ -176,7 +176,7 @@ pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
                , MenuAction "Save & Exit" $ Just (GameExitState (Just gd))
                ]
 
-introPageIO :: IO GameView
-introPageIO = do
-    nGame <- startNewGame
-    return $ GameMenu Nothing $ introPage nGame
+introPageIO :: GameConfigs -> IO GameView
+introPageIO cfgs = do
+    nGame <- startNewGame cfgs
+    return $ GameMenu Nothing $ introPage nGame cfgs
