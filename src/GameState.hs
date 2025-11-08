@@ -66,8 +66,9 @@ updateGameView inputs (GameViewInfo gv@(GameView vl oM tM mM)) = if null outs th
                 Just (Left ov) -> Just $ Left $ GameViewInfo $ gv { viewOverlay = Just ov }
                 Just (Right gps) -> Just $ Right gps
                 _ -> Nothing
-        out3 = case timeoutUp of
-                Just gps -> Just $ Right gps
+        -- If overlay is open don't timeout
+        out3 = case (oM, timeoutUp) of
+                (Just (OverlayView False _ _), Just gps) -> Just $ Right gps
                 _ -> Nothing
         out4 = case menuUp of
                 Just (Left m) -> Just $ Left $ GameViewInfo $ gv { viewMenu = Just m }

@@ -121,10 +121,12 @@ updateInput to = do
     time <- liftIO getSystemTime
     event <- SDL.waitEventTimeout (fromIntegral to)
     let ts = systemSeconds time
+        tn = systemNanoseconds time
+        tsInt = ts * 1000 + fromIntegral (div tn 1000000)
     case event of
         (Just event) -> do
-            return $ payloadToIntent event ts
-        _ -> return $ updateRepeat input ts
+            return $ payloadToIntent event tsInt
+        _ -> return $ updateRepeat input tsInt
 
 
 payloadToIntent :: SDL.Event -> Int64 -> InputState

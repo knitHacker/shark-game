@@ -114,7 +114,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) =
             let (gd', sfM) = exec ta
                 tp' = newTrip sfM tl
                 lastText = T.concat ["month ", T.pack (show mn), ", using ", getData h equipText]
-            in GameView (v [TextDisplay lastText 30 60 4 Green]) Nothing (Just (TimeoutData ts 1 $ SharkFound gd' sfM tp')) Nothing
+            in GameView (v [TextDisplay lastText 30 60 4 Green]) Nothing (Just (TimeoutData ts 500 $ SharkFound gd' sfM tp')) Nothing
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp

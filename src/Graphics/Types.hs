@@ -59,8 +59,8 @@ data TimeoutData a = TimeoutData
 
 
 data AnimationData = AnimationData
-    { animationMaxFrames :: !Int
-    , animationFrame :: !Int
+    { animationFrame :: !Int
+    , animationMaxFrames :: !Int
     } deriving (Show, Eq)
 
 
