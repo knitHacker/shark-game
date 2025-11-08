@@ -69,7 +69,7 @@ data GamePlayState =
     | AwardGrantMenu GameData (DataEntry ResearchData)
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
-    | FleetManagement GameData AnimationData
+    | FleetManagement GameData
     | EquipmentManagement GameData
     | EquipmentStore GameData (Maybe (T.Text, Int, GameData))
     deriving (Eq, Show)

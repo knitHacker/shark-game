@@ -42,7 +42,7 @@ labTopMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (sel
                 ]
         fundWords = oneLine gr fundTxts 35 90 2
         opts = [ MenuAction "Fundraising" Nothing
-               , MenuAction "Fleet Management" $ Just $ FleetManagement gd $ startAnimation 10
+               , MenuAction "Fleet Management" $ Just $ FleetManagement gd
                , MenuAction "Equipment Management" $ Just $ EquipmentManagement gd
                , MenuAction "Return to Research Center" $ Just $ ResearchCenter gd
                ]
@@ -66,13 +66,39 @@ fundraiserTopMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Me
                , MenuAction "Equipment Management" Nothing
                ]
 
+boatBounceAnim :: Image -> Int -> [(Int, Int, Double, Image)]
+boatBounceAnim boatI frame =
+    [ (120, 85, 0.25, "water")
+    , (147 + yAdj, 105 + xAdj , 0.4, boatI)
+    , (115, 85, 0.25, "dock")
+    ]
+    where
+        xAdj = case mod frame 8 of
+            0 -> -1
+            1 -> -1
+            2 -> 0
+            3 -> 0
+            4 -> 1
+            5 -> 1
+            6 -> 0
+            7 -> 0
+            _ -> 0
+        yAdj = case mod (frame + 1) 6 of
+            0 -> 0
+            1 -> 1
+            2 -> 2
+            3 -> 3
+            4 -> 2
+            5 -> 1
+            _ -> 0
 
-fleetManagementTopMenu :: GameData -> AnimationData -> GameConfigs -> InputState -> Graphics -> GameView
-fleetManagementTopMenu gd animData cfgs inputs gr = GameView v Nothing to $ Just md
+
+fleetManagementTopMenu :: GameData -> GameConfigs -> InputState -> Graphics -> GameView
+fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing to $ Just md
     where
         v = View words imgs [] Nothing
         md = Menu (selOneOpts 15 190 4 15 opts mc 0) Nothing
-        to = Just $ TimeoutData (timestamp inputs) 300 $ FleetManagement gd $ updateAnimation animData
+        to = Just $ TimeoutData (timestamp inputs) 300 $ TimeoutAnimation $ startAnimation 10 nextFrame
         myBoat = gameBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         boatI = boatImage boatInfo
@@ -86,31 +112,11 @@ fleetManagementTopMenu gd animData cfgs inputs gr = GameView v Nothing to $ Just
                 , TextDisplay slotTxt 10 130 3 LightGray
                 , TextDisplay fuelTxt 10 150 3 LightGray
                 ]
-        xAdj = case mod (animationFrame animData) 8 of
-            0 -> -1
-            1 -> -1
-            2 -> 0
-            3 -> 0
-            4 -> 1
-            5 -> 1
-            6 -> 0
-            7 -> 0
-            _ -> 0
-        yAdj = case mod (animationFrame animData + 1) 6 of
-            0 -> 0
-            1 -> 1
-            2 -> 2
-            3 -> 3
-            4 -> 2
-            5 -> 1
-            _ -> 0
-        imgs = [ (120, 85, 0.25, "water")
-               , (147 + yAdj, 105 + xAdj , 0.4, boatI)
-               , (115, 85, 0.25, "dock")
-               ]
+        imgs = boatBounceAnim boatI 0
         opts = [ MenuAction "Boat Store" Nothing
                , MenuAction "Return to Management" $ Just $ LabManagement gd
                ]
+        nextFrame frame = View words (boatBounceAnim boatI frame) [] Nothing
 
 equipmentManagementTopMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
 equipmentManagementTopMenu gd cfgs gr = GameMenu (View words [] [] scrollData) (Menu (selOneOpts 15 190 4 15 opts mc 0) Nothing)

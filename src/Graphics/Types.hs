@@ -23,6 +23,7 @@ module Graphics.Types
     , ViewScroll(..)
     , ScrollData(..)
     , MenuPopup(..)
+    , TimeoutAction(..)
     ) where
 
 import qualified Data.Text as T
@@ -51,17 +52,22 @@ data OverlayMenu a = Overlay
     , overlayData :: !(MenuData a)
     }
 
+data TimeoutAction a =
+      TimeoutNext a
+    | TimeoutAnimation (AnimationData a)
+
 data TimeoutData a = TimeoutData
     { lastTimeout :: !Int64
     , timeoutLength :: !Int64
-    , timeoutAction :: !a
+    , timeoutAction :: TimeoutAction a
     }
 
 
-data AnimationData = AnimationData
+data AnimationData a = AnimationData
     { animationFrame :: !Int
     , animationMaxFrames :: !Int
-    } deriving (Show, Eq)
+    , animationAction :: Int -> View a
+    }
 
 
 data ScrollData = ScrollData

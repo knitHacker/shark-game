@@ -19,6 +19,7 @@ import Configs
 import Graphics
 import Graphics.Types
 import Graphics.Menu
+import Graphics.Animation
 
 import qualified Data.Text as T
 
@@ -68,7 +69,8 @@ updateGameView inputs (GameViewInfo gv@(GameView vl oM tM mM)) = if null outs th
                 _ -> Nothing
         -- If overlay is open don't timeout
         out3 = case (oM, timeoutUp) of
-                (Just (OverlayView False _ _), Just gps) -> Just $ Right gps
+                (Just (OverlayView False _ _), Just (Right gps)) -> Just $ Right gps
+                (Just (OverlayView False _ _), Just (Left (td, v'))) -> Just $ Left $ GameViewInfo $ gv { viewTimeout = Just td, viewLayer = v' }
                 _ -> Nothing
         out4 = case menuUp of
                 Just (Left m) -> Just $ Left $ GameViewInfo $ gv { viewMenu = Just m }
@@ -81,9 +83,13 @@ updateGameViewScroll i vs = case mouseInputs i of
     Just mi -> Just $ scrollView vs (scrollAmt mi)
     Nothing -> Nothing
 
-updateGameTimeout :: InputState -> TimeoutData GamePlayState -> Maybe GamePlayState
+updateGameTimeout :: InputState -> TimeoutData GamePlayState -> Maybe (Either (TimeoutData GamePlayState, View GamePlayState) GamePlayState)
 updateGameTimeout i@(InputState _ _ ts) (TimeoutData to tl ta)
-    | ts - to > tl = Just ta
+    | ts - to > tl = case ta of
+        TimeoutNext gps -> Just $ Right gps
+        TimeoutAnimation animData ->
+            let (animData', view') = updateAnimation animData
+            in Just $ Left (TimeoutData ts tl (TimeoutAnimation animData'), view')
     | otherwise = Nothing
 
 updateGameOverlay :: InputState -> OverlayView GamePlayState -> Maybe (Either (OverlayView GamePlayState) GamePlayState)
@@ -149,7 +155,7 @@ moveToNextState gps cfgs inputs gr =
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
-        FleetManagement gd an -> return $ withPause gps gd $ fleetManagementTopMenu gd an cfgs inputs gr
+        FleetManagement gd -> return $ withPause gps gd $ fleetManagementTopMenu gd cfgs inputs gr
         EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
         EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
     where

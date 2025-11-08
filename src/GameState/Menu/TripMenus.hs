@@ -109,12 +109,12 @@ reviewTripMenu gd loc eqs cfgs = GameMenu (View words [] [] Nothing) (Menu (selO
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> GameView
 tripProgressMenu gd tp cfgs (InputState _ _ ts) =
     case tripTries tp of
-        [] -> GameView (v []) Nothing (Just (TimeoutData ts 0 $ TripResults gd tp))Nothing
+        [] -> GameView (v []) Nothing (Just (TimeoutData ts 0 $ TimeoutNext $ TripResults gd tp)) Nothing
         (ta@(TripAttempt mn h):tl) ->
             let (gd', sfM) = exec ta
                 tp' = newTrip sfM tl
                 lastText = T.concat ["month ", T.pack (show mn), ", using ", getData h equipText]
-            in GameView (v [TextDisplay lastText 30 60 4 Green]) Nothing (Just (TimeoutData ts 500 $ SharkFound gd' sfM tp')) Nothing
+            in GameView (v [TextDisplay lastText 30 60 4 Green]) Nothing (Just (TimeoutData ts 500 $ TimeoutNext $ SharkFound gd' sfM tp')) Nothing
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
