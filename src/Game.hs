@@ -3,26 +3,27 @@ module Game
     ( runGame
     ) where
 
-import OutputHandles.Types ( OutputRead(getOutputs) )
-import OutputHandles ( cleanupOutputHandles, executeDraw )
-import Env ( runAppEnv )
+import OutputHandles.Types
+import OutputHandles
+import Env
 import Env.Types
-    ( AppEnv, AppEnvData(appEnvDataInputState, appEnvDataGameState) )
 import InputState
-import GameState ( isGameExiting, updateGameState )
-import GameState.Draw ( updateWindow )
-import GameState.Types ( GameState(..), GameView(..) )
+import GameState
+import GameState.Draw
+import GameState.Types
 import SaveData
-import Configs ( ConfigsRead(..), GameConfigs(..), StateConfigs(..), updateStateConfigs )
+import Configs
 
 import qualified SDL
 import Control.Monad.IO.Class ()
 import Control.Monad.Reader ( MonadReader(ask) )
 import Data.Time.Clock.System
-    ( SystemTime(systemSeconds, systemNanoseconds), getSystemTime )
+    ( SystemTime(systemSeconds, systemNanoseconds)
+    , getSystemTime
+    )
 import Data.Word ( Word32 )
 import Control.Concurrent
-import Control.Arrow (ArrowApply(app))
+import Control.Arrow
 
 import Debug.Trace
 
@@ -43,8 +44,8 @@ applyInputs input appEnvData = do
     let stop = inputQuit input
         appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
 
-    case (isGameExiting gameState', stop) of
-        (True, _) -> do
+    case (gameView gameState', stop) of
+        (GameExiting, _) -> do
             outputs <- runAppEnv appEnvData getOutputs
             cleanupOutputHandles outputs
         (_, True) -> do

@@ -30,8 +30,8 @@ import Graphics.TextUtil
 
 import Debug.Trace
 
-mainMenu :: Maybe GameData -> Menu GamePlayState
-mainMenu gdM = mkMenu words [] Nothing optEntry
+mainMenu :: Maybe GameData -> GameMenu
+mainMenu gdM = GameMenu (View words [] [] Nothing) (Menu optEntry Nothing)
     where
         optEntry = selOneOpts 80 180 3 2 menuOpts cursor 0
         cursor = CursorPointer "green_arrow"
@@ -48,8 +48,8 @@ mainMenu gdM = mkMenu words [] Nothing optEntry
                 Just cg -> [continueGame cg, newGame, exitOpt]
 
 
-introPage :: GameData -> Menu GamePlayState
-introPage gd = mkMenu words [] Nothing (selOneOpts 80 220 3 2 opts (CursorRect White) 0)
+introPage :: GameData -> GameMenu
+introPage gd = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 80 220 3 2 opts (CursorRect White) 0) Nothing)
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -69,8 +69,8 @@ introPage gd = mkMenu words [] Nothing (selOneOpts 80 220 3 2 opts (CursorRect W
 
 
 
-researchCenterMenu :: GameData -> Graphics -> Menu GamePlayState
-researchCenterMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 160 4 15 opts mc 0)
+researchCenterMenu :: GameData -> Graphics -> GameMenu
+researchCenterMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (selOneOpts 15 160 4 15 opts mc 0) Nothing)
     where
         funds = gameDataFunds gd
         mc = CursorRect White

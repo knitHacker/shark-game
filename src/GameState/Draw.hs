@@ -28,19 +28,18 @@ updateWindow :: (MonadIO m, ConfigsRead m, GameStateRead m) => m ToRender
 updateWindow = do
     cfgs <- readConfigs
     gs <- readGameState
-    case gameLastDraw gs of
-        Just r -> return r
-        Nothing -> return $ updateWindow' (gameGraphics gs) (gameView gs)
+    case (gameLastDraw gs, gameView gs) of
+        (Just r, _) -> return r
+        (Nothing, GameViewInfo gv) -> return $ updateWindow' (gameGraphics gs) gv
+        _ -> error "Cannot draw exiting game state"
 
 
 updateWindow' :: Graphics -> GameView -> ToRender
-updateWindow' gr gv =
-    case gv of
-        (GameMenu _ m) -> updateGameMenu gr 0 m
-        (OverlayMenu (Overlay x y w h c m) back) ->
-            let backR = updateBasicView gr 0 back
-                bg = addRectangle renderEmpty 1 0 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))
-                frontR = updateGameMenu gr 2 m
-            in backR <> bg <> frontR
-        (GameTimeout _ tov) -> updateTimeoutView gr 0 tov
-        _ -> renderEmpty
+updateWindow' gr (GameView v oM _ mM) = updateGameView gr 0 v <> mr <> ovr
+    where
+        ovr = case oM of
+            Just (OverlayView True ov om) -> updateOverlayMenu gr 2 om <> updateGameView gr 3 ov
+            _ -> renderEmpty
+        mr = case mM of
+            Just m -> updateGameMenu gr 1 m
+            _ -> renderEmpty

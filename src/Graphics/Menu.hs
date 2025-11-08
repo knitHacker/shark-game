@@ -1,19 +1,17 @@
 module Graphics.Menu
-    ( mkMenu
-    , mkScrollView
+    ( mkScrollView
     , selOneOpts
     , selMultOpts
     , scrollOpts
     , getNextMenu
+    , getNextOption
     , optionLength
     , incrementMenuCursor
     , incrementMenuOpt
     , decrementMenuCursor
     , decrementMenuOpt
-    , scrollMenu
-    , isMenuScrollable
+    , scrollView
     , getOptSize
-    , mkMenuPop
     ) where
 
 import qualified Data.Text as T
@@ -30,17 +28,10 @@ import Data.IntMap (update)
 import Debug.Trace
 import System.Console.GetOpt (getOpt)
 
-isMenuScrollable :: Menu a -> Bool
-isMenuScrollable (Menu _ _ (Just mp) _) = isMenuScrollable (popupMenu mp)
-isMenuScrollable (Menu (View _ _ _ (Just _)) _ _ _) = True
-isMenuScrollable _ = False
-
-mkMenu :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a) -> MenuOptions a -> Menu a
-mkMenu words images scrollM options = Menu (View words images [] scrollM) options Nothing Nothing
 
 
-mkMenuPop :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a) -> MenuOptions a -> Maybe (MenuPopup a) -> Menu a
-mkMenuPop words images scrollM options popupM = Menu (View words images [] scrollM) options popupM Nothing
+--mkMenuPop :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a) -> MenuData a -> Maybe (MenuPopup a) -> Menu a
+--mkMenuPop words images scrollM options popupM = Menu (View words images [] scrollM) options popupM Nothing
 
 
 mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe (ViewScroll a)
@@ -86,29 +77,31 @@ getViewSize (Graphics tm fs) (View txts imgs rects Nothing) = Just ((x, y), (w, 
         w = (maximum $ catMaybes [imgMaxXM, rcMaxXM, txMaxXM]) - x
         h = (maximum $ catMaybes [imgMaxYM, rcMaxYM, txMaxYM]) - y
 
-selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction a] -> CursorType -> Int -> MenuOptions a
-selOneOpts x y s sp opts curs = MenuOptions (SelOneListOpts $ OALOpts opts curs) (BlockDrawInfo x y s sp)
+selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction a] -> CursorType -> Int -> MenuData a
+selOneOpts x y s sp opts curs = MenuData (SelOneListOpts $ OALOpts opts curs) (BlockDrawInfo x y s sp)
 
 selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
             -> ([T.Text] -> Int -> a)
             -> Maybe ([T.Text] -> a)
-            -> Maybe a -> Int -> MenuOptions a
-selMultOpts x y s sp opts up act back = MenuOptions (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
+            -> Maybe a -> Int -> MenuData a
+selMultOpts x y s sp opts up act back = MenuData (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
-scrollOpts :: Int -> Int -> Int -> Int -> BasicOption a -> [MenuAction a] -> Int -> Int -> MenuOptions a
-scrollOpts x y s sp opts fixed maxScroll pos = MenuOptions (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll pos)) (BlockDrawInfo x y s sp) pos
+scrollOpts :: Int -> Int -> Int -> Int -> BasicOption a -> [MenuAction a] -> Int -> Int -> MenuData a
+scrollOpts x y s sp opts fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll pos)) (BlockDrawInfo x y s sp) pos
 
-
-getNextMenu :: Menu a -> Maybe a
-getNextMenu (Menu _ _ (Just mp) _) = getNextMenu (popupMenu mp)
-getNextMenu (Menu _ (MenuOptions (SelOneListOpts opts) _ pos) Nothing _) = getNextOALOpts opts pos
-getNextMenu (Menu _ (MenuOptions (SelMultiListOpts opts) _ pos) Nothing _) = getNextMSLOpts opts pos
-getNextMenu (Menu _ (MenuOptions (ScrollListOpts (SLOpts opts fixed _)) _ pos) Nothing _)
+getNextOption :: MenuData a -> Maybe a
+getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
+getNextOption (MenuData (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
+getNextOption (MenuData (ScrollListOpts (SLOpts opts fixed _)) _ pos)
     | pos < optLen = getNextOpt opts pos
     | otherwise = menuNextState opt
     where
         optLen = getOptSize opts
         opt = fixed !! (pos - optLen)
+
+getNextMenu :: Menu a -> Maybe a
+getNextMenu (Menu _ (Just mp)) = getNextOption (popupOptions mp)
+getNextMenu (Menu mo Nothing) = getNextOption mo
 
 getNextOpt :: BasicOption a -> Int -> Maybe a
 getNextOpt (BasicSOALOpts opts) pos = getNextOALOpts opts pos
@@ -145,10 +138,10 @@ getNextCBOpts (CBOpts _ _  _ opts) pos
     | isJust $ colOptionAction (opts !! pos) = colOptionAction (opts !! pos)
     | otherwise = Nothing
 
-optionLength :: MenuOptions a -> Int
-optionLength (MenuOptions (SelOneListOpts opts) _ _) = length $ oalOpts opts
-optionLength (MenuOptions (SelMultiListOpts opts) _ _) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
-optionLength (MenuOptions (ScrollListOpts opts) _ _) = length (sLFixedOpts opts) + case sLScrollOpts opts of
+optionLength :: MenuData a -> Int
+optionLength (MenuData (SelOneListOpts opts) _ _) = length $ oalOpts opts
+optionLength (MenuData (SelMultiListOpts opts) _ _) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
+optionLength (MenuData (ScrollListOpts opts) _ _) = length (sLFixedOpts opts) + case sLScrollOpts opts of
     BasicSOALOpts oal -> length $ oalOpts oal
     BasicMSLOpts msl -> 1 + length (mslOpts msl) + if isJust (mslBackActionM msl) then 1 else 0
     BasicCBOpts cb -> length $ colButOptActions cb
@@ -161,8 +154,8 @@ toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle 
         toggle sopt@(SelectOption t k _ False _) = sopt
         toggle (SelectOption t k sel _ _ ) = SelectOption t k (not sel) True False
 
-incrementMenuOpt :: MenuOptions a -> MenuOptions a
-incrementMenuOpt mo@(MenuOptions (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p)
+incrementMenuOpt :: MenuData a -> MenuData a
+incrementMenuOpt mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p)
     | p >= len - 1 = mo
     | p + off < end - 1 || off >= scrollLen - end = mo { cursorPosition = p + 1 }
     | otherwise = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off + 1) })
@@ -172,40 +165,39 @@ incrementMenuOpt mo@(MenuOptions (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))
         fxLen = length $ sLFixedOpts sl
         scrollLen = len - fxLen
         end = min mx len
-incrementMenuOpt mo@(MenuOptions _ _ p)
+incrementMenuOpt mo@(MenuData _ _ p)
     | p >= optionLength mo - 1 = mo
     | otherwise = mo { cursorPosition = p + 1 }
 
-decrementMenuOpt :: MenuOptions a -> MenuOptions a
-decrementMenuOpt mo@(MenuOptions (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p)
+decrementMenuOpt :: MenuData a -> MenuData a
+decrementMenuOpt mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p)
     | p == 0 = mo
     | p > off = mo { cursorPosition = p - 1 }
     | otherwise = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off - 1) })
                                    , cursorPosition = p - 1 }
-decrementMenuOpt mo@(MenuOptions _ _ p)
+decrementMenuOpt mo@(MenuData _ _ p)
     | p == 0 = mo
     | otherwise = mo { cursorPosition = p - 1 }
 
 
 incrementMenuCursor :: Menu a -> Menu a
-incrementMenuCursor m@(Menu _ _ (Just mp) _) = m { popupMaybe = Just (mp { popupMenu = incrementMenuCursor (popupMenu mp) }) }
-incrementMenuCursor m@(Menu _ mo Nothing _) = m { options = incrementMenuOpt mo }
+incrementMenuCursor m@(Menu _ (Just mp)) = m { popupMaybe = Just (mp { popupOptions = incrementMenuOpt (popupOptions mp) }) }
+incrementMenuCursor m@(Menu mo Nothing) = m { options = incrementMenuOpt mo }
 
 decrementMenuCursor :: Menu a -> Menu a
-decrementMenuCursor m@(Menu _ _ (Just mp) _) = m { popupMaybe = Just (mp { popupMenu = decrementMenuCursor (popupMenu mp) }) }
-decrementMenuCursor m@(Menu _ mo@(MenuOptions (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p) Nothing _)
+decrementMenuCursor m@(Menu _ (Just mp)) = m { popupMaybe = Just (mp { popupOptions = decrementMenuOpt (popupOptions mp) }) }
+decrementMenuCursor m@(Menu mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ (Scroll mx off))) _ p) Nothing)
     | p == 0 = m
     | p > off = m { options = mo { cursorPosition = p - 1 } }
     | otherwise = m { options = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off - 1) })
                                    , cursorPosition = p - 1 }
                     }
-decrementMenuCursor m@(Menu _ mo@(MenuOptions _ _ p) Nothing _)
+decrementMenuCursor m@(Menu mo@(MenuData _ _ p) Nothing)
     | p == 0 = m
     | otherwise = m { options = mo { cursorPosition = p - 1 } }
 
-scrollMenu :: Menu a -> Int -> Menu a
-scrollMenu m@(Menu v@(View txts imgs rts (Just vs)) opts Nothing _) sAmt = m { menuView = v { viewScroll = Just (vs { scrollOffset = newOffset }) } }
+scrollView :: ViewScroll a -> Int -> ViewScroll a
+scrollView vs sAmt = vs { scrollOffset = newOffset }
     where
         sd = scrollData vs
         newOffset = max 0 $ min (scrollOffset vs - sAmt) (scrollMaxOffset sd)
-scrollMenu m _ = m

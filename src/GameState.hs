@@ -3,7 +3,6 @@
 
 module GameState
     ( initGameState
-    , isGameExiting
     , updateGameState
     ) where
 
@@ -28,6 +27,7 @@ import Data.Map.Strict ((!))
 import Control.Monad.IO.Class ( MonadIO(..) )
 
 import Debug.Trace
+import Data.Maybe (catMaybes)
 
 initGameState :: TextureFileMap -> GameConfigs -> OutputHandles -> IO GameState
 initGameState tm cfgs outs = do
@@ -35,9 +35,6 @@ initGameState tm cfgs outs = do
     gv <- mainMenuView cfgs outs
     return $ GameState graph gv Nothing
 
-isGameExiting :: GameState -> Bool
-isGameExiting (GameState _ GameExiting _) = True
-isGameExiting _ = False
 
 updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
 updateGameState = do
@@ -45,10 +42,7 @@ updateGameState = do
     inputs <- readInputState
     gs <- readGameState
     outs <- getOutputs
-    let gsM = case gameView gs of
-                GameMenu mm m -> updateGameStateInMenu mm m inputs
-                OverlayMenu tm bm -> updateGameStateInOverlay tm bm inputs
-                _ -> Nothing
+    let gsM = updateGameView inputs $ gameView gs
     case gsM of
         Nothing -> return gs
         Just (Left gv) -> return $ GameState (gameGraphics gs) gv Nothing
@@ -57,18 +51,76 @@ updateGameState = do
             return $ GameState (gameGraphics gs) gv Nothing
 
 
-updateGameTimeout :: Maybe (OverlayMenu GamePlayState) -> TimeoutView GamePlayState -> InputState -> Maybe (Either GameView GamePlayState)
-updateGameTimeout mM (TimeoutView _ td) i@(InputState _ _ ts) =
-    case (esc, mM, to) of
-        (True, Just om, _) -> Just $ Left $ OverlayMenu om $ BasicTimeoutView (TimeoutView (timeoutView td) td)
-        (_, _, True) -> Just $ Right $ timeoutAction td
-        _ -> Nothing
+updateGameView :: InputState -> GameDrawInfo -> Maybe (Either GameDrawInfo GamePlayState)
+updateGameView _ GameExiting = Nothing
+updateGameView inputs (GameViewInfo gv@(GameView vl oM tM mM)) = if null outs then Nothing else Just (head outs)
     where
-        esc = escapeJustPressed i
-        to = ts - lastTimeout td > timeoutLength td
+        viewUp = viewScroll vl >>= updateGameViewScroll inputs
+        overlayUp = oM >>= updateGameOverlay inputs
+        timeoutUp = tM >>= updateGameTimeout inputs
+        menuUp = mM >>= updateGameMenu inputs
+        out = case viewUp of
+            Nothing -> Nothing
+            jvs -> Just $ Left $ GameViewInfo $ gv { viewLayer = (viewLayer gv) { viewScroll = jvs } }
+        out2 = case overlayUp of
+                Just (Left ov) -> Just $ Left $ GameViewInfo $ gv { viewOverlay = Just ov }
+                Just (Right gps) -> Just $ Right gps
+                _ -> Nothing
+        out3 = case timeoutUp of
+                Just gps -> Just $ Right gps
+                _ -> Nothing
+        out4 = case menuUp of
+                Just (Left m) -> Just $ Left $ GameViewInfo $ gv { viewMenu = Just m }
+                Just (Right gps) -> Just $ Right gps
+                _ -> Nothing
+        outs = catMaybes [out, out2, out3, out4]
+
+updateGameViewScroll :: InputState -> ViewScroll GamePlayState -> Maybe (ViewScroll GamePlayState)
+updateGameViewScroll i vs = case mouseInputs i of
+    Just mi -> Just $ scrollView vs (scrollAmt mi)
+    Nothing -> Nothing
+
+updateGameTimeout :: InputState -> TimeoutData GamePlayState -> Maybe GamePlayState
+updateGameTimeout i@(InputState _ _ ts) (TimeoutData to tl ta)
+    | ts - to > tl = Just ta
+    | otherwise = Nothing
+
+updateGameOverlay :: InputState -> OverlayView GamePlayState -> Maybe (Either (OverlayView GamePlayState) GamePlayState)
+updateGameOverlay i ov@(OverlayView active _ om)
+    | inputRepeating i = Nothing
+    | escapePressed i = Just $ Left $ ov { isActive = not active }
+    | not active = Nothing
+    | otherwise = case updateOverlayMenu i om of
+                    Just (Left om') -> Just $ Left $ ov { overlayMenu = om' }
+                    Just (Right gps) -> Just $ Right gps
+                    _ -> Nothing
+
+updateOverlayMenu :: InputState -> OverlayMenu GamePlayState -> Maybe (Either (OverlayMenu GamePlayState) GamePlayState)
+updateOverlayMenu inputs om@(Overlay _ _ _ _ _ md)
+    | enterJustPressed inputs = Right <$> getNextOption md
+    | inputRepeating inputs = Nothing
+    | inputDirection inputs == Just DDown = Just $ Left $ om { overlayData = incrementMenuOpt md }
+    | inputDirection inputs == Just DUp = Just $ Left $ om { overlayData = decrementMenuOpt md }
+    | otherwise = Nothing
 
 
-moveToNextState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> IO GameView
+updateGameMenu :: InputState -> Menu GamePlayState -> Maybe (Either (Menu GamePlayState) GamePlayState)
+updateGameMenu inputs m
+    | selected = Right <$> getNextMenu m
+    | inputRepeating inputs = Nothing
+    | inputDirection inputs == Just DDown = Just $ Left $ incrementMenuCursor m
+    | inputDirection inputs == Just DUp = Just $ Left $ decrementMenuCursor m
+    | otherwise = Nothing
+    where
+        selected = enterJustPressed inputs
+
+gameMenu :: GameMenu -> GameDrawInfo
+gameMenu (GameMenu v m) = GameViewInfo $ GameView v Nothing Nothing (Just m)
+
+gameMenuPause :: GamePlayState -> GameData -> GameMenu -> GameDrawInfo
+gameMenuPause gps gd (GameMenu v m) = withPause gps gd $ GameView v Nothing Nothing (Just m)
+
+moveToNextState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> IO GameDrawInfo
 moveToNextState gps cfgs inputs gr =
     case gps of
         GameExitState (Just gd) -> do
@@ -77,30 +129,30 @@ moveToNextState gps cfgs inputs gr =
         GameExitState Nothing -> return GameExiting
         MainMenu gd -> do
             saveGame gd cfgs
-            return $ GameMenu Nothing $ mainMenu $ Just gd
+            return $ gameMenu $ mainMenu $ Just gd
         IntroPage -> introPageIO cfgs
         ResearchCenter gd -> return $ menuWithPause gd $ researchCenterMenu gd gr
         TripDestinationSelect gd -> return $ menuWithPause gd $ mapMenu gd cfgs
         TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> return $ menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
-        TripProgress gd tp -> return $ withPause gps gd $ BasicTimeoutView $ tripProgressMenu gd tp cfgs inputs
-        SharkFound gd sf tp -> return $ GameMenu Nothing $ sharkFoundMenu gd sf tp cfgs
-        TripResults gd tp -> return $ GameMenu Nothing $ tripResultsMenu gd tp cfgs gr
+        TripProgress gd tp -> return $ withPause gps gd $ tripProgressMenu gd tp cfgs inputs
+        SharkFound gd sf tp -> return $ gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs
+        TripResults gd tp -> return $ gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr
         DataReviewTop gd -> return $ menuWithPause gd $ topReviewMenu gd cfgs
         SharkReviewTop gd mP -> return $ menuWithPause gd $ topReviewSharksMenu gd mP cfgs
         SharkReview gd se -> return $ menuWithPause gd $ sharkReviewMenu gd se cfgs gr
         ResearchReviewTop gd -> return $ menuWithPause gd $ topLabMenu gd cfgs
         OpenResearchMenu gd -> return $ menuWithPause gd $ openResearchMenu gd cfgs
         CompletedResearchMenu gd -> return $ menuWithPause gd $ completedResearchMenu gd cfgs
-        InvestigateResearchMenu gd rd -> return $ menuWithPause gd $ investigateResearchMenu gd rd cfgs
+        InvestigateResearchMenu gd rd -> return $ menuWithPause gd $ investigateResearchMenu gd rd cfgs gr
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
-        FleetManagement gd -> return $ withPause gps gd $ BasicTimeoutView $ fleetManagementTopMenu gd cfgs inputs gr
+        FleetManagement gd an -> return $ withPause gps gd $ fleetManagementTopMenu gd an cfgs inputs gr
         EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
         EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
     where
-        menuWithPause gd bm = withPause gps gd $ BasicMenu bm
+        menuWithPause = gameMenuPause gps
 
 
 saveGame :: GameData -> GameConfigs -> IO ()
@@ -110,7 +162,7 @@ saveGame gd cfgs = do
     where
         sc = (stateCfgs cfgs) { lastSaveM = Just (gameDataSaveFile gd) }
 
-mainMenuView :: GameConfigs -> OutputHandles -> IO GameView
+mainMenuView :: GameConfigs -> OutputHandles -> IO GameDrawInfo
 mainMenuView cfgs outs = do
     gdM <- case lastSaveM (stateCfgs cfgs) of
                 Nothing -> return Nothing
@@ -121,53 +173,16 @@ mainMenuView cfgs outs = do
                             putStrLn $ T.unpack err
                             return Nothing
                         Right gd -> return $ Just gd
-    return $ GameMenu Nothing $ mainMenu gdM
+    return $ gameMenu $ mainMenu gdM
 
 
-withPause :: GamePlayState -> GameData -> BasicView GamePlayState -> GameView
-withPause gps gd (BasicMenu m) = GameMenu (Just (pauseMenu gps gd)) m
+withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo
+withPause gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gps gd }
 
-
-updateGameStateInMenu :: Maybe (OverlayMenu GamePlayState) -> Menu GamePlayState -> InputState -> Maybe (Either GameView GamePlayState)
-updateGameStateInMenu _ _ (InputState Nothing Nothing _) = Nothing
-updateGameStateInMenu mM m inputs =
-    case (esc, mM, selected, moveDirM, mouseInputs inputs) of
-        (True, Just om, _, _, _) -> Just $ Left $ OverlayMenu om $ BasicMenu m
-        (_, _, _, Just DUp, _) -> Just $ Left $ GameMenu mM $ decrementMenuCursor m
-        (_, _, _, Just DDown, _) -> Just $ Left $ GameMenu mM $ incrementMenuCursor m
-        (_, _, True, _, _) -> Right <$> getNextMenu m
-        (_, _, _, _, Just (MouseInputs scroll)) ->
-            if isMenuScrollable m
-                then Just $ Left $ GameMenu mM $ scrollMenu m scroll
-                else Nothing
-        _ -> Nothing
+pauseMenu :: GamePlayState -> GameData -> OverlayView GamePlayState
+pauseMenu gps gd = OverlayView False (View words [] [] Nothing) (Overlay 20 20 200 200 DarkBlue menuOpt)
     where
-        moveDirM = if inputRepeating inputs then Nothing else inputDirection inputs
-        selected = enterJustPressed inputs
-        esc = escapeJustPressed inputs
-        optLen = optionLength $ options m
-
-updateGameStateInOverlay :: OverlayMenu GamePlayState -> BasicView GamePlayState -> InputState -> Maybe (Either GameView GamePlayState)
-updateGameStateInOverlay _ _ (InputState Nothing Nothing _) = Nothing
-updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
-    case (esc, backM, selected, moveDirM) of
-        (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
-        (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) tov
-        (_, _, True, _) -> Right <$> getNextMenu topM
-        (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
-        (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM
-        _ -> Nothing
-    where
-        moveDirM = if inputRepeating inputs then Nothing else inputDirection inputs
-        selected = enterJustPressed inputs
-        esc = escapeJustPressed inputs
-        om' newM = om { overlayMenu = newM }
-
-pauseMenu :: GamePlayState -> GameData -> OverlayMenu GamePlayState
-pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
-    where
-        menu = mkMenu words [] Nothing menuOpt
-        menuOpt = MenuOptions (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
+        menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
         words = [ TextDisplay "Game Menu" 30 30 10 White
                 ]
         opts = [ MenuAction "Continue" $ Just gps
@@ -175,7 +190,7 @@ pauseMenu gps gd = Overlay 20 20 200 200 DarkBlue menu
                , MenuAction "Save & Exit" $ Just (GameExitState (Just gd))
                ]
 
-introPageIO :: GameConfigs -> IO GameView
+introPageIO :: GameConfigs -> IO GameDrawInfo
 introPageIO cfgs = do
     nGame <- startNewGame cfgs
-    return $ GameMenu Nothing $ introPage nGame
+    return $ gameMenu $ introPage nGame

@@ -27,10 +27,10 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Map.Strict ((!))
-import Graphics.Animation (startAnimation)
+import Graphics.Animation (startAnimation, updateAnimation)
 
-labTopMenu :: GameData -> Graphics -> Menu GamePlayState
-labTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 140 4 12 opts mc 0)
+labTopMenu :: GameData -> Graphics -> GameMenu
+labTopMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (selOneOpts 15 140 4 12 opts mc 0) Nothing)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
@@ -40,7 +40,7 @@ labTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 140 4 1
                 ]
         fundWords = oneLine gr fundTxts 35 90 2
         opts = [ MenuAction "Fundraising" Nothing
-               , MenuAction "Fleet Management" $ Just $ FleetManagement gd
+               , MenuAction "Fleet Management" $ Just $ FleetManagement gd $ startAnimation 4
                , MenuAction "Equipment Management" $ Just $ EquipmentManagement gd
                , MenuAction "Return to Research Center" $ Just $ ResearchCenter gd
                ]
@@ -48,8 +48,8 @@ labTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 140 4 1
 -- To make sure the user doesn't get stuck with no money they can "host" a fundraiser
 -- This will give a small amount of money but also will add a new name for a donor to
 -- the research center's name
-fundraiserTopMenu :: GameData -> Graphics -> Menu GamePlayState
-fundraiserTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 160 4 15 opts mc 0)
+fundraiserTopMenu :: GameData -> Graphics -> GameMenu
+fundraiserTopMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (selOneOpts 15 160 4 15 opts mc 0) Nothing)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
@@ -65,9 +65,12 @@ fundraiserTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 
                ]
 
 
-fleetManagementTopMenu :: GameData -> AnimationData -> GameConfigs -> InputState -> Graphics -> Menu GamePlayState
-fleetManagementTopMenu gd animData cfgs inputs gr = mkMenu words imgs Nothing (selOneOpts 15 190 4 15 opts mc 0)
+fleetManagementTopMenu :: GameData -> AnimationData -> GameConfigs -> InputState -> Graphics -> GameView
+fleetManagementTopMenu gd animData cfgs inputs gr = GameView v Nothing to $ Just md
     where
+        v = View words imgs [] Nothing
+        md = Menu (selOneOpts 15 190 4 15 opts mc 0) Nothing
+        to = Just $ TimeoutData (timestamp inputs) 10 $ FleetManagement gd $ updateAnimation animData
         myBoat = gameBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         boatI = boatImage boatInfo
@@ -89,8 +92,8 @@ fleetManagementTopMenu gd animData cfgs inputs gr = mkMenu words imgs Nothing (s
                , MenuAction "Return to Management" $ Just $ LabManagement gd
                ]
 
-equipmentManagementTopMenu :: GameData -> GameConfigs -> Graphics -> Menu GamePlayState
-equipmentManagementTopMenu gd cfgs gr = mkMenu words [] scrollData (selOneOpts 15 190 4 15 opts mc 0)
+equipmentManagementTopMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
+equipmentManagementTopMenu gd cfgs gr = GameMenu (View words [] [] scrollData) (Menu (selOneOpts 15 190 4 15 opts mc 0) Nothing)
     where
         myEquipment = gameOwnedEquipment $ gameDataEquipment gd
         equipmentInfo = (!) (equipment (sharkCfgs cfgs)) <$> myEquipment
@@ -108,9 +111,10 @@ equipmentManagementTopMenu gd cfgs gr = mkMenu words [] scrollData (selOneOpts 1
                ]
 
 buyConfirm :: GameData -> GameConfigs -> (T.Text, Int, GameData) -> MenuPopup GamePlayState
-buyConfirm gd cfgs (item, price, gd') = MenuPopup m 20 40 150 200 DarkBlue
+buyConfirm gd cfgs (item, price, gd') = MenuPopup v md 20 40 150 200 DarkBlue
     where
-        m = mkMenu words [] Nothing (selOneOpts 80 190 3 4 opts (CursorRect White) 0)
+        v = View words [] [] Nothing
+        md = selOneOpts 80 190 3 4 opts (CursorRect White) 0
         funds = gameDataFunds gd
         enoughFunds = funds >= price
         fundTxt = T.append "Current Funds: " (showMoney funds)
@@ -136,9 +140,11 @@ mkStoreEntry gd (k, e) = ColAction txt action
         action = if equipPrice e > gameDataFunds gd then Nothing else Just (EquipmentStore gd (Just (name, cost, confirmBuy)))
 
 
-equipmentStoreMenu :: GameData -> Maybe (T.Text, Int, GameData) -> GameConfigs -> Graphics -> Menu GamePlayState
-equipmentStoreMenu gd popupGd cfgs gr = mkMenuPop words [] Nothing (scrollOpts 15 80 3 8 colOpts opts 6 0) pop
+equipmentStoreMenu :: GameData -> Maybe (T.Text, Int, GameData) -> GameConfigs -> Graphics -> GameMenu
+equipmentStoreMenu gd popupGd cfgs gr = GameMenu v $ Menu md pop
     where
+        v = View words [] [] Nothing
+        md = scrollOpts 15 80 3 8 colOpts opts 6 0
         mc = CursorRect White
         equips = equipment $ sharkCfgs cfgs
         owned = gameOwnedEquipment $ gameDataEquipment gd
