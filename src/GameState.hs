@@ -48,7 +48,6 @@ updateGameState = do
     let gsM = case gameView gs of
                 GameMenu mm m -> updateGameStateInMenu mm m inputs
                 OverlayMenu tm bm -> updateGameStateInOverlay tm bm inputs
-                GameTimeout mm tv -> updateGameTimeout mm tv inputs
                 _ -> Nothing
     case gsM of
         Nothing -> return gs
@@ -59,14 +58,15 @@ updateGameState = do
 
 
 updateGameTimeout :: Maybe (OverlayMenu GamePlayState) -> TimeoutView GamePlayState -> InputState -> Maybe (Either GameView GamePlayState)
-updateGameTimeout mM tv i@(InputState _ _ ts) =
+updateGameTimeout mM (TimeoutView _ td) i@(InputState _ _ ts) =
     case (esc, mM, to) of
-        (True, Just om, _) -> Just $ Left $ OverlayMenu om $ BasicTimeoutView tv
-        (_, _, True) -> Just $ Right $ timeoutAction tv
+        (True, Just om, _) -> Just $ Left $ OverlayMenu om $ BasicTimeoutView (TimeoutView (timeoutView td) td)
+        (_, _, True) -> Just $ Right $ timeoutAction td
         _ -> Nothing
     where
         esc = escapeJustPressed i
-        to = ts - lastTimeout tv > timeoutLength tv
+        to = ts - lastTimeout td > timeoutLength td
+
 
 moveToNextState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> IO GameView
 moveToNextState gps cfgs inputs gr =
@@ -96,7 +96,7 @@ moveToNextState gps cfgs inputs gr =
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
-        FleetManagement gd -> return $ menuWithPause gd $ fleetManagementTopMenu gd cfgs gr
+        FleetManagement gd -> return $ withPause gps gd $ BasicTimeoutView $ fleetManagementTopMenu gd cfgs inputs gr
         EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
         EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
     where
@@ -126,7 +126,6 @@ mainMenuView cfgs outs = do
 
 withPause :: GamePlayState -> GameData -> BasicView GamePlayState -> GameView
 withPause gps gd (BasicMenu m) = GameMenu (Just (pauseMenu gps gd)) m
-withPause gps gd (BasicTimeoutView m) = GameTimeout (Just (pauseMenu gps gd)) m
 
 
 updateGameStateInMenu :: Maybe (OverlayMenu GamePlayState) -> Menu GamePlayState -> InputState -> Maybe (Either GameView GamePlayState)
@@ -153,7 +152,7 @@ updateGameStateInOverlay _ _ (InputState Nothing Nothing _) = Nothing
 updateGameStateInOverlay om@(Overlay _ _ _ _ _ topM) backM inputs =
     case (esc, backM, selected, moveDirM) of
         (True, BasicMenu m, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) m
-        (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameTimeout (Just (om' topM)) tov
+        (True, BasicTimeoutView tov, _, _) -> Just $ Left $ GameMenu (Just (om' topM)) tov
         (_, _, True, _) -> Right <$> getNextMenu topM
         (_, _, _, Just DUp) -> Just $ Left $ OverlayMenu (om' (decrementMenuCursor topM)) backM
         (_, _, _, Just DDown) -> Just $ Left $ OverlayMenu (om' (incrementMenuCursor topM)) backM

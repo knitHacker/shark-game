@@ -27,7 +27,6 @@ data GameState = GameState
 data GameView =
       GameMenu !(Maybe (OverlayMenu GamePlayState)) !(Menu GamePlayState)
     | OverlayMenu !(OverlayMenu GamePlayState) !(BasicView GamePlayState)
-    | GameTimeout !(Maybe (OverlayMenu GamePlayState)) !(TimeoutView GamePlayState)
     | GameExiting
 
 

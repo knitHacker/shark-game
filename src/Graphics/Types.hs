@@ -18,8 +18,10 @@ module Graphics.Types
     , ColumnAction(..)
     , SelectOption(..)
     , ScrollListOptions(..)
+    , TimeoutData(..)
     , TimeoutView(..)
     , View(..)
+    , AnimationData(..)
     , ViewScroll(..)
     , ScrollData(..)
     , MenuPopup(..)
@@ -45,6 +47,12 @@ data Graphics = Graphics
 data BasicView a =
       BasicMenu !(Menu a)
     | BasicTimeoutView !(TimeoutView a)
+    | GameView -- todo
+
+data TimeoutView a = TimeoutView
+    { timeoutView :: !(View a)
+    , timeoutData :: !(TimeoutData a)
+    }
 
 data OverlayMenu a = Overlay
     { bgXPos :: !Int
@@ -55,12 +63,18 @@ data OverlayMenu a = Overlay
     , overlayMenu :: !(Menu a)
     }
 
-data TimeoutView a = TimeoutView
+data TimeoutData a = TimeoutData
     { lastTimeout :: !Int64
     , timeoutLength :: !Int64
-    , timeoutView :: !(View a)
     , timeoutAction :: !a
     }
+
+
+data AnimationData = AnimationData
+    { animationMaxFrames :: !Int
+    , animationFrame :: !Int
+    } deriving (Show, Eq)
+
 
 data ScrollData = ScrollData
     { startX :: !Int
@@ -170,6 +184,7 @@ data MenuOptionType a =
     | ScrollListOpts (ScrollListOptions a)
     -- todo options at given positions
 
+
 -- Menu game state
 --  Texts are the text to show including where to display
 --  Options for actions from this menu
@@ -178,6 +193,7 @@ data Menu a = Menu
     { menuView :: !(View a)
     , options :: !(MenuOptions a)
     , popupMaybe :: !(Maybe (MenuPopup a))
+    , timeoutMaybe :: !(Maybe (TimeoutData a))
     }
 
 data MenuPopup a = MenuPopup

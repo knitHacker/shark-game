@@ -18,6 +18,7 @@ import Graphics.Types
 import Graphics.TextUtil
 import Graphics.Menu
 import Configs
+import InputState
 
 import Shark.Types
 import Shark.Store
@@ -26,13 +27,14 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Map.Strict ((!))
+import Graphics.Animation (startAnimation)
 
 labTopMenu :: GameData -> Graphics -> Menu GamePlayState
 labTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 140 4 12 opts mc 0)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
-        fundTxts = [("Current Funds: ", White, 3), (T.append "$" (T.pack (show funds)), Green, 3)]
+        fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         words = [ TextDisplay "Lab" 10 10 10 White
                 , TextDisplay "Management" 40 45 10 White
                 ]
@@ -51,7 +53,7 @@ fundraiserTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 
     where
         funds = gameDataFunds gd
         mc = CursorRect White
-        fundTxts = [("Current Funds: ", White, 3), (T.append "$" (T.pack (show funds)), Green, 3)]
+        fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         dateTxt = "Center research run time:"
         words = [ TextDisplay "Research" 10 10 10 White
                 , TextDisplay "Center" 40 45 10 White
@@ -63,8 +65,8 @@ fundraiserTopMenu gd gr = mkMenu (words ++ fundWords) [] Nothing (selOneOpts 15 
                ]
 
 
-fleetManagementTopMenu :: GameData -> GameConfigs -> Graphics -> Menu GamePlayState
-fleetManagementTopMenu gd cfgs gr = mkMenu words imgs Nothing (selOneOpts 15 190 4 15 opts mc 0)
+fleetManagementTopMenu :: GameData -> AnimationData -> GameConfigs -> InputState -> Graphics -> Menu GamePlayState
+fleetManagementTopMenu gd animData cfgs inputs gr = mkMenu words imgs Nothing (selOneOpts 15 190 4 15 opts mc 0)
     where
         myBoat = gameBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
@@ -93,7 +95,7 @@ equipmentManagementTopMenu gd cfgs gr = mkMenu words [] scrollData (selOneOpts 1
         myEquipment = gameOwnedEquipment $ gameDataEquipment gd
         equipmentInfo = (!) (equipment (sharkCfgs cfgs)) <$> myEquipment
         mc = CursorRect White
-        equipTxts = (\e -> (equipText e) <> "    Equipment Slots: " <> (T.pack . show $ equipSize e)) <$> equipmentInfo
+        equipTxts = (\e -> equipText e <> "    Equipment Slots: " <> (T.pack . show $ equipSize e)) <$> equipmentInfo
         equipDis = (\(t, i) -> TextDisplay t 20 (100 + i * 20) 3 LightGray) <$> zip equipTxts [0..]
         words = [ TextDisplay "Equipment" 10 10 10 White
                 , TextDisplay "Management" 40 45 10 White
@@ -111,9 +113,9 @@ buyConfirm gd cfgs (item, price, gd') = MenuPopup m 20 40 150 200 DarkBlue
         m = mkMenu words [] Nothing (selOneOpts 80 190 3 4 opts (CursorRect White) 0)
         funds = gameDataFunds gd
         enoughFunds = funds >= price
-        fundTxt = T.append "Current Funds: $" (T.pack (show funds))
-        itemTxt = T.append "Item Cost: $" (T.pack (show price))
-        afterTxt = T.append "After Purchase: $" (T.pack (show (funds - price)))
+        fundTxt = T.append "Current Funds: " (showMoney funds)
+        itemTxt = T.append "Item Cost: " (showMoney price)
+        afterTxt = T.append "After Purchase: " (showMoney (funds - price))
         words = [ TextDisplay item 25 55 9 White
                 , TextDisplay fundTxt 30 105 3 Green
                 , TextDisplay itemTxt 30 125 3 Red

@@ -66,6 +66,7 @@ library
       GameState.Menu.TripMenus
       GameState.Types
       Graphics
+      Graphics.Animation
       Graphics.Draw
       Graphics.Menu
       Graphics.TextUtil

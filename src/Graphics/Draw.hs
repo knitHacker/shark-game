@@ -89,8 +89,8 @@ addPopup gr d r (MenuPopup m x y w h c) = r'
 
 -- Translate a menu obeject into a render object to show it on screen
 updateGameMenu :: Graphics -> Int -> Menu a -> ToRender
-updateGameMenu gr d (Menu v opts (Just mp)) = addPopup gr d (updateGameView gr d v <> updateMenuOptions gr d opts) mp
-updateGameMenu gr d (Menu v opts Nothing) = updateGameView gr d v <> updateMenuOptions gr d opts
+updateGameMenu gr d (Menu v opts (Just mp) _) = addPopup gr d (updateGameView gr d v <> updateMenuOptions gr d opts) mp
+updateGameMenu gr d (Menu v opts Nothing _) = updateGameView gr d v <> updateMenuOptions gr d opts
 
 -- Translate the menu options into render object to draw
 updateMenuOptions :: Graphics -> Int -> MenuOptions a -> ToRender
