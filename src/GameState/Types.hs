@@ -3,8 +3,11 @@ module GameState.Types
     , CursorType(..)
     , GamePlayState(..)
     , GameState(..)
+    , GameDrawInfo(..)
     , GameStateRead(..)
     , GameView(..)
+    , OverlayView(..)
+    , GameMenu(..)
     ) where
 
 import qualified Data.Map.Strict as M
@@ -20,16 +23,29 @@ import Util
 
 data GameState = GameState
     { gameGraphics :: !Graphics
-    , gameView :: !GameView
+    , gameView :: !GameDrawInfo
     , gameLastDraw :: !(Maybe ToRender)
     }
 
-data GameView =
-      GameMenu !(Maybe (OverlayMenu GamePlayState)) !(Menu GamePlayState)
-    | OverlayMenu !(OverlayMenu GamePlayState) !(BasicView GamePlayState)
-    | GameTimeout !(Maybe (OverlayMenu GamePlayState)) !(TimeoutView GamePlayState)
-    | GameExiting
+data OverlayView a = OverlayView
+    { isActive :: Bool
+    , overlayView :: View a
+    , overlayMenu :: OverlayMenu a
+    }
 
+data GameDrawInfo = GameViewInfo GameView | GameExiting
+
+data GameMenu = GameMenu
+    { gameViewLayer :: View GamePlayState
+    , gameMenuLayer :: Menu GamePlayState
+    }
+
+data GameView = GameView
+    { viewLayer :: View GamePlayState
+    , viewOverlay :: Maybe (OverlayView GamePlayState)
+    , viewTimeout :: Maybe (TimeoutData GamePlayState)
+    , viewMenu :: Maybe (Menu GamePlayState)
+    }
 
 data GamePlayState =
       MainMenu GameData
@@ -53,7 +69,7 @@ data GamePlayState =
     | AwardGrantMenu GameData (DataEntry ResearchData)
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
-    | FleetManagement GameData
+    | FleetManagement GameData AnimationData
     | EquipmentManagement GameData
     | EquipmentStore GameData (Maybe (T.Text, Int, GameData))
     deriving (Eq, Show)

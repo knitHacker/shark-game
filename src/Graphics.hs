@@ -11,6 +11,7 @@ import Graphics.Menu
 import OutputHandles.Types
 import OutputHandles
 import Configs
+import InputState
 
 -- Assumes monospaced font
 
@@ -21,6 +22,6 @@ initGraphics tm outs = do
         { graphicsTextures = M.map (\(TextureCfg x y _) -> TextureInfo x y) tm
         , graphicsFontSize = fontSize
         }
-
-updateGraphics :: Graphics -> Graphics
-updateGraphics graphics = graphics
+-- Eventually update potential graphics and font sizing based on config changes
+updateGraphics :: Graphics -> GameConfigs -> OutputHandles -> Graphics
+updateGraphics graphics _ _ = graphics

@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Graphics.Draw
-    ( updateBasicView
-    , updateTimeoutView
-    , updateGameMenu
+    ( updateGameMenu
     , updateGameView
+    , updateMenuOptions
+    , updateOverlayMenu
     ) where
 
 import Foreign.C.Types ( CInt )
@@ -22,13 +22,6 @@ import Graphics.Menu
 
 import Debug.Trace
 
--- Turn the basic view into a render object to draw to the screen
-updateBasicView :: Graphics -> Int -> BasicView a -> ToRender
-updateBasicView gr d (BasicMenu m) = updateGameMenu gr d m
-updateBasicView gr d (BasicTimeoutView tov) = updateTimeoutView gr d tov
-
-updateTimeoutView :: Graphics -> Int -> TimeoutView a -> ToRender
-updateTimeoutView gr d tov = updateGameView gr d (timeoutView tov)
 
 -- Add the scroll rectangle visual on the side.
 -- parameters
@@ -63,6 +56,12 @@ updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart y
         r'' = clipYRender fs r' yStart maxY
         r''' = addScrollRects r'' (d + 1) (xStart - 8) yStart viewHeight scrollHeight barHeight offH
 
+updateOverlayMenu :: Graphics -> Int -> OverlayMenu a -> ToRender
+updateOverlayMenu gr d (Overlay x y w h c m) = r'
+    where
+        r = addRectangle renderEmpty d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))
+        r' = r <> updateMenuOptions gr (d + 1) m
+
 -- Update a generic view
 updateGameView :: Graphics -> Int -> View a -> ToRender
 updateGameView gr d (View words imgs rs scrollM) = r'''
@@ -81,20 +80,21 @@ updateGameView gr d (View words imgs rs scrollM) = r'''
 
 -- Add a popup menu to the render
 addPopup :: Graphics -> Int -> ToRender -> MenuPopup a -> ToRender
-addPopup gr d r (MenuPopup m x y w h c) = r'
+addPopup gr d r (MenuPopup v md x y w h c) = r'
     where
         r' = addRectangle r (d+1) 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))
-            <> updateGameMenu gr (d+2) m
+            <> updateGameView gr (d+2) v
+            <> updateMenuOptions gr (d+3) md
 
 
 -- Translate a menu obeject into a render object to show it on screen
 updateGameMenu :: Graphics -> Int -> Menu a -> ToRender
-updateGameMenu gr d (Menu v opts (Just mp)) = addPopup gr d (updateGameView gr d v <> updateMenuOptions gr d opts) mp
-updateGameMenu gr d (Menu v opts Nothing) = updateGameView gr d v <> updateMenuOptions gr d opts
+updateGameMenu gr d (Menu opts (Just mp)) = addPopup gr d (updateMenuOptions gr d opts) mp
+updateGameMenu gr d (Menu opts Nothing) = updateMenuOptions gr d opts
 
 -- Translate the menu options into render object to draw
-updateMenuOptions :: Graphics -> Int -> MenuOptions a -> ToRender
-updateMenuOptions gr d mopts@(MenuOptions _ bdi p)
+updateMenuOptions :: Graphics -> Int -> MenuData a -> ToRender
+updateMenuOptions gr d mopts@(MenuData _ bdi p)
     | optionLength mopts == 0 = renderEmpty
     | otherwise =
         case menuOptions mopts of

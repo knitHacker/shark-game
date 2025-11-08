@@ -1,12 +1,11 @@
 module Graphics.Types
     ( Graphics(..)
     , TextureInfo(..)
-    , BasicView(..)
     , BlockDrawInfo(..)
     , CursorType(..)
     , Menu(..)
     , MenuAction(..)
-    , MenuOptions(..)
+    , MenuData(..)
     , MenuOptionType(..)
     , MenuScroll(..)
     , TextOption(..)
@@ -18,8 +17,9 @@ module Graphics.Types
     , ColumnAction(..)
     , SelectOption(..)
     , ScrollListOptions(..)
-    , TimeoutView(..)
+    , TimeoutData(..)
     , View(..)
+    , AnimationData(..)
     , ViewScroll(..)
     , ScrollData(..)
     , MenuPopup(..)
@@ -42,25 +42,27 @@ data Graphics = Graphics
     , graphicsFontSize :: !FontSize -- can be map in the future
     }
 
-data BasicView a =
-      BasicMenu !(Menu a)
-    | BasicTimeoutView !(TimeoutView a)
-
 data OverlayMenu a = Overlay
     { bgXPos :: !Int
     , bgYPos :: !Int
     , bgWidth :: !Int
     , bgHeight :: !Int
     , bgColor :: !Color
-    , overlayMenu :: !(Menu a)
+    , overlayData :: !(MenuData a)
     }
 
-data TimeoutView a = TimeoutView
+data TimeoutData a = TimeoutData
     { lastTimeout :: !Int64
     , timeoutLength :: !Int64
-    , timeoutView :: !(View a)
     , timeoutAction :: !a
     }
+
+
+data AnimationData = AnimationData
+    { animationFrame :: !Int
+    , animationMaxFrames :: !Int
+    } deriving (Show, Eq)
+
 
 data ScrollData = ScrollData
     { startX :: !Int
@@ -158,7 +160,7 @@ data BlockDrawInfo = BlockDrawInfo
     , blockSpace :: !Int
     }
 
-data MenuOptions a = MenuOptions
+data MenuData a = MenuData
     { menuOptions :: !(MenuOptionType a)
     , menuOptBlockInfo :: !BlockDrawInfo
     , cursorPosition :: !Int
@@ -170,18 +172,19 @@ data MenuOptionType a =
     | ScrollListOpts (ScrollListOptions a)
     -- todo options at given positions
 
+
 -- Menu game state
 --  Texts are the text to show including where to display
 --  Options for actions from this menu
 --  Cursor is the current option that is being pointed to
 data Menu a = Menu
-    { menuView :: !(View a)
-    , options :: !(MenuOptions a)
+    { options :: !(MenuData a)
     , popupMaybe :: !(Maybe (MenuPopup a))
     }
 
 data MenuPopup a = MenuPopup
-    { popupMenu :: !(Menu a)
+    { popupView :: !(View a)
+    , popupOptions :: !(MenuData a)
     , popupX :: !Int
     , popupY :: !Int
     , popupWidth :: !Int

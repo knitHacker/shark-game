@@ -62,6 +62,8 @@ initTripProgress gd loc boatName eqKeys cfgs = (gd', TripState trip aType (lengt
         (gd', aType) = catchAttempts playCfgs gd trip
 
 
+-- | Calculate the catch attempts for a trip
+-- Each piece of equipment adds a number of months to the trip
 catchAttempts :: PlayConfigs -> GameData -> TripInfo -> (GameData, [TripAttempt])
 catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
     where
