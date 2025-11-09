@@ -73,10 +73,9 @@ data SettingConfigs = SettingConfigs
     { debug :: Bool
     , debugOutlineTexture :: Bool
     , debugHitboxes :: Bool
-    , boardSizeX :: Int
-    , boardSizeY :: Int
     , windowSizeX :: Int
     , windowSizeY :: Int
+    , fontSize :: Int
     , frameRate :: Word32
     } deriving (Generic, Show, Eq)
 

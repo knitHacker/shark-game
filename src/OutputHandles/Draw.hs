@@ -76,15 +76,13 @@ drawAll drawings = do
         drawDbgs = debugHitboxes cfgs
         debugs = renderDebugs drawings
         r = renderer outs
-        ratX = ratioX outs
-        ratY = ratioY outs
-        drawings' = scaleDraw ratX ratY <$> renderDraws drawings
-        debugs' = scaleDebugs ratX ratY <$> debugs
+        drawings' = renderDraws drawings
+        --debugs' = scaleDebugs ratX ratY <$> debugs
     SDL.clear r
     setColor r Red
     mapM_ (draw (textures outs) (font outs) drawOutline r) drawings'
     setColor r Yellow
-    when drawDbgs $ mapM_ (drawDebug r) debugs'
+    when drawDbgs $ mapM_ (drawDebug r) debugs
     setColor r Black
     SDL.present r
 

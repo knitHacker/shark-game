@@ -2,9 +2,8 @@
     "debug": true,
     "debugOutlineTexture": false,
     "debugHitboxes": false,
-    "windowSizeX": 1500,
-    "windowSizeY": 1200,
-    "boardSizeX": 250,
-    "boardSizeY": 250,
+    "windowSizeX": 1280,
+    "windowSizeY": 800,
+    "fontSize": 4,
     "frameRate": 60
 }

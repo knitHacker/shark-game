@@ -133,10 +133,10 @@ updateListCursor :: Graphics -> Int -> CInt -> CInt -> Int -> Int -> Int -> Int 
 updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
     where
         (TextureInfo tW tH) = graphicsTextures gr ! t
-        x' = x - 20
-        y' = y - 3
-        w = fromIntegral tW
-        h = fromIntegral tH
+        x' = x - 80
+        y' = y - 16
+        w = fromIntegral (tW * 4)
+        h = fromIntegral (tH * 4)
 updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 rect
     where
         rect = getTextRectangle c x y tl th r sp

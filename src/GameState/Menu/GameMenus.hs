@@ -33,11 +33,11 @@ import Debug.Trace
 mainMenu :: Maybe GameData -> GameMenu
 mainMenu gdM = GameMenu (View words [] [] Nothing) (Menu optEntry Nothing)
     where
-        optEntry = selOneOpts 80 180 3 2 menuOpts cursor 0
+        optEntry = selOneOpts 400 550 3 2 menuOpts cursor 0
         cursor = CursorPointer "green_arrow"
         words = [ TextDisplay "Shark" 10 10 14 Gray
-                , TextDisplay "Research" 20 60 14 Gray
-                , TextDisplay "Press ENTER to select" 50 150 3 White
+                , TextDisplay "Research" 100 200 14 Gray
+                , TextDisplay "Press ENTER to select" 200 460 3 White
                 ]
         newGame = MenuAction "New Game" $ Just IntroPage
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg

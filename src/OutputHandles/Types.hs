@@ -128,8 +128,6 @@ data OutputHandles = OutputHandles
     , textures :: TextureMap
     -- Probably want this to be a map eventually because you want more than one font
     , font :: Font.Font
-    , ratioX :: Double
-    , ratioY :: Double
     }
 
 class Monad m => OutputRead m where
