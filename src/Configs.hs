@@ -77,6 +77,7 @@ data SettingConfigs = SettingConfigs
     , windowSizeY :: Int
     , fontSize :: Int
     , frameRate :: Word32
+    , fullScreen :: Bool
     } deriving (Generic, Show, Eq)
 
 

@@ -14,7 +14,7 @@ import qualified SDL.Image
 import SDL.Vect ( V2(V2) )
 import SDL                    (($=))
 import qualified SDL.Font as Font
-import Control.Monad ()
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
@@ -54,7 +54,13 @@ initOutputHandles textCfgs cfgs = do
     fontPath <- getGameFullPath fontFile
     SDL.initialize []
     Font.initialize
-    window <- SDL.createWindow "My Game" SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight, SDL.windowHighDPI = True }
+    window <- SDL.createWindow "My Game" SDL.defaultWindow
+        { SDL.windowInitialSize = V2 screenWidth screenHeight
+        , SDL.windowHighDPI = True
+        , SDL.windowMode = if fs then SDL.FullscreenDesktop else SDL.Windowed
+        , SDL.windowResizable = True
+        }
+    --when fs $ SDL.setWindowMode window SDL.Maximized
     SDL.showWindow window
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
@@ -68,6 +74,7 @@ initOutputHandles textCfgs cfgs = do
     where
         gCfgs = settingCfgs cfgs
         fontSz = fontSize gCfgs
+        fs = fullScreen gCfgs
         screenWidth = fromIntegral $ windowSizeX gCfgs
         screenHeight = fromIntegral $ windowSizeY gCfgs
 
