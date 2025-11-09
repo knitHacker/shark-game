@@ -135,7 +135,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) =
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
 
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> GameMenu
-sharkFoundMenu gd sfM tp cfgs = GameMenu (View words imgs [] Nothing) (Menu (selOneOpts 400 720 3 4 opts (CursorRect White) 0) Nothing)
+sharkFoundMenu gd sfM tp cfgs = GameMenu (View words imgs [] Nothing) (Menu (selOneOpts 400 700 3 4 opts (CursorRect White) 0) Nothing)
     where
         typeText sf = T.append (T.append "You " (getData (findEquipment sf) equipInfoType)) " a "
         sharkText sf = getData (findSpecies sf) sharkName
@@ -143,11 +143,11 @@ sharkFoundMenu gd sfM tp cfgs = GameMenu (View words imgs [] Nothing) (Menu (sel
         (words, imgs) = case sfM of
                     Nothing -> ([ TextDisplay "No Shark" 50 20 10 White
                                , TextDisplay "Found" 150 150 10 White
-                               , TextDisplay "Better luck next time!" 80 300 4 White
-                               ], [(375, 350, 1.75, "empty_net")])
+                               , TextDisplay "Better luck next time!" 200 300 4 White
+                               ], [(375, 340, 1.75, "empty_net")])
                     Just sf -> ([ TextDisplay (typeText sf) 60 20 8 White
-                               , TextDisplay (sharkText sf) 150 175 5 Blue
-                               ], [(350, 300, 1.75, sharkImg sf)])
+                               , TextDisplay (sharkText sf) 200 150 5 Blue
+                               ], [(375, 275, 1.75, sharkImg sf)])
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" $ Just nextState ]
 

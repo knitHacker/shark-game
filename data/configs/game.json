@@ -6,5 +6,5 @@
     "windowSizeY": 800,
     "fontSize": 16,
     "frameRate": 60,
-    "fullScreen": true
+    "fullScreen": false
 }
