@@ -76,7 +76,7 @@ updateGameView inputs (GameViewInfo gv@(GameView vl oM tM mM)) = if null outs th
                 Just (Left m) -> Just $ Left $ GameViewInfo $ gv { viewMenu = Just m }
                 Just (Right gps) -> Just $ Right gps
                 _ -> Nothing
-        outs = catMaybes [out, out2, out3, out4]
+        outs = catMaybes [out, out2, out4, out3]
 
 updateGameViewScroll :: InputState -> ViewScroll GamePlayState -> Maybe (ViewScroll GamePlayState)
 updateGameViewScroll i vs = case mouseInputs i of
@@ -155,6 +155,7 @@ moveToNextState gps cfgs inputs gr =
         AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
+        FundraiserTop gd -> return $ menuWithPause gd $ fundraiserTopMenu gd cfgs gr
         FleetManagement gd -> return $ withPause gps gd $ fleetManagementTopMenu gd cfgs inputs gr
         EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
         EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
@@ -187,10 +188,10 @@ withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo
 withPause gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gps gd }
 
 pauseMenu :: GamePlayState -> GameData -> OverlayView GamePlayState
-pauseMenu gps gd = OverlayView False (View words [] [] Nothing) (Overlay 20 20 200 200 DarkBlue menuOpt)
+pauseMenu gps gd = OverlayView False (View words [] [] Nothing) (Overlay 300 100 750 600 DarkBlue menuOpt)
     where
-        menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 120 5 15) 0
-        words = [ TextDisplay "Game Menu" 30 30 10 White
+        menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 450 400 4 15) 0
+        words = [ TextDisplay "Game Menu" 350 150 8 White
                 ]
         opts = [ MenuAction "Continue" $ Just gps
                , MenuAction "Main Menu" $ Just $ MainMenu gd

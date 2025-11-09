@@ -69,14 +69,14 @@ catchAttempts cfgs gd trip = (gd { gameDataSeed = s'}, n)
     where
         mechs = mechanicsEncounter $ gameMechanics cfgs
         months = foldl (\l ee@(Entry k eq) -> replicate (equipTimeAdded eq) ee ++ l) [] $ tripEquipment trip
-        (s', n) = catchAttempts' 1 (gameDataSeed gd) [] months
-        catchAttempts' _ s n [] = (s, n)
-        catchAttempts' i s n (h:tl) =
+        (s', n) = catchAttempts' 0 1 (gameDataSeed gd) [] months
+        catchAttempts' _ _ s n [] = (s, n)
+        catchAttempts' c i s n (h:tl) =
             let (s', per) = getRandomPercentS s
                 base = replicate (baseAttempts mechs) (TripAttempt i h)
                 bonusAttempt = bonusAttemptChancePercent mechs > per
-                (nextMonth, equips) = if bonusAttempt then (i+1, tl) else (i, h:tl)
-            in catchAttempts' nextMonth s' (n ++ base ++ [TripAttempt i h | bonusAttempt]) equips
+                (c', nextMonth, equips) = if c < bonusMaxAttempts mechs && bonusAttempt then (c+1, i, h:tl) else (0, i+1, tl)
+            in catchAttempts' c' nextMonth s' (n ++ base ++ [TripAttempt i h | bonusAttempt]) equips
 
 executeTrip :: PlayConfigs -> GameData -> TripInfo -> TripAttempt -> (GameData, Maybe SharkFind)
 executeTrip cfgs gd trip (TripAttempt mnth eq) =

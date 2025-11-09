@@ -33,11 +33,11 @@ import Debug.Trace
 mainMenu :: Maybe GameData -> GameMenu
 mainMenu gdM = GameMenu (View words [] [] Nothing) (Menu optEntry Nothing)
     where
-        optEntry = selOneOpts 80 180 3 2 menuOpts cursor 0
+        optEntry = selOneOpts 400 550 3 2 menuOpts cursor 0
         cursor = CursorPointer "green_arrow"
         words = [ TextDisplay "Shark" 10 10 14 Gray
-                , TextDisplay "Research" 20 60 14 Gray
-                , TextDisplay "Press ENTER to select" 50 150 3 White
+                , TextDisplay "Research" 100 200 14 Gray
+                , TextDisplay "Press ENTER to select" 200 460 3 White
                 ]
         newGame = MenuAction "New Game" $ Just IntroPage
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
@@ -49,7 +49,7 @@ mainMenu gdM = GameMenu (View words [] [] Nothing) (Menu optEntry Nothing)
 
 
 introPage :: GameData -> GameMenu
-introPage gd = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 80 220 3 2 opts (CursorRect White) 0) Nothing)
+introPage gd = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 450 700 3 2 opts (CursorRect White) 0) Nothing)
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -57,12 +57,12 @@ introPage gd = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 80 220 3 2 
         grantText = "Grant Amount: "
         startMoney = gameDataFunds gd
         gd' = gd { gameDataFunds = startMoney }
-        words = [ TextDisplay "Welcome!" 10 10 14 White
-                , TextDisplay welcomeText1 5 100 2 White
-                , TextDisplay welcomeText2 5 120 2 White
-                , TextDisplay welcomeText3 5 140 2 White
-                , TextDisplay grantText 75 170 4 White
-                , TextDisplay (showMoney startMoney) 100 190 3 Green
+        words = [ TextDisplay "Welcome!" 100 50 14 White
+                , TextDisplay welcomeText1 50 300 2 White
+                , TextDisplay welcomeText2 50 350 2 White
+                , TextDisplay welcomeText3 50 400 2 White
+                , TextDisplay grantText 400 500 4 White
+                , TextDisplay (showMoney startMoney) 500 600 3 Green
                 ]
         opts = [ MenuAction "Start Research" $ Just $ ResearchCenter gd'
                ]
@@ -70,19 +70,15 @@ introPage gd = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 80 220 3 2 
 
 
 researchCenterMenu :: GameData -> Graphics -> GameMenu
-researchCenterMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (selOneOpts 15 160 4 15 opts mc 0) Nothing)
+researchCenterMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (selOneOpts 300 500 4 15 opts mc 0) Nothing)
     where
         funds = gameDataFunds gd
         mc = CursorRect White
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        dateTxt = "Center research run time:"
-        dateTxt2 = monthToText (gameDataMonth gd)
-        words = [ TextDisplay "Research" 10 10 10 White
-                , TextDisplay "Center" 40 45 10 White
-                , TextDisplay dateTxt 35 105 3 White
-                , TextDisplay dateTxt2 55 120 3 Green
+        words = [ TextDisplay "Research" 50 10 10 White
+                , TextDisplay "Center" 200 160 10 White
                 ]
-        fundWords = oneLine gr fundTxts 35 90 2
+        fundWords = oneLine gr fundTxts 200 350 2
         opts = [ MenuAction "Plan Research Trip" $ Just $ TripDestinationSelect gd
                , MenuAction "Review Data" $ Just $ DataReviewTop gd
                , MenuAction "Lab Management" $ Just $ LabManagement gd

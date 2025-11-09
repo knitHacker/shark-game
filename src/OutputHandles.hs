@@ -46,9 +46,7 @@ getFontSize :: OutputHandles -> IO FontSize
 getFontSize outs =
     do
         size <-Font.size (font outs) " "
-        let rX = ratioX outs
-            rY = ratioY outs
-            size' = (fromIntegral (fst size) / rX, fromIntegral (snd size) / rY)
+        let size' = (fromIntegral (fst size), fromIntegral (snd size))
         return size'
 
 initOutputHandles :: TextureFileMap -> GameConfigs -> IO OutputHandles
@@ -56,25 +54,22 @@ initOutputHandles textCfgs cfgs = do
     fontPath <- getGameFullPath fontFile
     SDL.initialize []
     Font.initialize
-    window <- SDL.createWindow "My Game" SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight }
+    window <- SDL.createWindow "My Game" SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight, SDL.windowHighDPI = True }
     SDL.showWindow window
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
     initWindow r
-    font <- Font.load fontPath 16
+    font <- Font.load fontPath fontSz
     b <- Font.isMonospace font
     textList <- mapM (loadTexture r) $ M.toList textCfgs
     let textures = M.fromList textList
     print $ fst <$> M.toList textures
-    return $ OutputHandles window r textures font ratioX ratioY
+    return $ OutputHandles window r textures font
     where
         gCfgs = settingCfgs cfgs
+        fontSz = fontSize gCfgs
         screenWidth = fromIntegral $ windowSizeX gCfgs
         screenHeight = fromIntegral $ windowSizeY gCfgs
-        boardX = fromIntegral $ boardSizeX gCfgs
-        boardY = fromIntegral $ boardSizeY gCfgs
-        ratioX = fromIntegral screenWidth / fromIntegral boardX
-        ratioY = fromIntegral screenHeight / fromIntegral boardY
 
 loadTexture :: SDL.Renderer -> (T.Text, TextureCfg) -> IO (T.Text, SDL.Texture)
 loadTexture r (name, textureCfg) = do

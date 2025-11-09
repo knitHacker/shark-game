@@ -40,6 +40,7 @@ instance ToJSON StartMechanics
 data EncounterMechanics = Encounter
     { baseAttempts :: Int
     , bonusAttemptChancePercent :: Int
+    , bonusMaxAttempts :: Int
     } deriving (Generic, Show, Eq)
 
 instance FromJSON EncounterMechanics

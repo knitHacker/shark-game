@@ -39,10 +39,12 @@ addScrollRects r d x y fullHeight scrollHeight barHeight offH
     | fullHeight < scrollHeight = r
     | otherwise = addRectangle (addRectangle r d 1 rect) d 2 rect2
     where
+        x' = fromIntegral (x - 40)
+        w = 20
         maxBarY = y + scrollHeight - barHeight
         subStart = fromIntegral $ min (fromIntegral $ y + offH) maxBarY
-        rect = DRectangle DarkGray (fromIntegral x) (fromIntegral (y - 1)) 4 (fromIntegral (scrollHeight + 2))
-        rect2 = DRectangle Gray (fromIntegral x) subStart 4 (fromIntegral barHeight)
+        rect = DRectangle DarkGray (fromIntegral x') (fromIntegral (y - 1)) w (fromIntegral (scrollHeight + 2))
+        rect2 = DRectangle Gray (fromIntegral x') subStart w (fromIntegral barHeight)
 
 
 -- Update a view that has a scroll bar
@@ -54,7 +56,7 @@ updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart y
         offH = step * off
         r' = moveRenderY r (-offH)
         r'' = clipYRender fs r' yStart maxY
-        r''' = addScrollRects r'' (d + 1) (xStart - 8) yStart viewHeight scrollHeight barHeight offH
+        r''' = addScrollRects r'' (d + 1) xStart yStart viewHeight scrollHeight barHeight offH
 
 updateOverlayMenu :: Graphics -> Int -> OverlayMenu a -> ToRender
 updateOverlayMenu gr d (Overlay x y w h c m) = r'
@@ -133,10 +135,10 @@ updateListCursor :: Graphics -> Int -> CInt -> CInt -> Int -> Int -> Int -> Int 
 updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
     where
         (TextureInfo tW tH) = graphicsTextures gr ! t
-        x' = x - 20
-        y' = y - 3
-        w = fromIntegral tW
-        h = fromIntegral tH
+        x' = x - 80
+        y' = y - 16
+        w = fromIntegral (tW * 4)
+        h = fromIntegral (tH * 4)
 updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 rect
     where
         rect = getTextRectangle c x y tl th r sp
@@ -208,7 +210,7 @@ columnButtonOptionTexts (Graphics _ fs@(fw, fh)) p d s sp w butText headers opts
                 buttonColor = if p == n then (if isEnabled then Yellow else Red) else (if isEnabled then Green else Gray)
                 newY = yPos + yAdj
                 (maxX, r') = foldl columnDraw (fromIntegral x, r) $ colOptionTexts h
-                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then White else Black))
+                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then Blue else Red))
                 isEnabled = isJust $ colOptionAction h
                 columnDraw (tx, ls) t = (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral yPos) s Blue)
 
@@ -226,11 +228,11 @@ updateScrollListOptions gr@(Graphics _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s
         indicatorHeight = fromIntegral (scrollHeight - sp)
         moveAmt = indicatorHeight `div` fromIntegral optCount
         darkHeight = moveAmt * fromIntegral end
-        rx = fromIntegral (x - 10)
+        rx = fromIntegral (x - 40)
         ry = fromIntegral y + (fromIntegral off * moveAmt)
         -- height is recalculated because of rounding errors with division with integers
-        rect = DRectangle DarkGray rx (fromIntegral y - 1) 4 (moveAmt * fromIntegral optCount + 2)
-        rect2 = DRectangle Gray rx ry 4 darkHeight
+        rect = DRectangle DarkGray rx (fromIntegral y - 1) 20 (moveAmt * fromIntegral optCount + 2)
+        rect2 = DRectangle Gray rx ry 20 darkHeight
         ((r, yEnd), cur) = case opts of
                     BasicSOALOpts (OALOpts oal c) -> ((updateSelOneListOptions gr d p' bdi $ OALOpts (take mx (drop off oal)) c, y + scrollHeight), c)
                     BasicMSLOpts mo@(MSLOpts msl _ _ _) -> ((updateMultiListOptions gr d p' bdi $ mo { mslOpts = take mx (drop off msl) }, y + scrollHeight), CursorRect White)
