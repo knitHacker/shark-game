@@ -187,10 +187,10 @@ withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo
 withPause gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gps gd }
 
 pauseMenu :: GamePlayState -> GameData -> OverlayView GamePlayState
-pauseMenu gps gd = OverlayView False (View words [] [] Nothing) (Overlay 20 20 200 200 DarkBlue menuOpt)
+pauseMenu gps gd = OverlayView False (View words [] [] Nothing) (Overlay 300 100 750 600 DarkBlue menuOpt)
     where
-        menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 50 100 5 15) 0
-        words = [ TextDisplay "Game Menu" 30 30 10 White
+        menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 450 400 4 15) 0
+        words = [ TextDisplay "Game Menu" 350 150 8 White
                 ]
         opts = [ MenuAction "Continue" $ Just gps
                , MenuAction "Main Menu" $ Just $ MainMenu gd
