@@ -69,6 +69,7 @@ data GamePlayState =
     | AwardGrantMenu GameData (DataEntry ResearchData)
     | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
     | LabManagement GameData
+    | FundraiserTop GameData
     | FleetManagement GameData
     | EquipmentManagement GameData
     | EquipmentStore GameData (Maybe (T.Text, Int, GameData))
