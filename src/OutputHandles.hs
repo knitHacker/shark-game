@@ -59,7 +59,7 @@ initOutputHandles textCfgs cfgs = do
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
     initWindow r
-    font <- Font.load fontPath 16
+    font <- Font.load fontPath fontSz
     b <- Font.isMonospace font
     textList <- mapM (loadTexture r) $ M.toList textCfgs
     let textures = M.fromList textList
@@ -67,6 +67,7 @@ initOutputHandles textCfgs cfgs = do
     return $ OutputHandles window r textures font
     where
         gCfgs = settingCfgs cfgs
+        fontSz = fontSize gCfgs
         screenWidth = fromIntegral $ windowSizeX gCfgs
         screenHeight = fromIntegral $ windowSizeY gCfgs
 

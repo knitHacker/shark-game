@@ -4,6 +4,6 @@
     "debugHitboxes": false,
     "windowSizeX": 1280,
     "windowSizeY": 800,
-    "fontSize": 4,
+    "fontSize": 16,
     "frameRate": 60
 }
