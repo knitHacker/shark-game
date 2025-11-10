@@ -87,7 +87,7 @@ selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
 selMultOpts x y s sp opts up act back = MenuData (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
 scrollOpts :: Int -> Int -> Int -> Int -> BasicOption a -> [MenuAction a] -> Int -> Int -> MenuData a
-scrollOpts x y s sp opts fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll pos)) (BlockDrawInfo x y s sp) pos
+scrollOpts x y s sp opts fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll 0)) (BlockDrawInfo x y s sp) pos
 
 getNextOption :: MenuData a -> Maybe a
 getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
