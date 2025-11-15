@@ -8,17 +8,27 @@ module OutputHandles.Util
     , getRenderMaxX
     , moveRenderY
     , clipYRender
+    , mkRect
     ) where
 
 import Foreign.C.Types ( CInt )
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 
+import qualified SDL
+
 import OutputHandles.Types
 import OutputHandles.Text
 
 
 import Debug.Trace
+import Data.Aeson.Encoding (word)
+
+mkRect :: a -> a -> a -> a-> SDL.Rectangle a
+mkRect x y w h = SDL.Rectangle o z
+  where
+    o = SDL.P (SDL.V2 x y)
+    z = SDL.V2 w h
 
 renderEmpty :: ToRender
 renderEmpty = mempty
@@ -76,6 +86,21 @@ clipYRender fs rends startY endY = filterDraws clip rends
             -- Can I even cut off a rect?
             | otherwise = Just d
         clip d@(DrawTextDisplay td)
+            | wordsPosY td + textH < startY' = Nothing
+            | wordsPosY td < startY' && wordsPosY td + textH < endY' =
+                let xStart = wordsPosX td
+                    maskWidth = ceiling $ widthTextDisplay fs td
+                    maskHeight = wordsPosY td + textH - startY'
+                in Just $ DrawTextDisplay $ td { wordsMask = Just (mkRect xStart startY' maskWidth maskHeight) }
             | wordsPosY td < startY' = Nothing
+            | wordsPosY td < endY' && wordsPosY td + textH > endY' =
+                let xStart = wordsPosX td
+                    yStart = wordsPosY td
+                    maskWidth = ceiling $ widthTextDisplay fs td
+                    spaceH = endY' - wordsPosY td
+                    maskHeight = min textH spaceH
+                in Just $ DrawTextDisplay $ td { wordsMask = Just (mkRect xStart yStart maskWidth maskHeight) }
             | wordsPosY td + ceiling (heightTextDisplay fs td) > endY' = Nothing
             | otherwise = Just d
+            where
+                textH = ceiling (heightTextDisplay fs td)

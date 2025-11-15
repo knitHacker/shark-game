@@ -38,8 +38,8 @@ labTopMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (Menu (sel
         funds = gameDataFunds gd
         mc = CursorRect White
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        words = [ TextDisplay "Lab" 40 20 10 White
-                , TextDisplay "Management" 150 150 10 White
+        words = [ TextDisplay "Lab" 40 20 10 White Nothing
+                , TextDisplay "Management" 150 150 10 White Nothing
                 ]
         fundWords = oneLine gr fundTxts 150 350 2
         opts = [ MenuAction "Fundraising" $ Just $ FundraiserTop gd
@@ -58,9 +58,9 @@ fundraiserTopMenu gd cfgs gr = GameMenu (View (words ++ fundWords) [] [] Nothing
         mc = CursorRect White
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         dateTxt = "Center research run time:"
-        words = [ TextDisplay "Research" 40 20 10 White
-                , TextDisplay "Center" 150 150 10 White
-                --, TextDisplay dateTxt 200 300 3 White
+        words = [ TextDisplay "Research" 40 20 10 White Nothing
+                , TextDisplay "Center" 150 150 10 White Nothing
+                --, TextDisplay dateTxt 200 300 3 White Nothing
                 ]
         fundWords = oneLine gr fundTxts 200 350 2
         opts = [ MenuAction "Host Fundraiser" Nothing
@@ -107,12 +107,12 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing to $ Just md
         mc = CursorRect White
         slotTxt = "Equipment Slots: " <> (T.pack . show $ boatEquipmentSlots boatInfo)
         fuelTxt = "Fuel Cost: $" <> (T.pack . show $ boatFuelCost boatInfo)
-        words = [ TextDisplay "Fleet" 20 20 8 White
-                , TextDisplay "Management" 50 125 8 White
-                , TextDisplay "Boat Information" 75 275 4 LightGray
-                , TextDisplay (boatName boatInfo) 125 350 3 LightGray
-                , TextDisplay slotTxt 75 400 4 LightGray
-                , TextDisplay fuelTxt 75 475 4 LightGray
+        words = [ TextDisplay "Fleet" 20 20 8 White Nothing
+                , TextDisplay "Management" 50 125 8 White Nothing
+                , TextDisplay "Boat Information" 75 275 4 LightGray Nothing
+                , TextDisplay (boatName boatInfo) 125 350 3 LightGray Nothing
+                , TextDisplay slotTxt 75 400 4 LightGray Nothing
+                , TextDisplay fuelTxt 75 475 4 LightGray Nothing
                 ]
         imgs = boatBounceAnim boatI 0
         opts = [ MenuAction "Boat Store" Nothing
@@ -121,36 +121,36 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing to $ Just md
         nextFrame frame = View words (boatBounceAnim boatI frame) [] Nothing
 
 equipmentManagementTopMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
-equipmentManagementTopMenu gd cfgs gr = GameMenu (View words [] [] scrollData) (Menu (selOneOpts 150 600 4 15 opts mc 0) Nothing)
+equipmentManagementTopMenu gd cfgs gr = GameMenu (View words [] [] scrollData) (Menu (selOneOpts 150 650 3 15 opts mc 0) Nothing)
     where
         myEquipment = gameOwnedEquipment $ gameDataEquipment gd
         equipmentInfo = (!) (equipment (sharkCfgs cfgs)) <$> myEquipment
         mc = CursorRect White
         equipTxts = (\e -> equipText e <> "    Equipment Slots: " <> (T.pack . show $ equipSize e)) <$> equipmentInfo
-        equipDis = (\(t, i) -> TextDisplay t 90 (350 + i * 50) 3 LightGray) <$> zip equipTxts [0..]
-        words = [ TextDisplay "Equipment" 20 10 8 White
-                , TextDisplay "Management" 50 120 8 White
-                , TextDisplay "Owned Equipment" 75 250 4 LightGray
+        equipDis = (\(t, i) -> TextDisplay t 150 (375 + i * 50) 3 LightGray Nothing) <$> zip equipTxts [0..]
+        words = [ TextDisplay "Equipment" 30 10 8 White Nothing
+                , TextDisplay "Management" 175 120 8 White Nothing
+                , TextDisplay "Owned Equipment" 300 275 4 LightGray Nothing
                 ]
-        scrollData = mkScrollView gr equipDis [] 0 550 5
+        scrollData = mkScrollView gr equipDis [] 0 570 5
         opts = [ MenuAction "Equipment Store" $ Just $ EquipmentStore gd Nothing
                , MenuAction "Return to Management" $ Just $ LabManagement gd
                ]
 
 buyConfirm :: GameData -> GameConfigs -> (T.Text, Int, GameData) -> MenuPopup GamePlayState
-buyConfirm gd cfgs (item, price, gd') = MenuPopup v md 20 40 150 200 DarkBlue
+buyConfirm gd cfgs (item, price, gd') = MenuPopup v md 200 100 900 600 DarkBlue
     where
         v = View words [] [] Nothing
-        md = selOneOpts 80 190 3 4 opts (CursorRect White) 0
+        md = selOneOpts 350 500 3 4 opts (CursorRect White) 0
         funds = gameDataFunds gd
         enoughFunds = funds >= price
         fundTxt = T.append "Current Funds: " (showMoney funds)
         itemTxt = T.append "Item Cost: " (showMoney price)
         afterTxt = T.append "After Purchase: " (showMoney (funds - price))
-        words = [ TextDisplay item 25 55 9 White
-                , TextDisplay fundTxt 30 105 3 Green
-                , TextDisplay itemTxt 30 125 3 Red
-                , TextDisplay afterTxt 30 145 3 (if enoughFunds then Green else Red)
+        words = [ TextDisplay item 250 150 9 White Nothing
+                , TextDisplay fundTxt 300 300 3 Green Nothing
+                , TextDisplay itemTxt 300 350 3 Red Nothing
+                , TextDisplay afterTxt 300 400 3 (if enoughFunds then Green else Red) Nothing
                 ]
         opts = [ MenuAction "Confirm Purchase" $ if enoughFunds then Just (EquipmentStore gd' Nothing) else Nothing
                , MenuAction "Cancel" $ Just $ EquipmentStore gd Nothing
@@ -178,8 +178,8 @@ equipmentStoreMenu gd popupGd cfgs gr = GameMenu v $ Menu md pop
         available = M.withoutKeys equips (S.fromList owned)
         hds = ["Equipment", "Type", "Price"]
         colOpts = BasicCBOpts $ CBOpts "Buy" 350 hds $ mkStoreEntry gd <$> M.assocs available
-        words = [ TextDisplay "Equipment" 20 20 9 White
-                , TextDisplay "Store" 80 150 9 White
+        words = [ TextDisplay "Equipment" 20 20 9 White Nothing
+                , TextDisplay "Store" 80 150 9 White Nothing
                 ]
         opts = [ MenuAction "Leave Equipment Store" $ Just $ EquipmentManagement gd
                ]

@@ -36,7 +36,7 @@ wrapText outs txt x yStart width lineSpace fontScale c = (wrapped, fromIntegral 
             | T.length curr + T.length w <= maxLetters = (ls, T.concat [curr, " ", w])
             | otherwise = (ls ++ [curr], w)
         yAdjust = lineSpace + ceiling (fontHeight outs * fromIntegral fontScale)
-        makeTextDisplays (ts, y) line = (ts ++ [TextDisplay line (fromIntegral x) y fontScale c], y + fromIntegral yAdjust)
+        makeTextDisplays (ts, y) line = (ts ++ [TextDisplay line (fromIntegral x) y fontScale c Nothing], y + fromIntegral yAdjust)
 
 
 wrapTexts :: Graphics -> [T.Text] -> Int -> Int -> Int -> Int -> Int -> Color -> ([TextDisplay], Int)
@@ -47,7 +47,7 @@ wrapTexts outs txts x yStart width lineSpace fontScale c = foldl makeTextDisplay
 adjustTexts :: Graphics -> [(TextDisplay, Int, Int)] -> ([TextDisplay], Int)
 adjustTexts outs = foldl makeTextDisplays ([], 0)
     where
-        makeTextDisplays (ts, y) (TextDisplay txt x _ fontScale c, width, lineSpace) =
+        makeTextDisplays (ts, y) (TextDisplay txt x _ fontScale c Nothing, width, lineSpace) =
             let (newTs, newY) = wrapText outs txt (fromIntegral x) y width lineSpace fontScale c
             in (ts ++ newTs, newY)
 
@@ -58,7 +58,7 @@ oneLine outs txts x y space = fst $ foldl makeTextDisplays ([], fromIntegral x) 
             let letterWidth = fontWidth outs * fromIntegral fontScale
                 lineLength = ceiling $ fromIntegral (T.length txt) * letterWidth
                 spacing = floor $ fromIntegral space * letterWidth
-            in (ts ++ [TextDisplay txt x' (fromIntegral y) fontScale c], x' + fromIntegral lineLength + fromIntegral spacing)
+            in (ts ++ [TextDisplay txt x' (fromIntegral y) fontScale c Nothing], x' + fromIntegral lineLength + fromIntegral spacing)
 
 
 rightJustSpacing :: [T.Text] -> [T.Text]

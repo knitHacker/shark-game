@@ -170,7 +170,7 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' 
                 tlen = ceiling (fw * fromIntegral (T.length str * s))
                 tH = fh * fromIntegral s
                 textColor = if selectDisabled h then Gray else Blue
-                td = TextDisplay str x yPos s textColor
+                td = TextDisplay str x yPos s textColor Nothing
                 hlC
                     | cp == pos = Yellow
                     | selectChangeable h = White
@@ -187,7 +187,7 @@ updateMenuListOptions opts s h x = updateMenuListOptions' opts
         updateMenuListOptions' ((optText, col):tl) y = dis : updateMenuListOptions' tl newY
             where
                 newY = y + fromIntegral h
-                dis = TextDisplay optText x y s col
+                dis = TextDisplay optText x y s col Nothing
 
 -- Draw menu options with columns and a button for each row
 updateColumnButtonOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ColumnButtonOptions a -> (ToRender, Int)
@@ -199,7 +199,7 @@ updateColumnButtonOptions gr@(Graphics _ fs@(fw, fh)) d pos bdi@(BlockDrawInfo x
 columnButtonOptionTexts :: Graphics -> Int -> Int -> Int -> Int -> Int -> T.Text -> [T.Text] -> [ColumnAction a] -> Int -> Int -> (ToRender, Int)
 columnButtonOptionTexts (Graphics _ fs@(fw, fh)) p d s sp w butText headers opts x y = columnButtonOptionTexts' rend 0 opts (fromIntegral y + fromIntegral (sp + tH))
     where
-        (lastX, rend) = foldl (\(tx, ls) t -> (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral y) s White)) (fromIntegral x, mempty) headers
+        (lastX, rend) = foldl (\(tx, ls) t -> (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral y) s White Nothing)) (fromIntegral x, mempty) headers
         tL = ceiling $ fw * fromIntegral (s * T.length butText)
         tH = ceiling (fh * fromIntegral s)
         yAdj = fromIntegral (sp + tH)
@@ -210,9 +210,9 @@ columnButtonOptionTexts (Graphics _ fs@(fw, fh)) p d s sp w butText headers opts
                 buttonColor = if p == n then (if isEnabled then Yellow else Red) else (if isEnabled then Green else Gray)
                 newY = yPos + yAdj
                 (maxX, r') = foldl columnDraw (fromIntegral x, r) $ colOptionTexts h
-                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then Blue else Red))
+                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then Blue else Red) Nothing)
                 isEnabled = isJust $ colOptionAction h
-                columnDraw (tx, ls) t = (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral yPos) s Blue)
+                columnDraw (tx, ls) t = (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral yPos) s Blue Nothing)
 
 
 updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender

@@ -35,9 +35,9 @@ mainMenu gdM = GameMenu (View words [] [] Nothing) (Menu optEntry Nothing)
     where
         optEntry = selOneOpts 400 550 3 2 menuOpts cursor 0
         cursor = CursorPointer "green_arrow"
-        words = [ TextDisplay "Shark" 10 10 14 Gray
-                , TextDisplay "Research" 100 200 14 Gray
-                , TextDisplay "Press ENTER to select" 200 460 3 White
+        words = [ TextDisplay "Shark" 10 10 14 Gray Nothing
+                , TextDisplay "Research" 100 200 14 Gray Nothing
+                , TextDisplay "Press ENTER to select" 200 460 3 White Nothing
                 ]
         newGame = MenuAction "New Game" $ Just IntroPage
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
@@ -57,12 +57,12 @@ introPage gd = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 450 700 3 2
         grantText = "Grant Amount: "
         startMoney = gameDataFunds gd
         gd' = gd { gameDataFunds = startMoney }
-        words = [ TextDisplay "Welcome!" 100 50 14 White
-                , TextDisplay welcomeText1 50 300 2 White
-                , TextDisplay welcomeText2 50 350 2 White
-                , TextDisplay welcomeText3 50 400 2 White
-                , TextDisplay grantText 400 500 4 White
-                , TextDisplay (showMoney startMoney) 500 600 3 Green
+        words = [ TextDisplay "Welcome!" 100 50 14 White Nothing
+                , TextDisplay welcomeText1 50 300 2 White Nothing
+                , TextDisplay welcomeText2 50 350 2 White Nothing
+                , TextDisplay welcomeText3 50 400 2 White Nothing
+                , TextDisplay grantText 400 500 4 White Nothing
+                , TextDisplay (showMoney startMoney) 500 600 3 Green Nothing
                 ]
         opts = [ MenuAction "Start Research" $ Just $ ResearchCenter gd'
                ]
@@ -75,8 +75,8 @@ researchCenterMenu gd gr = GameMenu (View (words ++ fundWords) [] [] Nothing) (M
         funds = gameDataFunds gd
         mc = CursorRect White
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        words = [ TextDisplay "Research" 50 10 10 White
-                , TextDisplay "Center" 200 160 10 White
+        words = [ TextDisplay "Research" 50 10 10 White Nothing
+                , TextDisplay "Center" 200 160 10 White Nothing
                 ]
         fundWords = oneLine gr fundTxts 200 350 2
         opts = [ MenuAction "Plan Research Trip" $ Just $ TripDestinationSelect gd

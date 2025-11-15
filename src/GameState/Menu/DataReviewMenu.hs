@@ -36,7 +36,7 @@ topReviewMenu :: GameData -> GameConfigs -> GameMenu
 topReviewMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 250 300 3 20 opts mc 0) Nothing)
     where
         mc = CursorRect White
-        words = [ TextDisplay "Data Review" 50 50 10 White
+        words = [ TextDisplay "Data Review" 50 50 10 White Nothing
                 ]
         opts = [ MenuAction "Sharks" $ Just $ SharkReviewTop gd Nothing
                , MenuAction "Research" $ Just $ ResearchReviewTop gd
@@ -50,8 +50,8 @@ topReviewSharksMenu gd mPrev cfgs = GameMenu (View words [] [] Nothing) (Menu op
         sharksInfo = sharks $ sharkCfgs cfgs
         mc = CursorRect White
         sharkKeys = zip (M.keys (gameDataFoundSharks gd)) [0..]
-        words = [ TextDisplay "Data Review" 50 50 10 White
-                , TextDisplay "Discovered Sharks" 150 200 5 Green
+        words = [ TextDisplay "Data Review" 50 50 10 White Nothing
+                , TextDisplay "Discovered Sharks" 150 200 5 Green Nothing
                 ]
         opts = (\(s, _) -> MenuAction (sharkName (sharksInfo M.! s)) $ Just (SharkReview gd (getEntry sharksInfo s))) <$> sharkKeys
         otherOpts = [ MenuAction "Back" $ Just $ DataReviewTop gd ]
@@ -74,17 +74,17 @@ sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View (locWords ++ words') imgs
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
         (locWords, end) = wrapText gr locsTxt 75 150 500 5 4 Blue
-        words = [ TextDisplay (getData sharkEntry sharkName) 50 50 5 White
-                , TextDisplay sightingText 75 (fromIntegral (end + 20)) 3 White
+        words = [ TextDisplay (getData sharkEntry sharkName) 50 50 5 White Nothing
+                , TextDisplay sightingText 75 (fromIntegral (end + 20)) 3 White Nothing
                 ]
-        (_, words') = foldl (\(y, l) t -> (y + 75, l ++ [TextDisplay t 125 y 3 White])) (fromIntegral (end + 75), words) countTxts
+        (_, words') = foldl (\(y, l) t -> (y + 75, l ++ [TextDisplay t 125 y 3 White Nothing])) (fromIntegral (end + 75), words) countTxts
 
 topLabMenu :: GameData -> GameConfigs -> GameMenu
 topLabMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 300 400 4 25 opts mc 0) Nothing)
     where
         mc = CursorRect White
-        words = [ TextDisplay "Research" 50 20 10 White
-                , TextDisplay "Lab" 200 160 8 White
+        words = [ TextDisplay "Research" 50 20 10 White Nothing
+                , TextDisplay "Lab" 200 160 8 White Nothing
                 ]
         opts = [ MenuAction "Open Research" $ Just $ OpenResearchMenu gd
                , MenuAction "Completed Research" $ Just $ CompletedResearchMenu gd
@@ -98,23 +98,22 @@ openResearchMenu gd cfgs = GameMenu (View words' [] [] Nothing) (Menu (selOneOpt
         availResearch = filter (\r -> M.notMember (entryKey r) (gameDataResearchComplete gd)) (getKnownResearch sCfgs gd)
         sharksInfo = sharks sCfgs
         mc = CursorRect White
-        words = [ TextDisplay "Open Research" 50 50 6 White
+        words = [ TextDisplay "Open Research" 50 50 6 White Nothing
                 ]
         opts = (\s -> MenuAction (getData s researchPaperName) $ Just (InvestigateResearchMenu gd s)) <$> availResearch
         otherOpts = [ MenuAction "Back" $ Just $ ResearchReviewTop gd ]
-        words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 20 100 2 Red] else words
-
+        words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 20 100 2 Red Nothing] else words
 completedResearchMenu :: GameData -> GameConfigs -> GameMenu
 completedResearchMenu gd cfgs = GameMenu (View words' [] [] Nothing) (Menu (selOneOpts 150 250 3 25 (opts ++ otherOpts) mc 0) Nothing)
     where
         mc = CursorRect White
         availResearch = filter (\r -> M.member (entryKey r) (gameDataResearchComplete gd)) $ getKnownResearch (sharkCfgs cfgs) gd
-        words = [ TextDisplay "Completed Research" 50 50 6 White
+        words = [ TextDisplay "Completed Research" 50 50 6 White Nothing
                 ]
         research = (\s -> MenuAction (getData s researchPaperName) $ Just (CompletedResearchReviewMenu gd s)) <$> availResearch
         opts = (\s -> MenuAction (getData s researchPaperName) $ Just (CompletedResearchReviewMenu gd s)) <$> availResearch
         otherOpts = [ MenuAction "Back" $ Just $ ResearchReviewTop gd ]
-        words' = if null research then words ++ [TextDisplay "No completed research" 20 100 2 Red] else words
+        words' = if null research then words ++ [TextDisplay "No completed research" 20 100 2 Red Nothing] else words
 
 investigateResearchMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> GameMenu
 investigateResearchMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (Menu (selOneOpts 200 500 3 20 [completeOpt, returnOpt] mc 0) Nothing)
@@ -125,15 +124,15 @@ investigateResearchMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] N
         completeOpt = MenuAction "Complete Research" (if canCompleteResearch reqs then Just (AwardGrantMenu gd' researchEntry) else Nothing)
         returnOpt = MenuAction "Back" $ Just $ OpenResearchMenu gd
         grantText = T.append "Grant awarded when complete: $" (T.pack (show (getData researchEntry researchGrant)))
-        words = [ TextDisplay (getData researchEntry researchPaperName) 50 30 5 White
-                , TextDisplay grantText 100 200 2 Green
+        words = [ TextDisplay (getData researchEntry researchPaperName) 50 30 5 White Nothing
+                , TextDisplay grantText 100 200 2 Green Nothing
                 ]
         words' = fst $ foldl makeReqTxt (words, 250) reqs
         makeReqTxt (l, y) (sN, rrs) = (l ++ [sharkHeader] ++ infoRqs, y'' + 75)
                 where
-                        sharkHeader = TextDisplay sN 150 y 2 White
+                        sharkHeader = TextDisplay sN 150 y 2 White Nothing
                         toText it gsd c = T.concat [T.toTitle it, " ", T.pack (show (length gsd)), "/", T.pack (show c)]
-                        (infoRqs, y'') = foldl (\(l', y') (it, gsd, c) -> (l' ++ [TextDisplay (toText it gsd c) 200 y' 2 White], y' + 30)) ([], y + 50) rrs
+                        (infoRqs, y'') = foldl (\(l', y') (it, gsd, c) -> (l' ++ [TextDisplay (toText it gsd c) 200 y' 2 White Nothing], y' + 30)) ([], y + 50) rrs
 
 awardGrantMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> GameMenu
 awardGrantMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (Menu (selOneOpts 500 (e + 50) 3 20 [returnOpt] mc 0) Nothing)
@@ -141,8 +140,8 @@ awardGrantMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (
         mc = CursorRect White
         returnOpt = MenuAction "Continue" $ Just $ ResearchReviewTop gd
         grantText = T.append "Grant awarded when complete: $" (T.pack (show (getData researchEntry researchGrant)))
-        words = [ TextDisplay (getData researchEntry researchPaperName) 40 40 5 White
-                , TextDisplay grantText 175 150 3 Green
+        words = [ TextDisplay (getData researchEntry researchPaperName) 40 40 5 White Nothing
+                , TextDisplay grantText 175 150 3 Green Nothing
                 ]
         (descr, e) = wrapText gr (getData researchEntry researchDescription) 100 225 1050 4 2 White
         words' = words ++ descr
@@ -153,8 +152,8 @@ completedResearchReviewMenu gd researchEntry cfgs gr = GameMenu (View words' [] 
         mc = CursorRect White
         returnOpt = MenuAction "Back" $ Just $ CompletedResearchMenu gd
         grantText = T.append "Grant awarded when completed: $" (T.pack (show (getData researchEntry researchGrant)))
-        words = [ TextDisplay (getData researchEntry researchPaperName) 40 40 5 White
-                , TextDisplay grantText 175 150 3 Green
+        words = [ TextDisplay (getData researchEntry researchPaperName) 40 40 5 White Nothing
+                , TextDisplay grantText 175 150 3 Green Nothing
                 ]
         (descr, e) = wrapText gr (getData researchEntry researchDescription) 100 225 1050 4 2 White
         words' = words ++ descr

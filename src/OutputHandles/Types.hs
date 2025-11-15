@@ -118,6 +118,7 @@ data TextDisplay = TextDisplay
     , wordsPosY :: !CInt
     , wordsSize :: !Int
     , wordsColor :: !Color
+    , wordsMask :: !(Maybe (SDL.Rectangle CInt))
     }
 
 type TextureMap = M.Map Image SDL.Texture

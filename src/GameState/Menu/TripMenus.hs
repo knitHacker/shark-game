@@ -38,8 +38,8 @@ mapMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu options Nothing)
         options = scrollOpts 250 400 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] 4 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
         mc = CursorRect White
-        words = [ TextDisplay "Select Trip" 50 50 8 White
-                , TextDisplay "Destination" 150 200 10 White
+        words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
+                , TextDisplay "Destination" 150 200 10 White Nothing
                 ]
         opts = mkOptEntry <$> locs
         rtOpt = MenuAction "Return to Lab" $ Just $ ResearchCenter gd
@@ -64,10 +64,10 @@ equipmentPickMenu gd loc chsn pos cfgs = GameMenu (View words [] [] Nothing) (Me
         usedSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
         openSlots = slots - usedSlots
         slotTxt = T.concat ["Equipment Loaded: ", T.pack (show usedSlots), " slots"]
-        words = [ TextDisplay "Select Trip" 50 50 8 White
-                , TextDisplay "Equipment" 150 175 10 White
-                , TextDisplay (T.concat ["Max Slots: ", T.pack (show slots), " slots"]) 200 350 3 Green
-                , TextDisplay slotTxt 200 400 3 Green
+        words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
+                , TextDisplay "Equipment" 150 175 10 White Nothing
+                , TextDisplay (T.concat ["Max Slots: ", T.pack (show slots), " slots"]) 200 350 3 Green Nothing
+                , TextDisplay slotTxt 200 400 3 Green Nothing
                 ]
         opts' = (\(k, s, t) -> SelectOption t k (k `elem` chsn) True $ s > openSlots) <$> aEs'
         update = TripEquipmentSelect gd loc
@@ -89,14 +89,14 @@ reviewTripMenu gd loc eqs cfgs = GameMenu (View words [] [] Nothing) (Menu (selO
                                                         , ("After Trip: ", showMoney (funds - tc))
                                                         ]
         tripLenTxt = T.append (T.append "Trip Length: " (T.pack (show (tripLength trip)))) " month(s)"
-        words = [ TextDisplay "Review Trip" 50 20 8 White
-                , TextDisplay "Details" 150 125 10 White
-                , TextDisplay (T.append "Boat: " (boatName boatInfo)) 300 275 3 White
-                , TextDisplay (T.append "Fuel Cost: $" (T.pack (show (boatFuelCost boatInfo)))) 300 325 3 White
-                -- , TextDisplay tripLenTxt 250 375 3 White
-                , TextDisplay fundTxt 250 425 3 Green
-                , TextDisplay tripTxt 250 475 3 Red
-                , TextDisplay afterTxt 250 525 3 (if enoughFunds then Green else Red)
+        words = [ TextDisplay "Review Trip" 50 20 8 White Nothing
+                , TextDisplay "Details" 150 125 10 White Nothing
+                , TextDisplay (T.append "Boat: " (boatName boatInfo)) 300 275 3 White Nothing
+                , TextDisplay (T.append "Fuel Cost: $" (T.pack (show (boatFuelCost boatInfo)))) 300 325 3 White Nothing
+                -- , TextDisplay tripLenTxt 250 375 3 White Nothing
+                , TextDisplay fundTxt 250 425 3 Green Nothing
+                , TextDisplay tripTxt 250 475 3 Red Nothing
+                , TextDisplay afterTxt 250 525 3 (if enoughFunds then Green else Red) Nothing
                 ]
         gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
         (gd'', atmpts) = initTripProgress gd' loc boat eqs cfgs
@@ -114,7 +114,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) =
             let (gd', sfM) = exec ta
                 tp' = newTrip sfM tl
                 lastText = T.concat ["Using ", getData h equipText]
-            in GameView (v [TextDisplay lastText 150 400 3 Green]) Nothing (Just (TimeoutData ts 2000 $ TimeoutNext $ SharkFound gd' sfM tp')) Nothing
+            in GameView (v [TextDisplay lastText 150 400 3 Green Nothing]) Nothing (Just (TimeoutData ts 2000 $ TimeoutNext $ SharkFound gd' sfM tp')) Nothing
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
@@ -126,8 +126,8 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) =
         backRect = (Gray, progX, progY, progW, progH)
         p = floor (fromIntegral (allA - curA) / fromIntegral allA * 100)
         progressRect = (Green, progX, progY, (progW `div` 100) * p, progH)
-        words = [ TextDisplay "Trip Progress" 50 50 8 White
-                , TextDisplay "Looking for sharks..." 100 300 4 Blue
+        words = [ TextDisplay "Trip Progress" 50 50 8 White Nothing
+                , TextDisplay "Looking for sharks..." 100 300 4 Blue Nothing
                 ]
         newTrip sfM tl = case sfM of
                             Nothing -> tp { tripTries = tl }
@@ -141,12 +141,12 @@ sharkFoundMenu gd sfM tp cfgs = GameMenu (View words imgs [] Nothing) (Menu (sel
         sharkText sf = getData (findSpecies sf) sharkName
         sharkImg sf = getData (findSpecies sf) sharkImage
         (words, imgs) = case sfM of
-                    Nothing -> ([ TextDisplay "No Shark" 50 20 10 White
-                               , TextDisplay "Found" 150 150 10 White
-                               , TextDisplay "Better luck next time!" 200 300 4 White
+                    Nothing -> ([ TextDisplay "No Shark" 50 20 10 White Nothing
+                               , TextDisplay "Found" 150 150 10 White Nothing
+                               , TextDisplay "Better luck next time!" 200 300 4 White Nothing
                                ], [(375, 340, 1.75, "empty_net")])
-                    Just sf -> ([ TextDisplay (typeText sf) 60 20 8 White
-                               , TextDisplay (sharkText sf) 200 150 5 Blue
+                    Just sf -> ([ TextDisplay (typeText sf) 60 20 8 White Nothing
+                               , TextDisplay (sharkText sf) 200 150 5 Blue Nothing
                                ], [(375, 275, 1.75, sharkImg sf)])
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" $ Just nextState ]
@@ -156,9 +156,9 @@ tripResultsMenu gd tp cfgs gr = GameMenu (View words [] [] scrollVM) (Menu (selO
     where
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
-        words = [TextDisplay "Trip Complete!" 50 50 8 White]
+        words = [TextDisplay "Trip Complete!" 50 50 8 White Nothing]
         findText sf = T.concat ["- ", getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) equipInfoType]
-        findDisplays (i, sf) = [ TextDisplay (findText sf) 130 (250 + (i * 75)) 3 White
+        findDisplays (i, sf) = [ TextDisplay (findText sf) 130 (250 + (i * 75)) 3 White Nothing
                                -- , TextDisplay (T.append "at " (monthToText (findMonth sf))) 200 (300 + (i * 100)) 3 White
                                ]
         sharkFindsTxt = concatMap findDisplays $ zip [0..] (sharkFinds tp)

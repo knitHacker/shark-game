@@ -24,12 +24,8 @@ import Data.Map.Strict ((!))
 
 import Configs
 import OutputHandles.Types
+import OutputHandles.Util
 
-mkRect :: a -> a -> a -> a-> SDL.Rectangle a
-mkRect x y w h = SDL.Rectangle o z
-  where
-    o = SDL.P (SDL.V2 x y)
-    z = SDL.V2 w h
 
 fillRectangle :: (MonadIO m) => SDL.Renderer -> SDL.Rectangle CInt -> m ()
 fillRectangle r s = SDL.fillRect r (Just s)
@@ -95,7 +91,9 @@ drawText r font wd = do
     surf <- Font.solid font (color (wordsColor wd)) (wordsText wd)
     text <- SDL.createTextureFromSurface r surf
     (w, h) <- Font.size font (wordsText wd)
+    SDL.rendererClipRect r $= wordsMask wd
     SDL.copy r text Nothing (Just (mkRect (wordsPosX wd) (wordsPosY wd) (fromIntegral (w * textScale)) (fromIntegral (h * textScale))))
+    SDL.rendererClipRect r $= Nothing
     SDL.freeSurface surf
     SDL.destroyTexture text
     where
@@ -140,7 +138,7 @@ scaleDraw rX rY (DrawRectangle (DRectangle t pX pY w h)) = DrawRectangle $ DRect
 scaleDraw rX rY (DrawTextDisplay td) = DrawTextDisplay $ scaleWords rX rY td
 
 scaleWords :: Double -> Double -> TextDisplay -> TextDisplay
-scaleWords rX rY (TextDisplay wd pX pY s c) = TextDisplay wd (scale pX rX) (scale pY rY) s c
+scaleWords rX rY (TextDisplay wd pX pY s c mm) = TextDisplay wd (scale pX rX) (scale pY rY) s c mm
 
 scaleDebugs :: Double -> Double -> (Int, Int, Int, Int) -> (Int, Int, Int, Int)
 scaleDebugs rX rY (x, y, w, h) = (scale x rX, scale y rY, scale w rX, scale h rY)

@@ -29,11 +29,6 @@ import Debug.Trace
 import System.Console.GetOpt (getOpt)
 
 
-
---mkMenuPop :: [TextDisplay] -> [(Int, Int, Double, Image)] -> Maybe (ViewScroll a) -> MenuData a -> Maybe (MenuPopup a) -> Menu a
---mkMenuPop words images scrollM options popupM = Menu (View words images [] scrollM) options popupM Nothing
-
-
 mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe (ViewScroll a)
 mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY step <$> sdM
     where
@@ -48,7 +43,7 @@ mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
             let h2 = maxY - startY
                 h4 = floor $ (fromIntegral h2^2) / (fromIntegral h)
                 maxStep = ceiling $ (fromIntegral (h2 - h4)) / (fromIntegral step)
-            in ScrollData startX startY h h2 h4 maxStep
+            in ScrollData startX startY h h2 h4 $ maxStep
 
 getViewSize :: Graphics -> View a -> Maybe ((Int, Int), (Int, Int))
 getViewSize _ (View [] [] [] Nothing) = Nothing
