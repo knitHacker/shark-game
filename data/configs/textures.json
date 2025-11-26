@@ -45,7 +45,7 @@
         "skate": {
             "sizeX": 100,
             "sizeY": 50,
-            "file": "assets/animations/skate_animation.png",
+            "file": "assets/images/skate_swimming_animation.png",
             "frames": 8,
             "depth": 1
         }
