@@ -12,6 +12,7 @@ module Graphics.Menu
     , decrementMenuOpt
     , scrollView
     , getOptSize
+    , getTextureSize
     ) where
 
 import qualified Data.Text as T
@@ -45,12 +46,16 @@ mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
                 maxStep = ceiling $ (fromIntegral (h2 - h4)) / (fromIntegral step)
             in ScrollData startX startY h h2 h4 $ maxStep
 
+getTextureSize :: TextureInfo -> (Int, Int)
+getTextureSize (ImageCfg (ImageInfo sx sy)) = (sx, sy)
+getTextureSize (AnimationCfg (AnimationInfo sx sy _ _)) = (sx, sy)
+
 getViewSize :: Graphics -> View a -> Maybe ((Int, Int), (Int, Int))
 getViewSize _ (View [] [] [] Nothing) = Nothing
 getViewSize (Graphics tm fs) (View txts imgs rects Nothing) = Just ((x, y), (w, h))
     where
         imgRects = (\(x, y, s, tE) ->
-                        let (TextureInfo tw th) = (tm ! tE)
+                        let (tw, th) = getTextureSize $ tm ! tE
                         in (x, y, round ((fromIntegral tw) * s), round ((fromIntegral th) * s))
                      ) <$> imgs
         txMinYM = getTextMinY txts
@@ -62,10 +67,10 @@ getViewSize (Graphics tm fs) (View txts imgs rects Nothing) = Just ((x, y), (w, 
         rcMinXM = if null rects then Nothing else Just (minimum $ map (\(_, x, _, _, _) -> x) rects)
         rcMaxXM = if null rects then Nothing else Just (maximum $ map (\(_, x, _, w, _) -> x + w) rects)
         imgMinYM = if null imgs then Nothing else Just (minimum $ map (\(_, y, _, _) -> y) imgs)
-        imgMaxYM = if null imgs then Nothing else Just (maximum $ map (\(_, y, r, tE) -> let (TextureInfo _ th) = (tm ! tE)
+        imgMaxYM = if null imgs then Nothing else Just (maximum $ map (\(_, y, r, tE) -> let (_, th) = getTextureSize $ tm ! tE
                                                                                          in round (fromIntegral th * r) + y) imgs)
         imgMinXM = if null imgs then Nothing else Just (minimum $ map (\(x, _, _, _) -> x) imgs)
-        imgMaxXM = if null imgs then Nothing else Just (maximum $ map (\(x, _, r, tE) -> let (TextureInfo tw _ ) = (tm ! tE)
+        imgMaxXM = if null imgs then Nothing else Just (maximum $ map (\(x, _, r, tE) -> let (tw, _) = getTextureSize $ tm ! tE
                                                                                          in round (fromIntegral tw * r) + x) imgs)
         x = minimum $ catMaybes [imgMinXM, rcMinXM, txMinXM]
         y = minimum $ catMaybes [imgMinYM, rcMinYM, txMinYM]

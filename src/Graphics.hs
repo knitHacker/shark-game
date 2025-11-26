@@ -15,11 +15,13 @@ import InputState
 
 -- Assumes monospaced font
 
-initGraphics :: TextureFileMap -> OutputHandles -> IO Graphics
+initGraphics :: TextureCfg -> OutputHandles -> IO Graphics
 initGraphics tm outs = do
     fontSize <- getFontSize outs
+    let iTxts = M.map (\(ImageTexture sX sY _) -> ImageCfg $ ImageInfo sX sY) $ textureImages tm
+        aTxts = M.map (\(AnimationTexture sX sY _ f d) -> AnimationCfg $ AnimationInfo sX sY f d) $ textureAnimations tm
     return Graphics
-        { graphicsTextures = M.map (\(TextureCfg x y _) -> TextureInfo x y) tm
+        { graphicsTextures = M.union iTxts aTxts
         , graphicsFontSize = fontSize
         }
 -- Eventually update potential graphics and font sizing based on config changes

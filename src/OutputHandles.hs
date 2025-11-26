@@ -49,7 +49,7 @@ getFontSize outs =
         let size' = (fromIntegral (fst size), fromIntegral (snd size))
         return size'
 
-initOutputHandles :: TextureFileMap -> GameConfigs -> IO OutputHandles
+initOutputHandles :: TextureCfg -> GameConfigs -> IO OutputHandles
 initOutputHandles textCfgs cfgs = do
     fontPath <- getGameFullPath fontFile
     SDL.initialize []
@@ -67,7 +67,7 @@ initOutputHandles textCfgs cfgs = do
     initWindow r
     font <- Font.load fontPath fontSz
     b <- Font.isMonospace font
-    textList <- mapM (loadTexture r) $ M.toList textCfgs
+    textList <- mapM (loadTexture r) $ M.toList $ getTextureFiles textCfgs
     let textures = M.fromList textList
     print $ fst <$> M.toList textures
     return $ OutputHandles window r textures font
@@ -78,9 +78,9 @@ initOutputHandles textCfgs cfgs = do
         screenWidth = fromIntegral $ windowSizeX gCfgs
         screenHeight = fromIntegral $ windowSizeY gCfgs
 
-loadTexture :: SDL.Renderer -> (T.Text, TextureCfg) -> IO (T.Text, SDL.Texture)
-loadTexture r (name, textureCfg) = do
-    path <- getGameFullPath $ file textureCfg
+loadTexture :: SDL.Renderer -> (T.Text, FilePath) -> IO (T.Text, SDL.Texture)
+loadTexture r (name, filePath) = do
+    path <- getGameFullPath filePath
     t <- SDL.Image.loadTexture r path
     return (name, t)
 

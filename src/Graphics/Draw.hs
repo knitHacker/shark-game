@@ -73,9 +73,9 @@ updateGameView gr d (View words imgs rs scrollM) = r'''
         r'' = foldl (\rend (c, x, y, w, h) -> addRectangle rend d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r' rs
         toDraw :: (Int, Int, Double, Image) -> DrawTexture
         toDraw (x, y, s, tE) =
-            let (TextureInfo w h) = (graphicsTextures gr ! tE)
+            let (w, h) = getTextureSize (graphicsTextures gr ! tE)
             in DTexture tE (fromIntegral x) (fromIntegral y)
-                                        (floor ((fromIntegral w) * s)) (floor ((fromIntegral h) * s)) Nothing
+                                        (floor (fromIntegral w * s)) (floor (fromIntegral h * s)) Nothing
         r''' = case scrollM of
                 Nothing -> r''
                 Just scroll -> r'' <> updateGameViewScroll gr d scroll
@@ -134,7 +134,7 @@ updateSelOneListOptions gr@(Graphics _ (fw, fh)) d pos (BlockDrawInfo x y s sp) 
 updateListCursor :: Graphics -> Int -> CInt -> CInt -> Int -> Int -> Int -> Int -> CursorType -> ToRender
 updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
     where
-        (TextureInfo tW tH) = graphicsTextures gr ! t
+        (tW, tH) = getTextureSize $ graphicsTextures gr ! t
         x' = x - 80
         y' = y - 16
         w = fromIntegral (tW * 4)

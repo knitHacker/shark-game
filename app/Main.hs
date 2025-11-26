@@ -1,4 +1,3 @@
-{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
@@ -12,6 +11,7 @@ import Foreign.C.Types
 import SDL.Vect
 import qualified SDL
 import Data.Time.Clock.System
+import System.Exit (exitSuccess)
 
 
 main :: IO ()
@@ -21,3 +21,4 @@ main = do
     appEnvData <- initAppEnvData tm configs outs
     time <- getSystemTime
     runGame appEnvData
+    exitSuccess

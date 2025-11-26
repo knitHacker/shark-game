@@ -1,42 +1,53 @@
 {
-    "green_arrow": {
-        "sizeX": 16,
-        "sizeY": 16,
-        "file": "assets/images/arrow.png"
+    "textureImages": {
+        "green_arrow": {
+            "sizeX": 16,
+            "sizeY": 16,
+            "file": "assets/images/arrow.png"
+        },
+        "empty_net": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/empty_net_white.png"
+        },
+        "nurse_shark": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/nurse_shark.png"
+        },
+        "blue_shark": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/blue_shark.png"
+        },
+        "bad_shark": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/shark_placeholder.png"
+        },
+        "default_boat": {
+            "sizeX": 300,
+            "sizeY": 200,
+            "file": "assets/images/boat_default.png"
+        },
+        "water": {
+            "sizeX": 500,
+            "sizeY": 400,
+            "file": "assets/images/water.png"
+        },
+        "dock": {
+            "sizeX": 500,
+            "sizeY": 400,
+            "file": "assets/images/dock.png"
+        }
     },
-    "empty_net": {
-        "sizeX": 200,
-        "sizeY": 200,
-        "file": "assets/images/empty_net_white.png"
-    },
-    "nurse_shark": {
-        "sizeX": 200,
-        "sizeY": 200,
-        "file": "assets/images/nurse_shark.png"
-    },
-    "blue_shark": {
-        "sizeX": 200,
-        "sizeY": 200,
-        "file": "assets/images/blue_shark.png"
-    },
-    "bad_shark": {
-        "sizeX": 200,
-        "sizeY": 200,
-        "file": "assets/images/shark_placeholder.png"
-    },
-    "default_boat": {
-        "sizeX": 300,
-        "sizeY": 200,
-        "file": "assets/images/boat_default.png"
-    },
-    "water": {
-        "sizeX": 500,
-        "sizeY": 400,
-        "file": "assets/images/water.png"
-    },
-    "dock": {
-        "sizeX": 500,
-        "sizeY": 400,
-        "file": "assets/images/dock.png"
+    "textureAnimations": {
+        "skate": {
+            "sizeX": 100,
+            "sizeY": 50,
+            "file": "assets/animations/skate_animation.png",
+            "frames": 8,
+            "depth": 1
+        }
     }
 }

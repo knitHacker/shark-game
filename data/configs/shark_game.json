@@ -7,8 +7,8 @@
         },
         "mechanicsEncounter": {
             "baseAttempts": 3,
-            "bonusAttemptChancePercent": 40,
-            "bonusMaxAttempts": 3
+            "bonusAttemptChancePercent": 60,
+            "bonusMaxAttempts": 4
         }
     },
     "boats": {
@@ -122,6 +122,7 @@
         "whitetipReef": {
             "sharkName": "Whitetip Reef Shark",
             "sharkImage": "bad_shark",
+            "sharkRegion": "pacific",
             "sharkFacts": []
         },
         "blacktip": {
@@ -196,6 +197,61 @@
         },
         "horn": {
             "sharkName": "Horn Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "atlantic_sharpnose": {
+            "sharkName": "Atlantic Sharpnose Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "blacknose": {
+            "sharkName": "Blacknose Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "finetooth": {
+            "sharkName": "Finetooth Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "smooth_dogfish": {
+            "sharkName": "Smooth Dogfish Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "florida_smoothhound": {
+            "sharkName": "Florida Smoothhound Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "gulf_smoothhound": {
+            "sharkName": "Gulf Smoothhound Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "bull": {
+            "sharkName": "Bull Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "spinner": {
+            "sharkName": "Spinner Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "porbeagle": {
+            "sharkName": "Porbeagle Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "thresher": {
+            "sharkName": "Thresher Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "atlantic_angel": {
+            "sharkName": "Atlantic Angel Shark",
             "sharkImage": "bad_shark",
             "sharkFacts": []
         }

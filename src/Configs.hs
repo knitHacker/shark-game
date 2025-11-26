@@ -2,16 +2,20 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Configs
     ( ConfigsRead(..)
     , GameConfigs(..)
     , StateConfigs(..)
     , SettingConfigs(..)
-    , TextureCfg(..)
+    , ImageTexture(..)
+    , AnimationTexture(..)
     , TextureFileMap
+    , TextureCfg(..)
     , initConfigs
     , updateStateConfigs
+    , getTextureFiles
     ) where
 
 import Control.Monad ()
@@ -45,10 +49,38 @@ stateFile = "data/configs/state.json"
 sharkFile :: FilePath
 sharkFile = "data/configs/shark_game.json"
 
-data TextureCfg = TextureCfg
+
+type TextureFileMap = M.Map T.Text FilePath
+
+getTextureFiles :: TextureCfg -> TextureFileMap
+getTextureFiles tc = M.union imgFiles animFiles
+  where
+    imgFiles = M.map (\(ImageTexture _ _ f) -> f) (textureImages tc)
+    animFiles = M.map (\(AnimationTexture _ _ f _ _) -> f) (textureAnimations tc)
+
+data ImageTexture = ImageTexture
     { sizeX :: Int
     , sizeY :: Int
     , file :: FilePath
+    } deriving (Generic, Show, Eq, Ord)
+
+instance FromJSON ImageTexture
+instance ToJSON ImageTexture
+
+data AnimationTexture = AnimationTexture
+    { sizeX :: Int
+    , sizeY :: Int
+    , file :: FilePath
+    , frames :: Int
+    , depth :: Int
+    } deriving (Generic, Show, Eq, Ord)
+
+instance FromJSON AnimationTexture
+instance ToJSON AnimationTexture
+
+data TextureCfg = TextureCfg
+    { textureImages :: M.Map T.Text ImageTexture
+    , textureAnimations :: M.Map T.Text AnimationTexture
     } deriving (Generic, Show, Eq, Ord)
 
 instance FromJSON TextureCfg
@@ -95,10 +127,8 @@ instance Default StateConfigs where
     def :: StateConfigs
     def = StateConfigs Nothing
 
-type TextureFileMap = M.Map T.Text TextureCfg
-
 data Configs = Configs
-    { textureCfgs :: !TextureFileMap
+    { textureCfgs :: !TextureCfg
     , gameCfgs :: !SettingConfigs
     , sCfgs :: !StateConfigs
     , pCfgs :: !PlayConfigs
@@ -122,7 +152,7 @@ loadOrCreate path = do
                 encodeFile path newState
                 return $ Right newState
 
-initConfigs :: IO (TextureFileMap, GameConfigs)
+initConfigs :: IO (TextureCfg, GameConfigs)
 initConfigs = do
     gPath <- getGameFullPath configFile
     configsE <- eitherDecodeFileStrict gPath
@@ -134,7 +164,7 @@ initConfigs = do
     playerE <- eitherDecodeFileStrict pPath
     let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playerE
     case cfgE of
-        Left err -> error ("Faile to parse game configs: " ++ (show err))
+        Left err -> error ("Faile to parse game configs: " ++ show err)
         Right configs -> if checkConfigs configs
                             then return (textureCfgs configs, toGameConfigs configs)
                             else error "Invalid game configs"

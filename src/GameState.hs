@@ -30,7 +30,7 @@ import Control.Monad.IO.Class ( MonadIO(..) )
 import Debug.Trace
 import Data.Maybe (catMaybes)
 
-initGameState :: TextureFileMap -> GameConfigs -> OutputHandles -> IO GameState
+initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> IO GameState
 initGameState tm cfgs outs = do
     graph <- initGraphics tm outs
     gv <- mainMenuView cfgs outs

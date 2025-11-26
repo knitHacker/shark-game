@@ -24,6 +24,8 @@ module Graphics.Types
     , ScrollData(..)
     , MenuPopup(..)
     , TimeoutAction(..)
+    , ImageInfo(..)
+    , AnimationInfo(..)
     ) where
 
 import qualified Data.Text as T
@@ -33,10 +35,19 @@ import Data.Int (Int64)
 import OutputHandles.Types
 
 
-data TextureInfo = TextureInfo
-    { textureSizeX :: !Int
-    , textureSizeY :: !Int
+data ImageInfo = ImageInfo
+    { imageSizeX :: !Int
+    , imageSizeY :: !Int
     }
+
+data AnimationInfo = AnimationInfo
+    { animSizeX :: !Int
+    , animSizeY :: !Int
+    , animFrameCount :: !Int
+    , animFrameDepth :: !Int
+    }
+
+data TextureInfo = ImageCfg ImageInfo | AnimationCfg AnimationInfo
 
 data Graphics = Graphics
     { graphicsTextures :: M.Map Image TextureInfo
