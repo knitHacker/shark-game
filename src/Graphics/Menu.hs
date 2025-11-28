@@ -44,7 +44,7 @@ mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
             let h2 = maxY - startY
                 h4 = floor $ (fromIntegral h2^2) / (fromIntegral h)
                 maxStep = ceiling $ (fromIntegral (h2 - h4)) / (fromIntegral step)
-            in ScrollData startX startY h h2 h4 $ maxStep
+            in ScrollData startX startY h h2 h4 $ maxStep + 1
 
 getTextureSize :: TextureInfo -> (Int, Int)
 getTextureSize (ImageCfg (ImageInfo sx sy)) = (sx, sy)
