@@ -126,7 +126,7 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing to $ Just md
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
 chooseActiveBoatMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu md Nothing)
     where
-        md = scrollOpts 100 300 3 10 colOpts opts 6 0
+        md = selMultOpts 100 400 3 10 opts update act (Just back) bPos
         mc = CursorRect White
         bts = boats $ sharkCfgs cfgs
         owned = gameOwnedBoats $ gameDataEquipment gd
@@ -136,7 +136,7 @@ chooseActiveBoatMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu md Noth
         words = [ TextDisplay "Choose" 20 20 9 White Nothing
                 , TextDisplay "Active Boat" 80 150 9 White Nothing
                 ]
-        opts = [ MenuAction "Leave Boat Selection" $ Just $ FleetManagement gd
+        opts = (\()) MenuAction "Leave Boat Selection" $ Just $ FleetManagement gd
                ]
 
 boatStoreMenu :: Maybe (T.Text, Int, GameData) -> GameData -> GameConfigs -> Graphics -> GameMenu
