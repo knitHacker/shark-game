@@ -33,7 +33,7 @@ import Debug.Trace
 mapMenu :: GameData -> GameConfigs -> GameMenu
 mapMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu options Nothing)
     where
-        myBoat = gameBoat $ gameDataEquipment gd
+        myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         options = scrollOpts 250 400 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] 4 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
@@ -51,7 +51,7 @@ equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> Gam
 equipmentPickMenu gd loc chsn pos cfgs = GameMenu (View words [] [] Nothing) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
     where
         myEquip = gameDataEquipment gd
-        boatInfo = boats (sharkCfgs cfgs) ! gameBoat myEquip
+        boatInfo = boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
         slots = boatEquipmentSlots boatInfo
         allowedEq = allowedEquipment $ siteLocations (sharkCfgs cfgs) M.! loc
         eq = equipment $ sharkCfgs cfgs
@@ -78,7 +78,7 @@ equipmentPickMenu gd loc chsn pos cfgs = GameMenu (View words [] [] Nothing) (Me
 reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> GameMenu
 reviewTripMenu gd loc eqs cfgs = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 400 600 3 5 opts (CursorRect White) 0) Nothing)
     where
-        boat = gameBoat $ gameDataEquipment gd
+        boat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! boat
         trip = tripInfo (sharkCfgs cfgs) loc boat eqs
         funds = gameDataFunds gd

@@ -210,7 +210,7 @@ columnButtonOptionTexts (Graphics _ fs@(fw, fh)) p d s sp w butText headers opts
                 buttonColor = if p == n then (if isEnabled then Yellow else Red) else (if isEnabled then Green else Gray)
                 newY = yPos + yAdj
                 (maxX, r') = foldl columnDraw (fromIntegral x, r) $ colOptionTexts h
-                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then Blue else Red) Nothing)
+                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then Blue else Black) Nothing)
                 isEnabled = isJust $ colOptionAction h
                 columnDraw (tx, ls) t = (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral yPos) s Blue Nothing)
 

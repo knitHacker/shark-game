@@ -72,7 +72,9 @@ data GamePlayState =
     | FundraiserTop GameData
     | FleetManagement GameData
     | EquipmentManagement GameData
-    | EquipmentStore GameData (Maybe (T.Text, Int, GameData))
+    | EquipmentStore (Maybe (T.Text, Int, GameData)) GameData
+    | BoatStore (Maybe (T.Text, Int, GameData)) GameData
+    | ChooseBoat GameData
     deriving (Eq, Show)
 
 

@@ -82,7 +82,8 @@ getRandomElem gd ls = runST $ do
 type SharkIndex = Int
 
 data GameDataEquipment = GameEquipment
-    { gameBoat :: T.Text
+    { gameActiveBoat :: T.Text
+    , gameOwnedBoats :: [T.Text]
     , gameOwnedEquipment :: [T.Text]
     } deriving (Show, Eq, Generic)
 
@@ -147,7 +148,8 @@ startNewGame cfgs = do
     path <- getLocalGamePath dir
     putStrLn path
     s <- save g
-    let gEq = GameEquipment (startingBoat startCfg) (startingEquipment startCfg)
+    let startBoat = startingBoat startCfg
+        gEq = GameEquipment startBoat [startBoat] (startingEquipment startCfg)
         startMoney = startingFunds startCfg
         gData = GameData path s [] startMoney 0 0 M.empty M.empty M.empty gEq
     createDirectoryIfMissing True (takeDirectory path)

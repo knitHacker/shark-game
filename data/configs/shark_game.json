@@ -7,8 +7,8 @@
         },
         "mechanicsEncounter": {
             "baseAttempts": 3,
-            "bonusAttemptChancePercent": 60,
-            "bonusMaxAttempts": 4
+            "bonusAttemptChancePercent": 80,
+            "bonusMaxAttempts": 8
         }
     },
     "boats": {

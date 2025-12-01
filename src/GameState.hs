@@ -158,7 +158,9 @@ moveToNextState gps cfgs inputs gr =
         FundraiserTop gd -> return $ menuWithPause gd $ fundraiserTopMenu gd cfgs gr
         FleetManagement gd -> return $ withPause gps gd $ fleetManagementTopMenu gd cfgs inputs gr
         EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
-        EquipmentStore gd popup -> return $ menuWithPause gd $ equipmentStoreMenu gd popup cfgs gr
+        EquipmentStore popup gd -> return $ menuWithPause gd $ equipmentStoreMenu popup gd cfgs gr
+        BoatStore popup gd -> return $ menuWithPause gd $ boatStoreMenu popup gd cfgs gr
+        ChooseBoat gd -> return $ menuWithPause gd $ chooseActiveBoatMenu gd cfgs
     where
         menuWithPause = gameMenuPause gps
 
