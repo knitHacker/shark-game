@@ -29,6 +29,7 @@ import Shark.Store
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import qualified Data.List as L
 import Data.Map.Strict ((!))
 import Graphics.Animation (startAnimation, updateAnimation)
 
@@ -126,18 +127,24 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing to $ Just md
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
 chooseActiveBoatMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu md Nothing)
     where
-        md = selMultOpts 100 400 3 10 opts update act (Just back) bPos
+        md = scrollOpts 250 550 4 8 (BasicSOALOpts (OALOpts opts mc)) [cancelOpt] 4 pos
+        cancelOpt = MenuAction "Back" $ Just $ FleetManagement gd
         mc = CursorRect White
         bts = boats $ sharkCfgs cfgs
         owned = gameOwnedBoats $ gameDataEquipment gd
-        available = M.filterWithKey (\k _ -> k `elem` owned) bts
-        hds = ["Boat", "Size (slots)"]
-        colOpts = BasicCBOpts $ CBOpts "Select" 350 hds $ mkChooseBoatEntry gd <$> M.assocs available
-        words = [ TextDisplay "Choose" 20 20 9 White Nothing
-                , TextDisplay "Active Boat" 80 150 9 White Nothing
+        available = L.sortOn (\(_, cfg) -> boatEquipmentSlots cfg) $ M.assocs $ M.filterWithKey (\k _ -> k `elem` owned) bts
+        pos = case L.findIndex (\(b, _) -> b == gameActiveBoat (gameDataEquipment gd)) available of
+            Just i -> i
+            Nothing -> 0
+        boatsOpts = (\(b, bCfg) -> (b, T.concat [boatName bCfg, " - ", T.pack (show (boatEquipmentSlots bCfg)), " slots"])) <$> available
+        words = [ TextDisplay "Choose" 20 20 8 White Nothing
+                , TextDisplay "Active Boat" 80 150 8 White Nothing
+                , TextDisplay "Current Boat:" 200 275 5 LightGray Nothing
+                , TextDisplay (boatName $ bts ! gameActiveBoat (gameDataEquipment gd)) 350 360 4 Green Nothing
+                , TextDisplay "Owned Boats" 400 450 4 LightGray Nothing
                 ]
-        opts = (\()) MenuAction "Leave Boat Selection" $ Just $ FleetManagement gd
-               ]
+        gd' ab = gd { gameDataEquipment = (gameDataEquipment gd) { gameActiveBoat = ab } }
+        opts = (\(b, txt) -> MenuAction txt $ Just $ ChooseBoat (gd' b)) <$> boatsOpts
 
 boatStoreMenu :: Maybe (T.Text, Int, GameData) -> GameData -> GameConfigs -> Graphics -> GameMenu
 boatStoreMenu popupGd gd cfgs gr = GameMenu v $ Menu md pop
