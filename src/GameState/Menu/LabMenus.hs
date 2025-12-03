@@ -30,6 +30,7 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.List as L
+import Data.Maybe (fromMaybe)
 import Data.Map.Strict ((!))
 import Graphics.Animation (startAnimation, updateAnimation)
 
@@ -133,9 +134,7 @@ chooseActiveBoatMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu md Noth
         bts = boats $ sharkCfgs cfgs
         owned = gameOwnedBoats $ gameDataEquipment gd
         available = L.sortOn (\(_, cfg) -> boatEquipmentSlots cfg) $ M.assocs $ M.filterWithKey (\k _ -> k `elem` owned) bts
-        pos = case L.findIndex (\(b, _) -> b == gameActiveBoat (gameDataEquipment gd)) available of
-            Just i -> i
-            Nothing -> 0
+        pos = fromMaybe 0 $ L.findIndex (\(b, _) -> b == gameActiveBoat (gameDataEquipment gd)) available
         boatsOpts = (\(b, bCfg) -> (b, T.concat [boatName bCfg, " - ", T.pack (show (boatEquipmentSlots bCfg)), " slots"])) <$> available
         words = [ TextDisplay "Choose" 20 20 8 White Nothing
                 , TextDisplay "Active Boat" 80 150 8 White Nothing

@@ -1,0 +1,44 @@
+name: Build Windows
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: haskell-actions/setup@v2
+      with:
+        enable-stack: true
+        stack-version: 'latest'
+    
+    - name: Setup SDL2
+      run: |
+        # Download SDL2 libraries
+        Invoke-WebRequest https://www.libsdl.org/release/SDL2-devel-2.28.5-VC.zip -OutFile SDL2.zip
+        Invoke-WebRequest https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.8.0-VC.zip -OutFile SDL2_image.zip
+        Invoke-WebRequest https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-devel-2.22.0-VC.zip -OutFile SDL2_ttf.zip
+        
+        # Extract them
+        Expand-Archive SDL2.zip -DestinationPath .
+        Expand-Archive SDL2_image.zip -DestinationPath .
+        Expand-Archive SDL2_ttf.zip -DestinationPath .
+    
+    - name: Build
+      run: |
+        stack build --copy-bins --local-bin-path . `
+          --extra-include-dirs="SDL2-2.28.5\include;SDL2_image-2.8.0\include;SDL2_ttf-2.22.0\include" `
+          --extra-lib-dirs="SDL2-2.28.5\lib\x64;SDL2_image-2.8.0\lib\x64;SDL2_ttf-2.22.0\lib\x64"
+    
+    - name: Copy DLLs
+      run: |
+        copy SDL2-2.28.5\lib\x64\*.dll .
+        copy SDL2_image-2.8.0\lib\x64\*.dll .
+        copy SDL2_ttf-2.22.0\lib\x64\*.dll .
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: shark-game-windows
+        path: |
+          *.exe
+          *.dll
