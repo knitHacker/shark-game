@@ -12,36 +12,36 @@ jobs:
         enable-stack: true
         stack-version: 'latest'
     
-    - name: Setup SDL2
-      run: |
-        # Download SDL2 libraries
-        Invoke-WebRequest https://www.libsdl.org/release/SDL2-devel-2.28.5-VC.zip -OutFile SDL2.zip
-        Invoke-WebRequest https://www.libsdl.org/projects/SDL_image/release/SDL2_image-devel-2.8.0-VC.zip -OutFile SDL2_image.zip
-        Invoke-WebRequest https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-devel-2.22.0-VC.zip -OutFile SDL2_ttf.zip
-        
-        # Extract them
-        Expand-Archive SDL2.zip -DestinationPath .
-        Expand-Archive SDL2_image.zip -DestinationPath .
-        Expand-Archive SDL2_ttf.zip -DestinationPath .
-        dir SDL2-2.28.5\include
-        dir SDL2-2.28.5\lib\x64
+    - uses: msys2/setup-msys2@v2
+      with:
+        path-type: inherit    # This is the key!
+        update: true
+        install: >-
+          mingw-w64-x86_64-pkg-config
+          mingw-w64-x86_64-SDL2
+          mingw-w64-x86_64-SDL2_image
+          mingw-w64-x86_64-SDL2_ttf
     
     - name: Build
+      shell: msys2 {0}
       run: |
-        stack build --copy-bins --local-bin-path . `
-          --flag sdl2:-pkgconfig `
-          --extra-include-dirs="${{ github.workspace }}/SDL2-2.28.5/include" `
-          --extra-include-dirs="${{ github.workspace }}/SDL2_image-2.8.0/include" `
-          --extra-include-dirs="${{ github.workspace }}/SDL2_ttf-2.22.0/include" `
-          --extra-lib-dirs="${{ github.workspace }}/SDL2-2.28.5/lib/x64" `
-          --extra-lib-dirs="${{ github.workspace }}/SDL2_image-2.8.0/lib/x64" `
-          --extra-lib-dirs="${{ github.workspace }}/SDL2_ttf-2.22.0/lib/x64"
+        # Show where SDL2 actually got installed
+        echo "SDL2 pkg-config info:"
+        pkg-config --cflags --libs sdl2
+    
+        # Build with explicit paths to MSYS2 libraries
+        stack build --copy-bins --local-bin-path . \
+          --extra-include-dirs=/mingw64/include \
+          --extra-include-dirs=/mingw64/include/SDL2 \
+          --extra-lib-dirs=/mingw64/lib \
+          --extra-lib-dirs=/mingw64/bin
     
     - name: Copy DLLs
+      shell: msys2 {0}
       run: |
-        copy SDL2-2.28.5\lib\x64\*.dll .
-        copy SDL2_image-2.8.0\lib\x64\*.dll .
-        copy SDL2_ttf-2.22.0\lib\x64\*.dll .
+        cp /mingw64/bin/SDL2*.dll .
+        cp /mingw64/bin/lib*.dll . 2>/dev/null || true
+        ls -la *.dll
     
     - uses: actions/upload-artifact@v4
       with:
