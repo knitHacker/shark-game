@@ -23,12 +23,19 @@ jobs:
         Expand-Archive SDL2.zip -DestinationPath .
         Expand-Archive SDL2_image.zip -DestinationPath .
         Expand-Archive SDL2_ttf.zip -DestinationPath .
+        dir SDL2-2.28.5\include
+        dir SDL2-2.28.5\lib\x64
     
     - name: Build
       run: |
         stack build --copy-bins --local-bin-path . `
-          --extra-include-dirs="SDL2-2.28.5\include;SDL2_image-2.8.0\include;SDL2_ttf-2.22.0\include" `
-          --extra-lib-dirs="SDL2-2.28.5\lib\x64;SDL2_image-2.8.0\lib\x64;SDL2_ttf-2.22.0\lib\x64"
+          --flag sdl2:-pkgconfig `
+          --extra-include-dirs="${{ github.workspace }}/SDL2-2.28.5/include" `
+          --extra-include-dirs="${{ github.workspace }}/SDL2_image-2.8.0/include" `
+          --extra-include-dirs="${{ github.workspace }}/SDL2_ttf-2.22.0/include" `
+          --extra-lib-dirs="${{ github.workspace }}/SDL2-2.28.5/lib/x64" `
+          --extra-lib-dirs="${{ github.workspace }}/SDL2_image-2.8.0/lib/x64" `
+          --extra-lib-dirs="${{ github.workspace }}/SDL2_ttf-2.22.0/lib/x64"
     
     - name: Copy DLLs
       run: |
