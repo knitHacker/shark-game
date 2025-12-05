@@ -109,7 +109,6 @@ data GameLocation = GameLoc
 instance FromJSON GameLocation
 instance ToJSON GameLocation
 
-
 data SharkFact = SharkFact
     { sharkFactTitle :: T.Text
     , sharkFactInfo :: T.Text

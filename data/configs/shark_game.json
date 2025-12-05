@@ -8,8 +8,8 @@
         },
         "mechanicsEncounter": {
             "baseAttempts": 3,
-            "bonusAttemptChancePercent": 80,
-            "bonusMaxAttempts": 8
+            "bonusAttemptChancePercent": 60,
+            "bonusMaxAttempts": 5
         }
     },
     "boats": {
@@ -83,7 +83,7 @@
             "equipEffectiveness": 90
         },
         "bruv": {
-            "equipText": "Baited Remote Underwater Video",
+            "equipText": "BRUV",
             "equipSize": 2,
             "equipTimeAdded": 1,
             "equipPrice": 500,
@@ -106,17 +106,17 @@
                 "mangroves": {
                     "showText": "Mangroves",
                     "allowedEquipment": ["fishingGear"],
-                    "sharksFound": [["lemon", 50], ["nurse", 50]]
+                    "sharksFound": [["lemon", 40], ["nurse", 50], ["bull", 10]]
                 },
                 "openOcean": {
                     "showText": "Open Ocean",
                     "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
-                    "sharksFound": [["blue", 60], ["oceanicWhitetip", 40]]
+                    "sharksFound": [["blue", 30], ["sandbar", 30], ["bull", 15], ["tiger", 10], ["oceanicWhitetip", 10], ["white", 5]]
                 },
                 "seaGrass": {
                     "showText": "Sea Grass",
                     "allowedEquipment": ["fishingGear", "snorkelGear"],
-                    "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
+                    "sharksFound": [["tiger", 10], ["blacktip", 35], ["bonnethead", 40], ["great_hammerhead", 5], ["scalloped_hammerhead", 5], ["bull", 5]]
                 }
             }
         },
@@ -292,6 +292,16 @@
         },
         "atlantic_angel": {
             "sharkName": "Atlantic Angel Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "great_hammerhead": {
+            "sharkName": "Great Hammerhead Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "scalloped_hammerhead": {
+            "sharkName": "Scalloped Hammerhead Shark",
             "sharkImage": "bad_shark",
             "sharkFacts": []
         }
