@@ -61,13 +61,13 @@ data GamePlayState =
     | TripResults GameData TripState
     | DataReviewTop GameData
     | SharkReviewTop GameData (Maybe T.Text)
-    | SharkReview GameData (DataEntry SharkInfo)
+    | SharkReview GameData (DataEntry T.Text SharkInfo)
     | ResearchReviewTop GameData
     | OpenResearchMenu GameData
     | CompletedResearchMenu GameData
-    | InvestigateResearchMenu GameData (DataEntry ResearchData)
-    | AwardGrantMenu GameData (DataEntry ResearchData)
-    | CompletedResearchReviewMenu GameData (DataEntry ResearchData)
+    | InvestigateResearchMenu GameData (DataEntry T.Text ResearchData)
+    | AwardGrantMenu GameData (DataEntry T.Text ResearchData)
+    | CompletedResearchReviewMenu GameData (DataEntry T.Text ResearchData)
     | LabManagement GameData
     | FundraiserTop GameData
     | FleetManagement GameData

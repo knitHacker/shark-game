@@ -3,7 +3,8 @@
         "mechanicsStart": {
             "startingFunds": 5000,
             "startingBoat": "smallBoat",
-            "startingEquipment": ["fishingGear", "snorkelGear"]
+            "startingEquipment": ["fishingGear", "snorkelGear"],
+            "startingRegion": "tropical_west_atlantic"
         },
         "mechanicsEncounter": {
             "baseAttempts": 3,
@@ -80,33 +81,72 @@
             "equipPrice": 100,
             "equipInfoType": "observed",
             "equipEffectiveness": 90
+        },
+        "bruv": {
+            "equipText": "Baited Remote Underwater Video",
+            "equipSize": 2,
+            "equipTimeAdded": 1,
+            "equipPrice": 500,
+            "equipInfoType": "observed",
+            "equipEffectiveness": 80
         }
     },
-    "siteLocations": {
-        "reef": {
-            "showText": "Reef",
-            "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
-            "sharksFound": [["blacktipReef", 80], ["tiger", 20]]
+    "regions": {
+        "tropical_west_atlantic": {
+            "regionInfo": {
+                "regionShowText": "Tropical West Atlantic",
+                "regionDescription": "Warm waters with diverse marine life."
+            },
+            "siteLocations": {
+                "reef": {
+                    "showText": "Reef",
+                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear", "bruv"],
+                    "sharksFound": [["nurse", 80], ["tiger", 20]]
+                },
+                "mangroves": {
+                    "showText": "Mangroves",
+                    "allowedEquipment": ["fishingGear"],
+                    "sharksFound": [["lemon", 50], ["nurse", 50]]
+                },
+                "openOcean": {
+                    "showText": "Open Ocean",
+                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "sharksFound": [["blue", 60], ["oceanicWhitetip", 40]]
+                },
+                "seaGrass": {
+                    "showText": "Sea Grass",
+                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
+                }
+            }
         },
-        "mangroves": {
-            "showText": "Mangroves",
-            "allowedEquipment": ["fishingGear"],
-            "sharksFound": [["lemon", 50], ["nurse", 50]]
-        },
-        "openOcean": {
-            "showText": "Open Ocean",
-            "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
-            "sharksFound": [["blue", 60], ["oceanicWhitetip", 40]]
-        },
-        "seaGrass": {
-            "showText": "Sea Grass",
-            "allowedEquipment": ["fishingGear", "snorkelGear"],
-            "sharksFound": [["tiger", 10], ["sandbar", 70], ["bonnethead", 20]]
-        },
-        "kelpForest": {
-            "showText": "Kelp Forest",
-            "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
-            "sharksFound": [["leopard", 50], ["sevengill", 15], ["white", 5], ["horn", 30]]
+        "pacific_temperate": {
+            "regionInfo": {
+                "regionShowText": "Pacific Ocean",
+                "regionDescription": "Vast ocean with many shark species."
+            },
+            "siteLocations": {
+                "reef": {
+                    "showText": "Reef",
+                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear", "bruv"],
+                    "sharksFound": [["blacktipReef", 70], ["whitetipReef", 30]]
+                },
+                "openOcean": {
+                    "showText": "Open Ocean",
+                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "sharksFound": [["blue", 50], ["porbeagle", 30], ["thresher", 20]]
+                },
+                "seaGrass": {
+                    "showText": "Sea Grass",
+                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "sharksFound": [["sandbar", 60], ["bull", 30], ["spinner", 10]]
+                },
+                "kelpForest": {
+                    "showText": "Kelp Forest",
+                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
+                    "sharksFound": [["leopard", 50], ["sevengill", 15], ["white", 5], ["horn", 30]]
+                }
+            }
         }
     },
     "sharks": {

@@ -60,7 +60,7 @@ topReviewSharksMenu gd mPrev cfgs = GameMenu (View words [] [] Nothing) (Menu op
             Just p -> fromMaybe 0 $ L.lookup p sharkKeys
         options = scrollOpts 200 300 3 20 (BasicSOALOpts (OALOpts opts mc)) otherOpts 4 cursorIdx
 
-sharkReviewMenu :: GameData -> DataEntry SharkInfo -> GameConfigs -> Graphics -> GameMenu
+sharkReviewMenu :: GameData -> DataEntryT SharkInfo -> GameConfigs -> Graphics -> GameMenu
 sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View (locWords ++ words') imgs [] Nothing) (Menu (selOneOpts 500 650 3 20 [returnOpt] mc 0) Nothing)
     where
         img = getData sharkEntry sharkImage
@@ -115,7 +115,7 @@ completedResearchMenu gd cfgs = GameMenu (View words' [] [] Nothing) (Menu (selO
         otherOpts = [ MenuAction "Back" $ Just $ ResearchReviewTop gd ]
         words' = if null research then words ++ [TextDisplay "No completed research" 20 100 2 Red Nothing] else words
 
-investigateResearchMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> GameMenu
+investigateResearchMenu :: GameData -> DataEntryT ResearchData -> GameConfigs -> Graphics -> GameMenu
 investigateResearchMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (Menu (selOneOpts 200 500 3 20 [completeOpt, returnOpt] mc 0) Nothing)
     where
         reqs = getResearchRequirements (sharkCfgs cfgs) gd researchEntry
@@ -134,7 +134,7 @@ investigateResearchMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] N
                         toText it gsd c = T.concat [T.toTitle it, " ", T.pack (show (length gsd)), "/", T.pack (show c)]
                         (infoRqs, y'') = foldl (\(l', y') (it, gsd, c) -> (l' ++ [TextDisplay (toText it gsd c) 200 y' 2 White Nothing], y' + 30)) ([], y + 50) rrs
 
-awardGrantMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> GameMenu
+awardGrantMenu :: GameData -> DataEntryT ResearchData -> GameConfigs -> Graphics -> GameMenu
 awardGrantMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (Menu (selOneOpts 500 (e + 50) 3 20 [returnOpt] mc 0) Nothing)
     where
         mc = CursorRect White
@@ -146,7 +146,7 @@ awardGrantMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (
         (descr, e) = wrapText gr (getData researchEntry researchDescription) 100 225 1050 4 2 White
         words' = words ++ descr
 
-completedResearchReviewMenu :: GameData -> DataEntry ResearchData -> GameConfigs -> Graphics -> GameMenu
+completedResearchReviewMenu :: GameData -> DataEntryT ResearchData -> GameConfigs -> Graphics -> GameMenu
 completedResearchReviewMenu gd researchEntry cfgs gr = GameMenu (View words' [] [] Nothing) (Menu (selOneOpts 500 (e + 50) 3 20 [returnOpt] mc 0) Nothing)
     where
         mc = CursorRect White

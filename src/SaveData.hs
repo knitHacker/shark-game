@@ -93,6 +93,7 @@ instance ToJSON GameDataEquipment
 data GameSharkData = GameShark
     { gameSharkMonth :: Int
     , gameSharkSpecies :: T.Text
+    , gameSharkRegion :: T.Text
     , gameSharkLocation :: T.Text
     , gameSharkEquipment :: T.Text
     } deriving (Show, Eq, Generic)
@@ -120,6 +121,7 @@ data GameData = GameData
     , gameDataFoundSharks :: M.Map T.Text [SharkIndex]
     , gameDataResearchComplete :: M.Map T.Text ResearchCompleteInfo
     , gameDataEquipment :: GameDataEquipment
+    , gameCurrentRegion :: T.Text
     } deriving (Show, Eq)
 
 
@@ -132,6 +134,7 @@ data GameSaveData = GameSaveData
     , saveSharks :: M.Map SharkIndex GameSharkData
     , saveResearchComplete :: M.Map T.Text ResearchCompleteInfo
     , saveDataEquipment :: GameDataEquipment
+    , saveCurrentRegion :: T.Text
     } deriving (Show, Eq, Generic)
 
 
@@ -151,7 +154,7 @@ startNewGame cfgs = do
     let startBoat = startingBoat startCfg
         gEq = GameEquipment startBoat [startBoat] (startingEquipment startCfg)
         startMoney = startingFunds startCfg
-        gData = GameData path s [] startMoney 0 0 M.empty M.empty M.empty gEq
+        gData = GameData path s [] startMoney 0 0 M.empty M.empty M.empty gEq $ startingRegion startCfg
     createDirectoryIfMissing True (takeDirectory path)
     saveToFile gData
     return gData
@@ -163,13 +166,16 @@ convertSave :: String -> GameSaveData -> GameData
 convertSave fn gsd = GameData fn seed (saveFoundationNames gsd)
                               (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks
                               (sortSharks sSharks) (saveResearchComplete gsd) (saveDataEquipment gsd)
+                              (saveCurrentRegion gsd)
     where
         seed = toSeed $ saveSeed gsd
         sSharks = saveSharks gsd
 
 convertBack :: GameData -> (FilePath, GameSaveData)
 convertBack gd = ( gameDataSaveFile gd
-                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd) (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd) (gameDataEquipment gd)
+                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd)
+                                      (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd)
+                                      (gameDataEquipment gd) (gameCurrentRegion gd)
                  )
     where
         seedV = fromSeed $ gameDataSeed gd

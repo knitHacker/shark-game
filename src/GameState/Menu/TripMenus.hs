@@ -33,10 +33,11 @@ import Debug.Trace
 mapMenu :: GameData -> GameConfigs -> GameMenu
 mapMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu options Nothing)
     where
+        region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         options = scrollOpts 250 400 4 8 (BasicSOALOpts (OALOpts opts mc)) [rtOpt] 4 0
-        locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (siteLocations $ sharkCfgs cfgs)
+        locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (getData region siteLocations)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
                 , TextDisplay "Destination" 150 200 10 White Nothing
@@ -50,10 +51,11 @@ mapMenu gd cfgs = GameMenu (View words [] [] Nothing) (Menu options Nothing)
 equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> GameMenu
 equipmentPickMenu gd loc chsn pos cfgs = GameMenu (View words [] [] Nothing) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
     where
+        region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myEquip = gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
         slots = boatEquipmentSlots boatInfo
-        allowedEq = allowedEquipment $ siteLocations (sharkCfgs cfgs) M.! loc
+        allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
         eq = equipment $ sharkCfgs cfgs
         aEs = filter (`elem` allowedEq) $ gameOwnedEquipment myEquip
         lupE et =
@@ -78,9 +80,10 @@ equipmentPickMenu gd loc chsn pos cfgs = GameMenu (View words [] [] Nothing) (Me
 reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> GameMenu
 reviewTripMenu gd loc eqs cfgs = GameMenu (View words [] [] Nothing) (Menu (selOneOpts 400 600 3 5 opts (CursorRect White) 0) Nothing)
     where
+        region = gameCurrentRegion gd
         boat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! boat
-        trip = tripInfo (sharkCfgs cfgs) loc boat eqs
+        trip = tripInfo (sharkCfgs cfgs) region loc boat eqs
         funds = gameDataFunds gd
         tc = tripCost trip
         enoughFunds = funds >= tc
@@ -99,7 +102,7 @@ reviewTripMenu gd loc eqs cfgs = GameMenu (View words [] [] Nothing) (Menu (selO
                 , TextDisplay afterTxt 250 525 3 (if enoughFunds then Green else Red) Nothing
                 ]
         gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
-        (gd'', atmpts) = initTripProgress gd' loc boat eqs cfgs
+        (gd'', atmpts) = initTripProgress gd' (gameCurrentRegion gd) loc boat eqs cfgs
         progress = TripProgress
         opts = [ MenuAction "Start Trip" (if enoughFunds then Just (TripProgress gd'' atmpts) else Nothing)
                , MenuAction "Back to equipment" $ Just (TripEquipmentSelect gd loc eqs 0)

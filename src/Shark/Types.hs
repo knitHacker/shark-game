@@ -18,6 +18,9 @@ module Shark.Types
     , StartMechanics(..)
     , EncounterMechanics(..)
     , GameMechanics(..)
+    , SiteLocation(..)
+    , RegionInformation(..)
+    , FullLocation(..)
     ) where
 
 import GHC.Generics ( Generic )
@@ -32,6 +35,7 @@ data StartMechanics = Mechanics
     { startingFunds :: Int
     , startingBoat :: T.Text
     , startingEquipment :: [T.Text]
+    , startingRegion :: T.Text
     } deriving (Generic, Show, Eq)
 
 instance FromJSON StartMechanics
@@ -69,7 +73,7 @@ instance ToJSON Boat
 
 data TripAttempt = TripAttempt
     { attemptMonth :: Int
-    , attemptEqipment :: DataEntry GameEquipment
+    , attemptEqipment :: DataEntry T.Text GameEquipment
     } deriving (Show, Eq)
 
 data TripState = TripState
@@ -143,13 +147,39 @@ data ResearchData = ResearchData
 instance FromJSON ResearchData
 instance ToJSON ResearchData
 
+data RegionInformation = RegionInformation
+    { regionShowText :: T.Text
+    , regionDescription :: T.Text
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON RegionInformation
+instance ToJSON RegionInformation
+
+data SiteLocation = SiteLocation
+    { regionInfo :: RegionInformation
+    , siteLocations :: M.Map T.Text GameLocation
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON SiteLocation
+instance ToJSON SiteLocation
+
+data FullLocation = FullLocation
+    { locationRegion :: RegionInformation
+    , locationSite :: GameLocation
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON FullLocation
+instance ToJSON FullLocation
+
 checkPlayConfigs :: PlayConfigs -> Bool
-checkPlayConfigs cfgs = and $ checkGameLocation <$> siteLocations cfgs
+checkPlayConfigs cfgs = and $ checkGameLocation <$> sitesLoc
+    where
+        sitesLoc = concatMap (M.elems . siteLocations) $ M.elems (regions cfgs)
 
 data PlayConfigs = PlayConfigs
     { boats :: M.Map T.Text Boat
     , equipment :: M.Map T.Text GameEquipment
-    , siteLocations :: M.Map T.Text GameLocation
+    , regions :: M.Map T.Text SiteLocation
     , sharks :: M.Map T.Text SharkInfo
     , research :: M.Map T.Text ResearchData
     , gameMechanics :: GameMechanics
@@ -159,18 +189,17 @@ instance FromJSON PlayConfigs
 instance ToJSON PlayConfigs
 
 data TripInfo = TripInfo
-    { tripDestination :: DataEntry GameLocation
-    , tripEquipment :: [DataEntry GameEquipment]
-    , tripBoat :: DataEntry Boat
+    { tripDestination :: DataEntry (T.Text, T.Text) FullLocation
+    , tripEquipment :: [DataEntry T.Text GameEquipment]
+    , tripBoat :: DataEntry T.Text Boat
     } deriving (Show, Eq)
 
 data SharkFind = SharkFind
     { findMonth :: Int
-    , findSpecies :: DataEntry SharkInfo
-    , findLocation :: DataEntry GameLocation
-    , findEquipment :: DataEntry GameEquipment
+    , findSpecies :: DataEntry T.Text SharkInfo
+    , findLocation :: DataEntry (T.Text, T.Text) FullLocation
+    , findEquipment :: DataEntry T.Text GameEquipment
     } deriving (Generic, Show, Eq)
 
 instance FromJSON SharkFind
 instance ToJSON SharkFind
-

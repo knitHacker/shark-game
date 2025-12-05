@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 
 module Shark.Review
     ( getInfoCounts
@@ -19,7 +20,7 @@ import Shark.Util
 import SaveData
 import Util
 
-getFinds :: PlayConfigs -> GameData -> DataEntry SharkInfo -> [SharkFind]
+getFinds :: PlayConfigs -> GameData -> DataEntryT SharkInfo -> [SharkFind]
 getFinds cfgs gd se =
     case M.lookup sharkKey gsd of
         Nothing -> []
@@ -28,8 +29,8 @@ getFinds cfgs gd se =
         sharkKey = entryKey se
         gsd = gameDataFoundSharks gd
 
-getSeenLocations :: PlayConfigs -> GameData -> DataEntry SharkInfo -> [T.Text]
-getSeenLocations cfgs gd se = (\lE -> getData lE showText) <$> (L.nub $ findLocation <$> getFinds cfgs gd se)
+getSeenLocations :: PlayConfigs -> GameData -> DataEntryT SharkInfo -> [T.Text]
+getSeenLocations cfgs gd se = (\lE -> getData lE (\e -> T.concat [regionShowText (locationRegion e), " - ", showText (locationSite e)])) <$> (L.nub $ findLocation <$> getFinds cfgs gd se)
 
 getInfoCounts :: [SharkFind] -> M.Map T.Text Int
 getInfoCounts = getInfoCounts' M.empty
@@ -40,13 +41,13 @@ getInfoCounts = getInfoCounts' M.empty
                 info = getData eq equipInfoType
             in getInfoCounts' (M.insertWith (+) info 1 m) tl
 
-getKnownSharks :: PlayConfigs -> GameData -> [DataEntry SharkInfo]
+getKnownSharks :: PlayConfigs -> GameData -> [DataEntryT SharkInfo]
 getKnownSharks cfgs gd = getEntry (sharks cfgs) <$> M.keys (gameDataFoundSharks gd)
 
 getResearchSharks :: ResearchData -> [T.Text]
 getResearchSharks rr = M.keys $ researchReqs rr
 
-getKnownResearch :: PlayConfigs -> GameData -> [DataEntry ResearchData]
+getKnownResearch :: PlayConfigs -> GameData -> [DataEntryT ResearchData]
 getKnownResearch cfgs gd = foldl getKnownResearch' [] researchEntries
     where
         researchEntries = uncurry Entry <$> M.toList (research cfgs)
@@ -54,7 +55,7 @@ getKnownResearch cfgs gd = foldl getKnownResearch' [] researchEntries
         getKnownResearch' l rE = if shouldShowResearch cfgs gd rE then l ++ [rE] else l
 
 
-shouldShowResearch :: PlayConfigs -> GameData -> DataEntry ResearchData -> Bool
+shouldShowResearch :: PlayConfigs -> GameData -> DataEntryT ResearchData -> Bool
 shouldShowResearch cfgs gd re = rSharks `S.isSubsetOf` kSharks && depends `S.isSubsetOf` completed
     where
         kSharks = S.fromList $ entryKey <$> getKnownSharks cfgs gd
@@ -65,7 +66,7 @@ shouldShowResearch cfgs gd re = rSharks `S.isSubsetOf` kSharks && depends `S.isS
 type SharkReq = (T.Text, [SharkIndex], Int)
 type ResearchReqData = (T.Text, [SharkReq])
 
-getResearchRequirements :: PlayConfigs -> GameData -> DataEntry ResearchData -> [ResearchReqData]
+getResearchRequirements :: PlayConfigs -> GameData -> DataEntryT ResearchData -> [ResearchReqData]
 getResearchRequirements cfgs gd re = researchReq <$> bySharks
     where
         bySharks = M.toList $ researchReqs (entryData re)
@@ -88,7 +89,7 @@ canCompleteResearch = all canComplete
         canComplete (_, reqs) = all canComplete' reqs
         canComplete' (_, sds, c) = length sds >= c
 
-completeResearch :: PlayConfigs -> GameData -> DataEntry ResearchData -> [ResearchReqData] -> GameData
+completeResearch :: PlayConfigs -> GameData -> DataEntryT ResearchData -> [ResearchReqData] -> GameData
 completeResearch cfgs gd re reqs = gd { gameDataResearchComplete = M.insert (entryKey re) rci (gameDataResearchComplete gd)
                                       , gameDataFunds = gameDataFunds gd + grant }
     where

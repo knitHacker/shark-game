@@ -38,10 +38,10 @@ monthToText mnths
         monthTxt 1 = "1 month"
         monthTxt n = T.pack (show n ++ " months")
 
-tripInfo :: PlayConfigs -> T.Text -> T.Text -> [T.Text] -> TripInfo
-tripInfo cfg loc boatName eqTxt = TripInfo locE eqEs boat
+tripInfo :: PlayConfigs -> T.Text -> T.Text -> T.Text -> [T.Text] -> TripInfo
+tripInfo cfg reg loc boatName eqTxt = TripInfo locE eqEs boat
     where
-        locE = getEntry (siteLocations cfg) loc
+        locE = getNestedEntry (regions cfg) siteLocations (\ rD lD -> FullLocation (regionInfo rD) lD) reg loc
         eqEs = getEntry (equipment cfg) <$> eqTxt
         boat = getEntry (boats cfg) boatName
 
@@ -54,11 +54,11 @@ tripLength :: TripInfo -> Int
 tripLength trip = L.sum $ flip getData equipTimeAdded <$> tripEquipment trip
 
 
-initTripProgress :: GameData -> T.Text -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
-initTripProgress gd loc boatName eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
+initTripProgress :: GameData -> T.Text -> T.Text -> T.Text -> [T.Text] -> GameConfigs -> (GameData, TripState)
+initTripProgress gd reg loc boatName eqKeys cfgs = (gd', TripState trip aType (length aType)  [])
     where
         playCfgs = sharkCfgs cfgs
-        trip = tripInfo playCfgs loc boatName eqKeys
+        trip = tripInfo playCfgs reg loc boatName eqKeys
         (gd', aType) = catchAttempts playCfgs gd trip
 
 
@@ -89,7 +89,7 @@ executeTrip cfgs gd trip (TripAttempt mnth eq) =
         loc = entryData (tripDestination trip)
         (gd', caughtP) = getRandomPercent gd
         caughtAnything = eqChance > caughtP
-        (_, sharkChances) = foldl (\(p, ls) (s, c) -> (p + c, ls ++ [(s, p+c)])) (0, []) (sharksFound loc)
+        (_, sharkChances) = foldl (\(p, ls) (s, c) -> (p + c, ls ++ [(s, p+c)])) (0, []) (sharksFound $ locationSite loc)
         (gd'', sharkChoice) = getRandomPercent gd'
         sharkMatch m (s, p)
             | isJust m = m
