@@ -20,6 +20,11 @@
             "sizeY": 200,
             "file": "assets/images/blue_shark.png"
         },
+        "tiger_shark": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/tiger_shark.png"
+        },
         "bad_shark": {
             "sizeX": 200,
             "sizeY": 200,

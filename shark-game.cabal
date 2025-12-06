@@ -29,6 +29,7 @@ extra-source-files:
     assets/images/nurse_shark.png
     assets/images/shark_placeholder.png
     assets/images/skate_swimming_animation.png
+    assets/images/tiger_shark.png
     assets/images/water.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
@@ -39,6 +40,7 @@ data-files:
     assets/images/arrow.png
     assets/images/nurse_shark.png
     assets/images/blue_shark.png
+    assets/images/tiger_shark.png
     assets/images/shark_placeholder.png
     assets/images/empty_net_white.png
     assets/images/boat_default.png

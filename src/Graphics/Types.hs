@@ -34,7 +34,6 @@ import Data.Int (Int64)
 
 import OutputHandles.Types
 
-
 data ImageInfo = ImageInfo
     { imageSizeX :: !Int
     , imageSizeY :: !Int
@@ -73,13 +72,11 @@ data TimeoutData a = TimeoutData
     , timeoutAction :: TimeoutAction a
     }
 
-
 data AnimationData a = AnimationData
     { animationFrame :: !Int
     , animationMaxFrames :: !Int
     , animationAction :: Int -> View a
     }
-
 
 data ScrollData = ScrollData
     { startX :: !Int
@@ -97,7 +94,6 @@ data ViewScroll a = ViewScroll
     , scrollStep :: !Int
     , scrollData :: !ScrollData
     }
-
 
 data View a = View
     { texts :: ![TextDisplay]

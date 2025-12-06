@@ -14,6 +14,8 @@ updateAnimation ad@(AnimationData frame maxFrame action) = (ad { animationFrame 
 startAnimation :: Int -> (Int -> View a) -> AnimationData a
 startAnimation = AnimationData 0
 
-
---updateAnimationTexture :: AnimationData a -> AnimationInfo -> (AnimationData a, View a)
---updateAnimationTexture (AnimationData frame maxFrame action) animInfo = (AnimationData newFrame
+updateAnimationTexture :: AnimationData a -> AnimationInfo -> (AnimationData a, View a)
+updateAnimationTexture (AnimationData frame maxFrame action) animInfo = undefined
+    where
+        newFrame = mod (frame + 1) (animFrameCount animInfo)
+        newAd = AnimationData newFrame (animFrameCount animInfo) action
