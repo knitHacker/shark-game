@@ -116,7 +116,7 @@
                 "seaGrass": {
                     "showText": "Sea Grass",
                     "allowedEquipment": ["fishingGear", "snorkelGear"],
-                    "sharksFound": [["tiger", 10], ["blacktip", 35], ["bonnethead", 40], ["great_hammerhead", 5], ["scalloped_hammerhead", 5], ["bull", 5]]
+                    "sharksFound": [["lemon", 10], ["tiger", 10], ["blacktip", 35], ["bonnethead", 30], ["great_hammerhead", 5], ["scalloped_hammerhead", 5], ["bull", 5]]
                 }
             }
         },
@@ -342,6 +342,152 @@
                 "blacktipReef": [{ "dataType": "caught", "reqCount": 5}]
             },
             "researchDepends": []
+        },
+        "tiger_0": {
+            "researchPaperName": "Tiger Shark Diet",
+            "researchDescription": "Tiger sharks are known for their diverse diet, which includes fish, seals, birds, and even inedible objects.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 4}]
+            },
+            "researchDepends": []
+        },
+        "tiger_1": {
+            "researchPaperName": "Tiger Shark Behavior",
+            "researchDescription": "Tiger sharks are mostly solitary but are known to congregate in areas with abundant food sources.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 8}]
+            },
+            "researchDepends": ["tiger_0"]
+        },
+        "blacktip_0": {
+            "researchPaperName": "Blacktip Shark Migration",
+            "researchDescription": "Blacktip sharks are known to migrate seasonally, often moving to warmer waters during the winter months.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 7}]
+            },
+            "researchDepends": []
+        },
+        "blacktip_1": {
+            "researchPaperName": "Blacktip Shark Reproduction",
+            "researchDescription": "Blacktip sharks are viviparous, meaning they give live birth. They have a gestation period of about 10-12 months and can have 4-10 pups.",
+            "researchGrant": 1100,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 15}]
+            },
+            "researchDepends": ["blacktip_0"]
+        },
+        "sandbar_0": {
+            "researchPaperName": "Sandbar Shark Habitat",
+            "researchDescription": "Sandbar sharks are commonly found in coastal waters and are known to inhabit sandy or muddy bottoms.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "caught", "reqCount": 6}]
+            },
+            "researchDepends": []
+        },
+        "sandbar_1": {
+            "researchPaperName": "Sandbar Shark Conservation",
+            "researchDescription": "Sandbar sharks are currently listed as vulnerable due to overfishing and habitat loss. Conservation efforts are underway to protect their populations.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "caught", "reqCount": 12}]
+            },
+            "researchDepends": ["sandbar_0"]
+        },
+        "lemon_0": {
+            "researchPaperName": "Lemon Shark Social Behavior",
+            "researchDescription": "Lemon sharks are known to form social groups, especially during their juvenile stages.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "lemon": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "lemon_1": {
+            "researchPaperName": "Lemon Shark Nursery Areas",
+            "researchDescription": "Lemon sharks often use shallow coastal areas as nursery grounds for their young.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "lemon": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["lemon_0"]
+        },
+        "great_hamnerhead_0": {
+            "researchPaperName": "Hammerhead Shark Senses",
+            "researchDescription": "Hammerhead sharks have a unique head shape that enhances their sensory capabilities, allowing them to better detect prey.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "observed", "reqCount": 4}],
+                "scalloped_hammerhead": [{ "dataType": "observed", "reqCount": 4}]
+            },
+            "researchDepends": []
+        },
+        "great_hammerhead_1": {
+            "researchPaperName": "Hammerhead Shark Hunting Strategies",
+            "researchDescription": "Hammerhead sharks use their wide-set heads to pin down stingrays and other prey on the ocean floor.",
+            "researchGrant": 1300,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "observed", "reqCount": 8}],
+                "scalloped_hammerhead": [{ "dataType": "observed", "reqCount": 8}]
+            },
+            "researchDepends": ["hamnerhead_0"]
+        },
+        "bonnethead_0": {
+            "researchPaperName": "Bonnethead Shark Diet",
+            "researchDescription": "Bonnethead sharks primarily feed on crustaceans, mollusks, and small fish.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "bonnethead_1": {
+            "researchPaperName": "Bonnethead Shark Reproduction",
+            "researchDescription": "Bonnethead sharks are viviparous and have a gestation period of about 10-12 months.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["bonnethead_0"]
+        },
+        "white_0": {
+            "researchPaperName": "Great White Shark Hunting Techniques",
+            "researchDescription": "Great white sharks are apex predators known for their powerful hunting techniques, including breaching the water to catch seals.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 3}]
+            },
+            "researchDepends": []
+        },
+        "white_1": {
+            "researchPaperName": "Great White Shark Migration Patterns",
+            "researchDescription": "Great white sharks undertake long migrations, often traveling thousands of miles between feeding and breeding grounds.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 6}]
+            },
+            "researchDepends": ["white_0"]
+        },
+        "bull_0": {
+            "researchPaperName": "Bull Shark Adaptations",
+            "researchDescription": "Bull sharks have special adaptations that allow them to survive in both saltwater and freshwater environments.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "bull_1": {
+            "researchPaperName": "Bull Shark Behavior",
+            "researchDescription": "Bull sharks are known for their aggressive behavior and tendency to swim in shallow coastal waters.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["bull_0"]
         }
     }
 }

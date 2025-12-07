@@ -66,16 +66,17 @@ sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View (locWords ++ words') imgs
         img = getData sharkEntry sharkImage
         imgs = [(750, 200, 1.75, img)]
         locs = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
-        locsTxt = T.concat ["Locations: ", T.intercalate ", " locs]
+        locsTxt = T.concat [T.intercalate ", " locs]
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
         mc = CursorRect White
         infoCnts = getInfoCounts sharkFinds
         returnOpt = MenuAction "Back" $ Just $ SharkReviewTop gd (Just (entryKey sharkEntry))
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
-        (locWords, end) = wrapText gr locsTxt 75 150 500 5 4 Blue
+        (locWords, end) = wrapText gr locsTxt 75 200 550 3 2 Blue
         words = [ TextDisplay (getData sharkEntry sharkName) 50 50 5 White Nothing
                 , TextDisplay sightingText 75 (fromIntegral (end + 20)) 3 White Nothing
+                , TextDisplay "Locations Seen:" 75 (fromIntegral (end - 90)) 3 Blue Nothing
                 ]
         (_, words') = foldl (\(y, l) t -> (y + 75, l ++ [TextDisplay t 125 y 3 White Nothing])) (fromIntegral (end + 75), words) countTxts
 
