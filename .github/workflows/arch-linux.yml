@@ -1,0 +1,31 @@
+name: Build Arch Linux
+on: [push, pull_request]
+
+jobs:
+  build-arch:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+    - name: Install dependencies
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm base-devel git curl gcc make pkgconf \
+          sdl2 sdl2_image sdl2_ttf stack ghc
+
+    - uses: actions/checkout@v4
+    
+    - name: Build
+      run: |
+        stack build --copy-bins --local-bin-path .
+    
+    - name: Bundle libraries
+      run: |
+        # Copy SDL2 shared libraries next to the binary
+        mkdir -p release
+        cp shark-game-exe release/
+        ldd shark-game-exe | grep SDL2 | awk '{print $3}' | xargs -I {} cp {} release/
+        
+    - uses: actions/upload-artifact@v4
+      with:
+        name: shark-game-arch-linux
+        path: release/
