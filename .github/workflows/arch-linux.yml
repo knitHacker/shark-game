@@ -16,7 +16,7 @@ jobs:
     
     - name: Build
       run: |
-        stack build --copy-bins --local-bin-path .
+        stack build --allow-different-user --copy-bins --local-bin-path .
     
     - name: Bundle libraries
       run: |

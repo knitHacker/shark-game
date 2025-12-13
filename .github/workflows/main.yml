@@ -30,13 +30,13 @@ jobs:
         pkg-config --cflags --libs sdl2
     
         # Build with explicit paths to MSYS2 libraries
-        # Use GHC's C compiler and link stack smashing protection library
+        # Add -lssp to link stack smashing protection library (fixes __stack_chk_fail error)
         stack build --copy-bins --local-bin-path . \
           --extra-include-dirs=/mingw64/include \
           --extra-include-dirs=/mingw64/include/SDL2 \
           --extra-lib-dirs=/mingw64/lib \
           --extra-lib-dirs=/mingw64/bin \
-          --ghc-options="-pgmc gcc -pgml gcc -optl-lssp"
+          --ghc-options="-optl-lssp"
     
     - name: Copy DLLs
       shell: msys2 {0}

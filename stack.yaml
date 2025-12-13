@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-23.3  # GHC 9.10.1
+resolver: lts-20.26  # GHC 9.2.8
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
