@@ -17,6 +17,8 @@ module Shark.Types
     , checkPlayConfigs
     , StartMechanics(..)
     , EncounterMechanics(..)
+    , Fundraisers(..)
+    , FundraisingMechanics(..)
     , GameMechanics(..)
     , SiteLocation(..)
     , RegionInformation(..)
@@ -50,9 +52,29 @@ data EncounterMechanics = Encounter
 instance FromJSON EncounterMechanics
 instance ToJSON EncounterMechanics
 
+data Fundraisers = Fundraisers
+    { fundraiserName :: T.Text
+    , fundraiserDescription :: T.Text
+    , fundraiserBaseAmount :: Int
+    , fundraiserCost :: Int
+    , fundraiserSuccessRate :: Int
+    , fundraiserRecurring :: Bool
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON Fundraisers
+instance ToJSON Fundraisers
+
+data FundraisingMechanics = Fundraising
+    { fundraisers :: M.Map T.Text Fundraisers
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON FundraisingMechanics
+instance ToJSON FundraisingMechanics
+
 data GameMechanics = GameMech
     { mechanicsStart :: StartMechanics
     , mechanicsEncounter :: EncounterMechanics
+    , mechanicsFundraising :: FundraisingMechanics
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameMechanics

@@ -43,7 +43,7 @@ data GameMenu = GameMenu
 data GameView = GameView
     { viewLayer :: View GamePlayState
     , viewOverlay :: Maybe (OverlayView GamePlayState)
-    , viewTimeout :: Maybe (TimeoutData GamePlayState)
+    , viewTimeouts :: [TimeoutData GamePlayState]
     , viewMenu :: Maybe (Menu GamePlayState)
     }
 
@@ -75,6 +75,8 @@ data GamePlayState =
     | EquipmentStore (Maybe (T.Text, Int, GameData)) GameData
     | BoatStore (Maybe (T.Text, Int, GameData)) GameData
     | ChooseBoat GameData
+    | ViewDonors GameData
+    | NewFundraiser GameData
     deriving (Eq, Show)
 
 

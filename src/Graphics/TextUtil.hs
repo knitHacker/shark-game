@@ -18,10 +18,10 @@ import Graphics.Types
 import OutputHandles.Types
 
 fontWidth :: Graphics -> Double
-fontWidth (Graphics _ (w, _)) = w
+fontWidth (Graphics _ _ (w, _)) = w
 
 fontHeight :: Graphics -> Double
-fontHeight (Graphics _ (_, h)) = h
+fontHeight (Graphics _ _ (_, h)) = h
 
 wrapText :: Graphics -> T.Text -> Int -> Int -> Int -> Int -> Int -> Color -> ([TextDisplay], Int)
 wrapText outs txt x yStart width lineSpace fontScale c = (wrapped, fromIntegral lastY)

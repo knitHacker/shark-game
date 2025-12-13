@@ -1,6 +1,7 @@
 module OutputHandles.Images
     ( addRectangle
     , addTexture
+    , addAnimTexture
     , getRectMinY
     , getRectMinX
     , getRectMaxY
@@ -42,3 +43,6 @@ addRectangle rend depth priority dr = addDraw rend depth priority (DrawRectangle
 
 addTexture :: ToRender -> Int -> Int -> DrawTexture -> ToRender
 addTexture rend depth priority dt = addDraw rend depth priority (DrawTexture dt)
+
+addAnimTexture :: ToRender -> Int -> Int -> DrawAnimFrame -> ToRender
+addAnimTexture rend depth priority daf = addDraw rend depth priority (DrawAnimFrame daf)

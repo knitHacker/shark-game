@@ -114,6 +114,7 @@ data GameData = GameData
     { gameDataSaveFile :: String
     , gameDataSeed :: Seed
     , gameDataFoundationNames :: [T.Text]
+    , gameDataDonorList :: [T.Text]
     , gameDataFunds :: Int
     , gameDataMonth :: Int
     , gameDataSharkIndex :: SharkIndex
@@ -128,6 +129,7 @@ data GameData = GameData
 data GameSaveData = GameSaveData
     { saveSeed :: Vector Word32
     , saveFoundationNames :: [T.Text]
+    , saveDonorList :: [T.Text]
     , saveFunds :: Int
     , saveMonth :: Int
     , saveSharkIndex :: SharkIndex
@@ -154,7 +156,7 @@ startNewGame cfgs = do
     let startBoat = startingBoat startCfg
         gEq = GameEquipment startBoat [startBoat] (startingEquipment startCfg)
         startMoney = startingFunds startCfg
-        gData = GameData path s [] startMoney 0 0 M.empty M.empty M.empty gEq $ startingRegion startCfg
+        gData = GameData path s [] [] startMoney 0 0 M.empty M.empty M.empty gEq $ startingRegion startCfg
     createDirectoryIfMissing True (takeDirectory path)
     saveToFile gData
     return gData
@@ -163,7 +165,7 @@ sortSharks :: M.Map SharkIndex GameSharkData -> M.Map T.Text [SharkIndex]
 sortSharks = M.foldlWithKey' (\m i sd -> M.insertWith (L.++) (gameSharkSpecies sd) [i] m) M.empty
 
 convertSave :: String -> GameSaveData -> GameData
-convertSave fn gsd = GameData fn seed (saveFoundationNames gsd)
+convertSave fn gsd = GameData fn seed (saveFoundationNames gsd) (saveDonorList gsd)
                               (saveFunds gsd) (saveMonth gsd) (saveSharkIndex gsd) sSharks
                               (sortSharks sSharks) (saveResearchComplete gsd) (saveDataEquipment gsd)
                               (saveCurrentRegion gsd)
@@ -173,7 +175,7 @@ convertSave fn gsd = GameData fn seed (saveFoundationNames gsd)
 
 convertBack :: GameData -> (FilePath, GameSaveData)
 convertBack gd = ( gameDataSaveFile gd
-                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataFunds gd) (gameDataMonth gd)
+                 , GameSaveData seedV (gameDataFoundationNames gd) (gameDataDonorList gd) (gameDataFunds gd) (gameDataMonth gd)
                                       (gameDataSharkIndex gd) (gameDataSharks gd) (gameDataResearchComplete gd)
                                       (gameDataEquipment gd) (gameCurrentRegion gd)
                  )

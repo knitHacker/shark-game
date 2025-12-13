@@ -26,6 +26,9 @@ module Graphics.Types
     , TimeoutAction(..)
     , ImageInfo(..)
     , AnimationInfo(..)
+    , ImagePlacement
+    , AnimPlacement(..)
+    , AnimationAction(..)
     ) where
 
 import qualified Data.Text as T
@@ -49,7 +52,8 @@ data AnimationInfo = AnimationInfo
 data TextureInfo = ImageCfg ImageInfo | AnimationCfg AnimationInfo
 
 data Graphics = Graphics
-    { graphicsTextures :: M.Map Image TextureInfo
+    { graphicsStaticTextures :: M.Map Image ImageInfo
+    , graphicsAnimTextures :: M.Map Image AnimationInfo
     , graphicsFontSize :: !FontSize -- can be map in the future
     }
 
@@ -72,10 +76,12 @@ data TimeoutData a = TimeoutData
     , timeoutAction :: TimeoutAction a
     }
 
+data AnimationAction a = GeneralAnimAction (View a -> Int -> View a) | TextureAnimAction
+
 data AnimationData a = AnimationData
     { animationFrame :: !Int
     , animationMaxFrames :: !Int
-    , animationAction :: Int -> View a
+    , animationAction :: AnimationAction a
     }
 
 data ScrollData = ScrollData
@@ -95,9 +101,21 @@ data ViewScroll a = ViewScroll
     , scrollData :: !ScrollData
     }
 
+type ImagePlacement = (Int, Int, Double, Image)
+
+data AnimPlacement = APlace
+    { animPosX :: !Int
+    , animPosY :: !Int
+    , animScale :: !Double
+    , animTexture :: !Image
+    , animFrame :: !Int
+    , animDepth :: !Int
+    }
+
 data View a = View
     { texts :: ![TextDisplay]
-    , imgs :: ![(Int, Int, Double, Image)]
+    , imgs :: ![ImagePlacement]
+    , animations :: ![AnimPlacement]
     , rects :: ![(Color, Int, Int, Int, Int)]
     -- should this be a list? probably but don't have mouse position atm
     , viewScroll :: !(Maybe (ViewScroll a))

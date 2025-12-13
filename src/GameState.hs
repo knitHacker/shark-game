@@ -43,7 +43,7 @@ updateGameState = do
     inputs <- readInputState
     gs <- readGameState
     outs <- getOutputs
-    let gsM = updateGameView inputs $ gameView gs
+    let gsM = updateGameView (gameGraphics gs) inputs $ gameView gs
     case gsM of
         Nothing -> return gs
         Just (Left gv) -> return $ GameState (gameGraphics gs) gv Nothing
@@ -52,13 +52,13 @@ updateGameState = do
             return $ GameState (gameGraphics gs) gv Nothing
 
 
-updateGameView :: InputState -> GameDrawInfo -> Maybe (Either GameDrawInfo GamePlayState)
-updateGameView _ GameExiting = Nothing
-updateGameView inputs (GameViewInfo gv@(GameView vl oM tM mM)) = if null outs then Nothing else Just (head outs)
+updateGameView :: Graphics -> InputState -> GameDrawInfo -> Maybe (Either GameDrawInfo GamePlayState)
+updateGameView _ _ GameExiting = Nothing
+updateGameView gr inputs (GameViewInfo gv@(GameView vl oM tL mM)) = if null outs then Nothing else Just (head outs)
     where
         viewUp = viewScroll vl >>= updateGameViewScroll inputs
         overlayUp = oM >>= updateGameOverlay inputs
-        timeoutUp = tM >>= updateGameTimeout inputs
+        timeoutUp = updateGameTimeout gr vl inputs tL
         menuUp = mM >>= updateGameMenu inputs
         out = case viewUp of
             Nothing -> Nothing
@@ -70,7 +70,7 @@ updateGameView inputs (GameViewInfo gv@(GameView vl oM tM mM)) = if null outs th
         -- If overlay is open don't timeout
         out3 = case (oM, timeoutUp) of
                 (Just (OverlayView False _ _), Just (Right gps)) -> Just $ Right gps
-                (Just (OverlayView False _ _), Just (Left (td, v'))) -> Just $ Left $ GameViewInfo $ gv { viewTimeout = Just td, viewLayer = v' }
+                (Just (OverlayView False _ _), Just (Left (td, v'))) -> Just $ Left $ GameViewInfo $ gv { viewTimeouts = td, viewLayer = v' }
                 _ -> Nothing
         out4 = case menuUp of
                 Just (Left m) -> Just $ Left $ GameViewInfo $ gv { viewMenu = Just m }
@@ -83,14 +83,22 @@ updateGameViewScroll i vs = case mouseInputs i of
     Just mi -> Just $ scrollView vs (scrollAmt mi)
     Nothing -> Nothing
 
-updateGameTimeout :: InputState -> TimeoutData GamePlayState -> Maybe (Either (TimeoutData GamePlayState, View GamePlayState) GamePlayState)
-updateGameTimeout i@(InputState _ _ ts) (TimeoutData to tl ta)
-    | ts - to > tl = case ta of
-        TimeoutNext gps -> Just $ Right gps
-        TimeoutAnimation animData ->
-            let (animData', view') = updateAnimation animData
-            in Just $ Left (TimeoutData ts tl (TimeoutAnimation animData'), view')
-    | otherwise = Nothing
+updateGameTimeout :: Graphics -> View GamePlayState -> InputState -> [TimeoutData GamePlayState] -> Maybe (Either ([TimeoutData GamePlayState], View GamePlayState) GamePlayState)
+updateGameTimeout _ _ _ [] = Nothing
+updateGameTimeout gr vO i@(InputState _ _ ts) timeouts =
+    case outs of
+        Left (tds, v') -> Just $ Left (tds, v')
+        Right gps -> Just $ Right gps
+    where
+        outs = foldr checkTimeout (Left ([], vO)) timeouts
+        checkTimeout _ (Right gps) = Right gps
+        checkTimeout td@(TimeoutData lTO toLen ta) (Left (tds, v'))
+            | ts - lTO > toLen = case ta of
+                TimeoutNext gps -> Right gps
+                TimeoutAnimation animData ->
+                    let (ad, v'') = updateAnimation gr v' animData
+                    in Left (tds++[td { lastTimeout = ts, timeoutAction = TimeoutAnimation ad }], v'')
+            | otherwise = Left (tds++[td], v')
 
 updateGameOverlay :: InputState -> OverlayView GamePlayState -> Maybe (Either (OverlayView GamePlayState) GamePlayState)
 updateGameOverlay i ov@(OverlayView active _ om)
@@ -122,10 +130,10 @@ updateGameMenu inputs m
         selected = enterJustPressed inputs
 
 gameMenu :: GameMenu -> GameDrawInfo
-gameMenu (GameMenu v m) = GameViewInfo $ GameView v Nothing Nothing (Just m)
+gameMenu (GameMenu v m) = GameViewInfo $ GameView v Nothing [] (Just m)
 
 gameMenuPause :: GamePlayState -> GameData -> GameMenu -> GameDrawInfo
-gameMenuPause gps gd (GameMenu v m) = withPause gps gd $ GameView v Nothing Nothing (Just m)
+gameMenuPause gps gd (GameMenu v m) = withPause gps gd $ GameView v Nothing [] (Just m)
 
 moveToNextState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> IO GameDrawInfo
 moveToNextState gps cfgs inputs gr =
@@ -142,7 +150,7 @@ moveToNextState gps cfgs inputs gr =
         TripDestinationSelect gd -> return $ menuWithPause gd $ mapMenu gd cfgs
         TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> return $ menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
-        TripProgress gd tp -> return $ withPause gps gd $ tripProgressMenu gd tp cfgs inputs
+        TripProgress gd tp -> return $ withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr
         SharkFound gd sf tp -> return $ gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs
         TripResults gd tp -> return $ gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr
         DataReviewTop gd -> return $ menuWithPause gd $ topReviewMenu gd cfgs
@@ -161,6 +169,8 @@ moveToNextState gps cfgs inputs gr =
         EquipmentStore popup gd -> return $ menuWithPause gd $ equipmentStoreMenu popup gd cfgs gr
         BoatStore popup gd -> return $ menuWithPause gd $ boatStoreMenu popup gd cfgs gr
         ChooseBoat gd -> return $ menuWithPause gd $ chooseActiveBoatMenu gd cfgs
+        ViewDonors gd -> return $ menuWithPause gd $ donorList gd gr
+        NewFundraiser gd -> return $ menuWithPause gd $ fundraisingMenu gd cfgs gr
     where
         menuWithPause = gameMenuPause gps
 
@@ -190,7 +200,7 @@ withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo
 withPause gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gps gd }
 
 pauseMenu :: GamePlayState -> GameData -> OverlayView GamePlayState
-pauseMenu gps gd = OverlayView False (View words [] [] Nothing) (Overlay 300 100 750 600 DarkBlue menuOpt)
+pauseMenu gps gd = OverlayView False (textView words) (Overlay 300 100 750 600 DarkBlue menuOpt)
     where
         menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 450 400 4 15) 0
         words = [ TextDisplay "Game Menu" 350 150 8 White Nothing

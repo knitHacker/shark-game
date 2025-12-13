@@ -18,10 +18,11 @@ import InputState
 initGraphics :: TextureCfg -> OutputHandles -> IO Graphics
 initGraphics tm outs = do
     fontSize <- getFontSize outs
-    let iTxts = M.map (\(ImageTexture sX sY _) -> ImageCfg $ ImageInfo sX sY) $ textureImages tm
-        aTxts = M.map (\(AnimationTexture sX sY _ f d) -> AnimationCfg $ AnimationInfo sX sY f d) $ textureAnimations tm
+    let iTxts = M.map (\(ImageTexture sX sY _) -> ImageInfo sX sY) $ textureImages tm
+        aTxts = M.map (\(AnimationTexture sX sY _ f d) -> AnimationInfo sX sY f d) $ textureAnimations tm
     return Graphics
-        { graphicsTextures = M.union iTxts aTxts
+        { graphicsStaticTextures = iTxts
+        , graphicsAnimTextures = aTxts
         , graphicsFontSize = fontSize
         }
 -- Eventually update potential graphics and font sizing based on config changes

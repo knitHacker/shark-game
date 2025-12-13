@@ -11,6 +11,7 @@ module OutputHandles.Types
     , TextureMap
     , DrawRectangle(..)
     , DrawTexture(..)
+    , DrawAnimFrame(..)
     , FontSize
     , Image
     , lengthDraws
@@ -93,6 +94,7 @@ data Color = White
 data Draw = DrawTexture DrawTexture
           | DrawRectangle DrawRectangle
           | DrawTextDisplay TextDisplay
+          | DrawAnimFrame DrawAnimFrame
 
 
 data DrawTexture = DTexture
@@ -102,6 +104,17 @@ data DrawTexture = DTexture
     , drawWidth :: !CInt
     , drawHeight :: !CInt
     , drawMask :: !(Maybe (SDL.Rectangle CInt))
+    }
+
+data DrawAnimFrame = DFrame
+    { drawATexture :: !Image -- Possible error, might not exist in the texture map
+    , drawPosAX :: !CInt
+    , drawPosAY :: !CInt
+    , drawAWidth :: !CInt
+    , drawAHeight :: !CInt
+    , drawScale :: !Double
+    , drawFrameNum :: !Int
+    , drawDepth :: !Int
     }
 
 data DrawRectangle = DRectangle

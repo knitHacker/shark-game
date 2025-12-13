@@ -103,14 +103,26 @@ draw :: MonadIO m => TextureMap -> Font.Font -> Bool -> SDL.Renderer -> Draw -> 
 draw tm _ showRect r (DrawTexture dt) = drawTextureNow tm showRect r dt
 draw _ _ showRect r (DrawRectangle dr) = drawRectangleNow showRect r dr
 draw _ f showRect r (DrawTextDisplay td) = drawText r f td
+draw tm _ showRect r (DrawAnimFrame daf) = drawAnimNow tm showRect r daf
+
+drawAnimNow :: MonadIO m => TextureMap -> Bool -> SDL.Renderer -> DrawAnimFrame -> m ()
+drawAnimNow textMap showRect r d = do
+    SDL.copy r texture (Just frameMask) $ Just pos
+    when showRect $ SDL.drawRect r $ Just pos
+    where
+        w = drawAWidth d
+        h = drawAHeight d
+        frameMask = mkRect (w * fromIntegral (drawFrameNum d)) (h * fromIntegral (drawDepth d)) w h
+        pos = mkRect (drawPosAX d) (drawPosAY d) (scale w (drawScale d)) (scale h (drawScale d))
+        texture = textMap ! drawATexture d
 
 drawTextureNow :: MonadIO m => TextureMap -> Bool -> SDL.Renderer -> DrawTexture -> m ()
 drawTextureNow texMap showRect r d = do
-    SDL.copy r texture (drawMask d) (Just pos)
-    when showRect $ SDL.drawRect r (Just pos)
+    SDL.copy r texture (drawMask d) $ Just pos
+    when showRect $ SDL.drawRect r $ Just pos
     where
         pos = mkRect (drawPosX d) (drawPosY d) (drawWidth d) (drawHeight d)
-        texture = texMap ! (drawTexture d)
+        texture = texMap ! drawTexture d
 
 drawRectangleNow :: MonadIO m => Bool -> SDL.Renderer -> DrawRectangle -> m ()
 drawRectangleNow showRect r d = do
