@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Graphics.Menu
     ( mkScrollView
     , selOneOpts
@@ -108,7 +106,7 @@ getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
 getNextOption (MenuData (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
 getNextOption (MenuData (ScrollListOpts (SLOpts opts fixed bM _)) _ pos)
     | pos < optLen = getNextOpt opts pos
-    | pos - optLen < length fixed = menuNextState (fixed !! (pos - optLen))
+    | pos - optLen < length fixed = fixed !? (pos - optLen) >>= menuNextState
     | otherwise = bM >>= menuNextState
     where
         optLen = getOptSize opts
@@ -134,11 +132,7 @@ getBackOALOpts :: OneActionListOptions a -> Maybe a
 getBackOALOpts (OALOpts opts backM _) =
     case backM of
         Just backOpt -> menuNextState backOpt
-        Nothing -> case filter isBackOption opts of
-            (opt:_) -> menuNextState opt
-            [] -> Nothing
-    where
-        isBackOption (MenuAction text _) = T.toLower text `elem` ["back", "return", "cancel"]
+        Nothing -> Nothing
 
 getNextOpt :: BasicOption a -> Int -> Maybe a
 getNextOpt (BasicSOALOpts opts) pos = getNextOALOpts opts pos
@@ -153,9 +147,7 @@ getOptSize (BasicCBOpts opts) = length $ colButOptActions opts
 getOptSize (BasicTextOpts to) = length $ textOptionTexts to
 
 getNextOALOpts :: OneActionListOptions a -> Int -> Maybe a
-getNextOALOpts (OALOpts opts Nothing _) pos
-    | pos < length opts = menuNextState (opts !! pos)
-    | otherwise = Nothing
+getNextOALOpts (OALOpts opts Nothing _) pos = (opts !? pos) >>= menuNextState
 getNextOALOpts (OALOpts opts (Just back) _) pos
     | pos < length opts = menuNextState (opts !! pos)
     | pos == length opts = menuNextState back
