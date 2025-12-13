@@ -105,7 +105,7 @@ fundraisingMenu gd cfgs gr = GameMenu (textView words) (Menu (selOneOpts 250 450
 boatBounceAnim :: Image -> Int -> [(Int, Int, Double, Image)]
 boatBounceAnim boatI frame =
     [ (750, 250, 0.9, "water")
-    , (900 + yAdj, 340 + xAdj , 1.3, boatI)
+    , (900 + yAdj, 320 + xAdj , 1.3, boatI)
     , (750, 250, 0.9, "dock")
     ]
     where

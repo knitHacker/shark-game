@@ -46,8 +46,10 @@ mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
         mkScrollData' ((startX, startY), (w, h)) =
             let h2 = maxY - startY
                 h4 = floor $ (fromIntegral h2^2) / (fromIntegral h)
-                maxStep = ceiling $ (fromIntegral (h2 - h4)) / (fromIntegral step)
-            in ScrollData startX startY h h2 h4 $ maxStep + 1
+                -- Maximum scroll should allow us to see the bottom of the content
+                maxScrollPixels = max 0 (h - h2)
+                maxStep = ceiling $ fromIntegral maxScrollPixels / fromIntegral step
+            in ScrollData startX startY h h2 h4 maxStep
 
 getTextureSize :: TextureInfo -> (Int, Int)
 getTextureSize (ImageCfg (ImageInfo sx sy)) = (sx, sy)
