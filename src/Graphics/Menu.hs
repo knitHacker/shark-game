@@ -92,7 +92,12 @@ selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
 selMultOpts x y s sp opts up act back = MenuData (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
 scrollOpts :: Int -> Int -> Int -> Int -> BasicOption a -> [MenuAction a] -> Int -> Int -> MenuData a
-scrollOpts x y s sp opts fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll 0)) (BlockDrawInfo x y s sp) pos
+scrollOpts x y s sp opts fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
+    where
+        -- Calculate initial scroll offset to ensure cursor position is visible
+        -- If cursor is within the first maxScroll items, no offset needed
+        -- Otherwise, offset so the cursor is visible (centered when possible)
+        initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
 
 getNextOption :: MenuData a -> Maybe a
 getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos

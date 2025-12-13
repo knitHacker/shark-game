@@ -29,8 +29,13 @@ getFinds cfgs gd se =
         sharkKey = entryKey se
         gsd = gameDataFoundSharks gd
 
-getSeenLocations :: PlayConfigs -> GameData -> DataEntryT SharkInfo -> [T.Text]
-getSeenLocations cfgs gd se = (\lE -> getData lE (\e -> T.concat [regionShowText (locationRegion e), " - ", showText (locationSite e)])) <$> (L.nub $ findLocation <$> getFinds cfgs gd se)
+getSeenLocations :: PlayConfigs -> GameData -> DataEntryT SharkInfo -> M.Map T.Text [T.Text]
+getSeenLocations cfgs gd se = foldr addLocation M.empty $ L.nub $ findLocation <$> getFinds cfgs gd se
+    where
+        addLocation lE acc = 
+            let region = getData lE (regionShowText . locationRegion)
+                site = getData lE (showText . locationSite)
+            in M.insertWith (++) region [site] acc
 
 getInfoCounts :: [SharkFind] -> M.Map T.Text Int
 getInfoCounts = getInfoCounts' M.empty

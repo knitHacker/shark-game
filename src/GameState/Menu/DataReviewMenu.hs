@@ -65,20 +65,25 @@ sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View (locWords ++ words') imgs
     where
         img = getData sharkEntry sharkImage
         imgs = [(750, 200, 1.75, img)]
-        locs = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
-        locsTxt = T.concat [T.intercalate ", " locs]
+        locsMap = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
         mc = CursorRect White
         infoCnts = getInfoCounts sharkFinds
         returnOpt = MenuAction "Back" $ Just $ SharkReviewTop gd (Just (entryKey sharkEntry))
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
-        (locWords, end) = wrapText gr locsTxt 75 200 550 3 2 Blue
+        -- Format locations grouped by region
+        (locWords, end) = foldl formatRegion ([], 200) $ M.toList locsMap
+        formatRegion (displays, yPos) (region, sites) =
+            let regionHeader = TextDisplay region 75 yPos 3 Blue Nothing
+                sitesText = T.intercalate ", " sites
+                (siteDisplays, newEnd) = wrapText gr sitesText 100 (fromIntegral yPos + 50) 525 3 2 Green
+            in (displays ++ [regionHeader] ++ siteDisplays, fromIntegral newEnd + 20)
         words = [ TextDisplay (getData sharkEntry sharkName) 50 50 5 White Nothing
-                , TextDisplay sightingText 75 (fromIntegral (end + 20)) 3 White Nothing
-                , TextDisplay "Locations Seen:" 75 (fromIntegral (end - 90)) 3 Blue Nothing
+                , TextDisplay "Locations Seen:" 65 140 4 Gray Nothing
+                , TextDisplay sightingText 75 (fromIntegral end + 20) 3 White Nothing
                 ]
-        (_, words') = foldl (\(y, l) t -> (y + 75, l ++ [TextDisplay t 125 y 3 White Nothing])) (fromIntegral (end + 75), words) countTxts
+        (_, words') = foldl (\(y, l) t -> (y + 75, l ++ [TextDisplay t 125 y 3 White Nothing])) (fromIntegral end + 75, words) countTxts
 
 topLabMenu :: GameData -> GameConfigs -> GameMenu
 topLabMenu gd cfgs = GameMenu (textView words) (Menu (selOneOpts 300 400 4 25 opts mc 0) Nothing)
@@ -93,7 +98,7 @@ topLabMenu gd cfgs = GameMenu (textView words) (Menu (selOneOpts 300 400 4 25 op
                ]
 
 openResearchMenu :: GameData -> GameConfigs -> GameMenu
-openResearchMenu gd cfgs = GameMenu (textView words') (Menu (selOneOpts 150 250 3 25 (opts ++ otherOpts) mc 0) Nothing)
+openResearchMenu gd cfgs = GameMenu (textView words') (Menu options Nothing)
     where
         sCfgs = sharkCfgs cfgs
         availResearch = filter (\r -> M.notMember (entryKey r) (gameDataResearchComplete gd)) (getKnownResearch sCfgs gd)
@@ -103,9 +108,10 @@ openResearchMenu gd cfgs = GameMenu (textView words') (Menu (selOneOpts 150 250 
                 ]
         opts = (\s -> MenuAction (getData s researchPaperName) $ Just (InvestigateResearchMenu gd s)) <$> availResearch
         otherOpts = [ MenuAction "Back" $ Just $ ResearchReviewTop gd ]
+        options = scrollOpts 150 250 3 25 (BasicSOALOpts (OALOpts opts mc)) otherOpts 4 0
         words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 20 100 2 Red Nothing] else words
 completedResearchMenu :: GameData -> GameConfigs -> GameMenu
-completedResearchMenu gd cfgs = GameMenu (textView words') (Menu (selOneOpts 150 250 3 25 (opts ++ otherOpts) mc 0) Nothing)
+completedResearchMenu gd cfgs = GameMenu (textView words') (Menu options Nothing)
     where
         mc = CursorRect White
         availResearch = filter (\r -> M.member (entryKey r) (gameDataResearchComplete gd)) $ getKnownResearch (sharkCfgs cfgs) gd
@@ -114,6 +120,7 @@ completedResearchMenu gd cfgs = GameMenu (textView words') (Menu (selOneOpts 150
         research = (\s -> MenuAction (getData s researchPaperName) $ Just (CompletedResearchReviewMenu gd s)) <$> availResearch
         opts = (\s -> MenuAction (getData s researchPaperName) $ Just (CompletedResearchReviewMenu gd s)) <$> availResearch
         otherOpts = [ MenuAction "Back" $ Just $ ResearchReviewTop gd ]
+        options = scrollOpts 150 250 3 25 (BasicSOALOpts (OALOpts opts mc)) otherOpts 4 0
         words' = if null research then words ++ [TextDisplay "No completed research" 20 100 2 Red Nothing] else words
 
 investigateResearchMenu :: GameData -> DataEntryT ResearchData -> GameConfigs -> Graphics -> GameMenu
