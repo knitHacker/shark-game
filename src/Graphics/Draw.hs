@@ -124,7 +124,7 @@ getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
 
 -- Draw the menu options for menus that you only select one option at a time
 updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
-updateSelOneListOptions gr@(Graphics _ _ (fw, fh)) d pos (BlockDrawInfo x y s sp) (OALOpts ma curs) = r'
+updateSelOneListOptions gr@(Graphics _ _ (fw, fh)) d pos (BlockDrawInfo x y s sp) (OALOpts ma _ curs) = r'
     where
         r = if pos >= 0 && pos < length ma then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
         r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions opts s h oX oY
@@ -223,7 +223,7 @@ columnButtonOptionTexts (Graphics _ _ fs@(fw, fh)) p d s sp w butText headers op
 
 
 updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender
-updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts (Scroll mx off))
+updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts _ (Scroll mx off))
     | optCount <= mx = r `mappend` fixedR
     | otherwise = rend
     where
@@ -241,8 +241,8 @@ updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y
         rect = DRectangle DarkGray rx (fromIntegral y - 1) 20 (moveAmt * fromIntegral optCount + 2)
         rect2 = DRectangle Gray rx ry 20 darkHeight
         ((r, yEnd), cur) = case opts of
-                    BasicSOALOpts (OALOpts oal c) -> ((updateSelOneListOptions gr d p' bdi $ OALOpts (take mx (drop off oal)) c, y + scrollHeight), c)
+                    BasicSOALOpts (OALOpts oal _ c) -> ((updateSelOneListOptions gr d p' bdi $ OALOpts (take mx (drop off oal)) Nothing c, y + scrollHeight), c)
                     BasicMSLOpts mo@(MSLOpts msl _ _ _) -> ((updateMultiListOptions gr d p' bdi $ mo { mslOpts = take mx (drop off msl) }, y + scrollHeight), CursorRect White)
                     BasicCBOpts cbo@(CBOpts _ _  _ opts) -> (updateColumnButtonOptions gr d p' bdi $ cbo { colButOptActions = take mx (drop off opts) }, CursorRect White)
-        fixedR = updateSelOneListOptions gr d (p - (end + off)) (bdi { blockY = yEnd })  $ OALOpts fixedOpts cur
+        fixedR = updateSelOneListOptions gr d (p - (end + off)) (bdi { blockY = yEnd })  $ OALOpts fixedOpts Nothing cur
         rend = addRectangle (addRectangle r d 1 rect `mappend` fixedR) d 2 rect2

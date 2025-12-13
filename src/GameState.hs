@@ -122,12 +122,14 @@ updateOverlayMenu inputs om@(Overlay _ _ _ _ _ md)
 updateGameMenu :: InputState -> Menu GamePlayState -> Maybe (Either (Menu GamePlayState) GamePlayState)
 updateGameMenu inputs m
     | selected = Right <$> getNextMenu m
+    | backSelected = Right <$> getBackOption m
     | inputRepeating inputs = Nothing
     | inputDirection inputs == Just DDown = Just $ Left $ incrementMenuCursor m
     | inputDirection inputs == Just DUp = Just $ Left $ decrementMenuCursor m
     | otherwise = Nothing
     where
         selected = enterJustPressed inputs
+        backSelected = backJustPressed inputs
 
 gameMenu :: GameMenu -> GameDrawInfo
 gameMenu (GameMenu v m) = GameViewInfo $ GameView v Nothing [] (Just m)
@@ -202,7 +204,7 @@ withPause gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gps gd 
 pauseMenu :: GamePlayState -> GameData -> OverlayView GamePlayState
 pauseMenu gps gd = OverlayView False (textView words) (Overlay 300 100 750 600 DarkBlue menuOpt)
     where
-        menuOpt = MenuData (SelOneListOpts $ OALOpts opts (CursorRect White)) (BlockDrawInfo 450 400 4 15) 0
+        menuOpt = MenuData (SelOneListOpts $ OALOpts opts Nothing (CursorRect White)) (BlockDrawInfo 450 400 4 15) 0
         words = [ TextDisplay "Game Menu" 350 150 8 White Nothing
                 ]
         opts = [ MenuAction "Continue" $ Just gps
