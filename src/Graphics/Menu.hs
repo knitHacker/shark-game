@@ -108,10 +108,10 @@ getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
 getNextOption (MenuData (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
 getNextOption (MenuData (ScrollListOpts (SLOpts opts fixed bM _)) _ pos)
     | pos < optLen = getNextOpt opts pos
-    | otherwise = menuNextState opt
+    | pos - optLen < length fixed = menuNextState (fixed !! (pos - optLen))
+    | otherwise = bM >>= menuNextState
     where
         optLen = getOptSize opts
-        opt = fixed !! (pos - optLen)
 
 getNextMenu :: Menu a -> Maybe a
 getNextMenu (Menu _ (Just mp)) = getNextOption (popupOptions mp)
@@ -180,10 +180,10 @@ getNextCBOpts (CBOpts _ _  _ opts) pos
     | otherwise = Nothing
 
 optionLength :: MenuData a -> Int
-optionLength (MenuData (SelOneListOpts opts) _ _) = length $ oalOpts opts
+optionLength (MenuData (SelOneListOpts opts) _ _) = length (oalOpts opts) + if isJust (oalBackOptM opts) then 1 else 0
 optionLength (MenuData (SelMultiListOpts opts) _ _) = 1 + length (mslOpts opts) + if isJust (mslBackActionM opts) then 1 else 0
-optionLength (MenuData (ScrollListOpts opts) _ _) = length (sLFixedOpts opts) + case sLScrollOpts opts of
-    BasicSOALOpts oal -> length $ oalOpts oal
+optionLength (MenuData (ScrollListOpts opts) _ _) = length (sLFixedOpts opts) + (if isJust (sLBackOptM opts) then 1 else 0) + case sLScrollOpts opts of
+    BasicSOALOpts oal -> length (oalOpts oal) + if isJust (oalBackOptM oal) then 1 else 0
     BasicMSLOpts msl -> 1 + length (mslOpts msl) + if isJust (mslBackActionM msl) then 1 else 0
     BasicCBOpts cb -> length $ colButOptActions cb
     BasicTextOpts to -> length $ textOptionTexts to
@@ -196,26 +196,29 @@ toggleMultiOption opt pos = opt { mslOpts = (\(n, o) -> if n == pos then toggle 
         toggle (SelectOption t k sel _ _ ) = SelectOption t k (not sel) True False
 
 incrementMenuOpt :: MenuData a -> MenuData a
-incrementMenuOpt mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ _ (Scroll mx off))) _ p)
+incrementMenuOpt mo@(MenuData (ScrollListOpts sl@(SLOpts opts _ _ (Scroll mx off))) _ p)
     | p >= len - 1 = mo
+    | p >= scrollLen = mo { cursorPosition = p + 1 }  -- In fixed/back area, just move cursor
     | p + off < end - 1 || off >= scrollLen - end = mo { cursorPosition = p + 1 }
     | otherwise = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off + 1) })
                                    , cursorPosition = p + 1 }
     where
         len = optionLength mo
-        fxLen = length $ sLFixedOpts sl
-        scrollLen = len - fxLen
-        end = min mx len
+        scrollLen = getOptSize opts  -- Only count scrollable options
+        end = min mx scrollLen
 incrementMenuOpt mo@(MenuData _ _ p)
     | p >= optionLength mo - 1 = mo
     | otherwise = mo { cursorPosition = p + 1 }
 
 decrementMenuOpt :: MenuData a -> MenuData a
-decrementMenuOpt mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ _ (Scroll mx off))) _ p)
+decrementMenuOpt mo@(MenuData (ScrollListOpts sl@(SLOpts opts _ _ (Scroll mx off))) _ p)
     | p == 0 = mo
+    | p >= scrollLen = mo { cursorPosition = p - 1 }  -- In fixed/back area, just move cursor
     | p > off = mo { cursorPosition = p - 1 }
     | otherwise = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off - 1) })
                                    , cursorPosition = p - 1 }
+    where
+        scrollLen = getOptSize opts
 decrementMenuOpt mo@(MenuData _ _ p)
     | p == 0 = mo
     | otherwise = mo { cursorPosition = p - 1 }

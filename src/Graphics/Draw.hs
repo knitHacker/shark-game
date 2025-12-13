@@ -20,6 +20,7 @@ import OutputHandles.Util
 import Graphics.Types
 import Graphics.Menu
 
+
 -- Add the scroll rectangle visual on the side.
 -- parameters
 --  - render to add to
@@ -124,16 +125,19 @@ getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
 
 -- Draw the menu options for menus that you only select one option at a time
 updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
-updateSelOneListOptions gr@(Graphics _ _ (fw, fh)) d pos (BlockDrawInfo x y s sp) (OALOpts ma _ curs) = r'
+updateSelOneListOptions gr@(Graphics _ _ (fw, fh)) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM curs) = r'
     where
-        r = if pos >= 0 && pos < length ma then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
+        allOpts = case backOptM of
+                    Nothing -> ma
+                    Just backOpt -> ma ++ [backOpt]
+        r = if pos >= 0 && pos < length allOpts then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
         r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions opts s h oX oY
-        opts = (\mo -> (menuOptionText mo, if isJust $ menuNextState mo then Blue else Gray)) <$> ma
+        opts = (\mo -> (menuOptionText mo, if isJust $ menuNextState mo then Blue else Gray)) <$> allOpts
         yPos = y + (h * pos)
         yPos' = fromIntegral yPos
         oX = fromIntegral x
         oY = fromIntegral y
-        opt = ma !! pos
+        opt = allOpts !! pos
         cL = ceiling $ fw * fromIntegral (s * T.length (menuOptionText opt))
         h = sp + ceiling (fh * fromIntegral s)
 
@@ -223,10 +227,11 @@ columnButtonOptionTexts (Graphics _ _ fs@(fw, fh)) p d s sp w butText headers op
 
 
 updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender
-updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts _ (Scroll mx off))
+updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts backOptM (Scroll mx off))
     | optCount <= mx = r `mappend` fixedR
     | otherwise = rend
     where
+        -- p' is the position within the visible scrolling window
         p' = p - off
         h = sp + ceiling (fh * fromIntegral s)
         scrollHeight = h * end
@@ -244,5 +249,7 @@ updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y
                     BasicSOALOpts (OALOpts oal _ c) -> ((updateSelOneListOptions gr d p' bdi $ OALOpts (take mx (drop off oal)) Nothing c, y + scrollHeight), c)
                     BasicMSLOpts mo@(MSLOpts msl _ _ _) -> ((updateMultiListOptions gr d p' bdi $ mo { mslOpts = take mx (drop off msl) }, y + scrollHeight), CursorRect White)
                     BasicCBOpts cbo@(CBOpts _ _  _ opts) -> (updateColumnButtonOptions gr d p' bdi $ cbo { colButOptActions = take mx (drop off opts) }, CursorRect White)
-        fixedR = updateSelOneListOptions gr d (p - (end + off)) (bdi { blockY = yEnd })  $ OALOpts fixedOpts Nothing cur
+        -- Fixed options cursor position: p is in scroll area if < optCount, else subtract optCount to get fixed index
+        fixedP = p - optCount
+        fixedR = updateSelOneListOptions gr d fixedP (bdi { blockY = yEnd })  $ OALOpts fixedOpts backOptM cur
         rend = addRectangle (addRectangle r d 1 rect `mappend` fixedR) d 2 rect2
