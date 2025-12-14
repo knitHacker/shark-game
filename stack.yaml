@@ -73,7 +73,3 @@ configure-options:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
-
-# Global GHC options (including for dependencies)
-ghc-options:
-  "$everything": -optl-lssp

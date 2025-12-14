@@ -25,8 +25,11 @@ jobs:
     - name: Copy libssp to GHC MinGW
       shell: msys2 {0}
       run: |
+        # Ensure GHC is installed first
+        stack setup
+        
         # Copy libssp from MSYS2 to GHC's MinGW so hsc2hs can find it
-        GHC_MINGW="$(stack path --compiler-bin | sed 's|\\|/|g')/../lib"
+        GHC_MINGW="$(stack path --compiler-bin)/../lib"
         echo "Copying libssp to: $GHC_MINGW"
         mkdir -p "$GHC_MINGW"
         cp /mingw64/lib/libssp.* "$GHC_MINGW/" || true
