@@ -37,8 +37,11 @@ jobs:
     - name: Build
       shell: msys2 {0}
       run: |
-        # Build with stack - msys-packages in stack.yaml will ensure SDL2 is installed
-        stack build --copy-bins --local-bin-path .
+        # Build with explicit paths to the MSYS2 where SDL2 was installed
+        stack build --copy-bins --local-bin-path . \
+          --extra-include-dirs=/mingw64/include \
+          --extra-lib-dirs=/mingw64/lib \
+          --extra-lib-dirs=/mingw64/bin
     
     - name: Copy DLLs
       shell: msys2 {0}
