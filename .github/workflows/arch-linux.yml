@@ -1,5 +1,8 @@
 name: Build Arch Linux
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - '*'
 
 jobs:
   build-arch:
