@@ -42,7 +42,7 @@ jobs:
         Version: 2.8.2
         Requires: sdl2 >= 2.0.0
         Libs: -L\${libdir} -lSDL2_image
-        Cflags: -I\${includedir}
+        Cflags: -I\${includedir} -D_SDL_main_h
         EOF
         
         cat > sdl2-install/lib/pkgconfig/SDL2_ttf.pc << EOF
@@ -56,7 +56,7 @@ jobs:
         Version: 2.22.0
         Requires: sdl2 >= 2.0.0
         Libs: -L\${libdir} -lSDL2_ttf
-        Cflags: -I\${includedir}
+        Cflags: -I\${includedir} -D_SDL_main_h
         EOF
 
     - name: Cache Stack dependencies
