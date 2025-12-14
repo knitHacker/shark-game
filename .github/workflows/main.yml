@@ -23,26 +23,22 @@ jobs:
           mingw-w64-x86_64-SDL2_image
           mingw-w64-x86_64-SDL2_ttf
     
+    - name: Cache Stack dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~\AppData\Roaming\stack
+          ~\AppData\Local\Programs\stack
+          .stack-work
+        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'shark-game.cabal') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-
+    
     - name: Build
       shell: msys2 {0}
       run: |
-        # Show where SDL2 actually got installed
-        echo "SDL2 pkg-config info:"
-        pkg-config --cflags --libs sdl2
-        
-        # Put MSYS2's gcc first in PATH so hsc2hs uses it instead of GHC's bundled gcc
-        export PATH="/mingw64/bin:$PATH"
-        which gcc
-        gcc --version
-        
-        # Use -D_SDL_main_h to skip SDL2main linking (avoids libssp issue)
-        # See: https://github.com/haskell-game/sdl2/issues/139
-        stack build --copy-bins --local-bin-path . \
-          --extra-include-dirs=/mingw64/include \
-          --extra-include-dirs=/mingw64/include/SDL2 \
-          --extra-lib-dirs=/mingw64/lib \
-          --extra-lib-dirs=/mingw64/bin \
-          --ghc-options="-D_SDL_main_h"
+        # Build with stack - msys-packages in stack.yaml will ensure SDL2 is installed
+        stack build --copy-bins --local-bin-path .
     
     - name: Copy DLLs
       shell: msys2 {0}
