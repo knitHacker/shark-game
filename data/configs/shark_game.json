@@ -199,7 +199,6 @@
         "whitetipReef": {
             "sharkName": "Whitetip Reef Shark",
             "sharkImage": "bad_shark",
-            "sharkRegion": "pacific",
             "sharkFacts": []
         },
         "blacktip": {
@@ -210,7 +209,11 @@
         "nurse": {
             "sharkName": "Nurse Shark",
             "sharkImage": "nurse_shark",
-            "sharkFacts": []
+            "sharkFacts": [ {
+                "sharkFactTitle": "Shark Size",
+                "sharkFactInfo": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs.",
+                "sharkFactRevealDepends": ["nurse_0"]
+            } ]
         },
         "lemon": {
             "sharkName": "Lemon Shark",
@@ -346,6 +349,11 @@
             "sharkName": "Shortfin Mako Shark",
             "sharkImage": "bad_shark",
             "sharkFacts": []
+        },
+        "whale": {
+            "sharkName": "Whale Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
         }
     },
     "research": {
@@ -369,7 +377,7 @@
         },
         "nurse_1": {
             "researchPaperName": "Nurse Shark Reproduction",
-            "researchDescription": "Nurse sharks are ovoviviparous, meaning they give live birth. They have a gestation period of 6 months and can have up to 40 pups.",
+            "researchDescription": "Nurse sharks are ovoviviparous, meaning they give live birth but their embryos develop inside eggs within the mother's body. They have a gestation period of 6 months and can have up to 40 pups.",
             "researchGrant": 1000,
             "researchReqs": {
                 "nurse": [{ "dataType": "caught", "reqCount": 10}]

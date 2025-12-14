@@ -40,6 +40,7 @@ jobs:
     - name: Build
       run: |
         stack build --copy-bins --local-bin-path . `
+          --flag sdl2:-pkgconfig `
           --extra-include-dirs=$PWD/sdl2-install/include `
           --extra-lib-dirs=$PWD/sdl2-install/lib `
           --ghc-options="-D_SDL_main_h"
