@@ -15,9 +15,10 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Build
+      env:
+        STACK_ROOT: /tmp/stack-root
       run: |
-        export STACK_ROOT="$(pwd)/.stack-root"
-        stack build --allow-different-user --copy-bins --local-bin-path .
+        stack build --system-ghc --allow-different-user --copy-bins --local-bin-path .
     
     - name: Bundle libraries
       run: |
