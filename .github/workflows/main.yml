@@ -38,11 +38,14 @@ jobs:
           ${{ runner.os }}-stack-
 
     - name: Build
+      shell: bash
       run: |
-        stack build --copy-bins --local-bin-path . `
-          --flag sdl2:-pkgconfig `
-          --extra-include-dirs=$PWD/sdl2-install/include `
-          --extra-lib-dirs=$PWD/sdl2-install/lib `
+        SDL_DIR=$(cygpath -w "$PWD/sdl2-install")
+        stack build --copy-bins --local-bin-path . \
+          --flag sdl2:-pkgconfig \
+          --extra-include-dirs="$SDL_DIR/include/SDL2" \
+          --extra-include-dirs="$SDL_DIR/include" \
+          --extra-lib-dirs="$SDL_DIR/lib" \
           --ghc-options="-D_SDL_main_h"
 
     - name: Copy DLLs
