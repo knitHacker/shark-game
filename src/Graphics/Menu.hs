@@ -20,7 +20,7 @@ module Graphics.Menu
 import qualified Data.Text as T
 import Data.Map.Strict ((!))
 import Data.Maybe (isJust, catMaybes)
-import Data.List ((!?))
+
 
 import OutputHandles.Types
 import OutputHandles.Text
@@ -106,7 +106,7 @@ getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
 getNextOption (MenuData (SelMultiListOpts opts) _ pos) = getNextMSLOpts opts pos
 getNextOption (MenuData (ScrollListOpts (SLOpts opts fixed bM _)) _ pos)
     | pos < optLen = getNextOpt opts pos
-    | pos - optLen < length fixed = fixed !? (pos - optLen) >>= menuNextState
+    | pos - optLen < length fixed = menuNextState (fixed !! (pos - optLen))
     | otherwise = bM >>= menuNextState
     where
         optLen = getOptSize opts
@@ -147,7 +147,9 @@ getOptSize (BasicCBOpts opts) = length $ colButOptActions opts
 getOptSize (BasicTextOpts to) = length $ textOptionTexts to
 
 getNextOALOpts :: OneActionListOptions a -> Int -> Maybe a
-getNextOALOpts (OALOpts opts Nothing _) pos = (opts !? pos) >>= menuNextState
+getNextOALOpts (OALOpts opts Nothing _) pos
+    | pos < length opts = menuNextState (opts !! pos)
+    | otherwise = Nothing
 getNextOALOpts (OALOpts opts (Just back) _) pos
     | pos < length opts = menuNextState (opts !! pos)
     | pos == length opts = menuNextState back

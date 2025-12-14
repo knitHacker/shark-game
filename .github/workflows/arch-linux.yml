@@ -16,6 +16,7 @@ jobs:
     
     - name: Build
       run: |
+        export STACK_ROOT="$(pwd)/.stack-root"
         stack build --allow-different-user --copy-bins --local-bin-path .
     
     - name: Bundle libraries
