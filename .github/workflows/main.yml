@@ -97,3 +97,5 @@ jobs:
         path: |
           *.exe
           *.dll
+          data/
+          assets/
