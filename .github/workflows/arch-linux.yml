@@ -18,6 +18,8 @@ jobs:
       env:
         STACK_ROOT: /tmp/stack-root
       run: |
+        # Clear any cached config with -lssp flags
+        rm -rf /tmp/stack-root
         stack build --system-ghc --allow-different-user --copy-bins --local-bin-path .
     
     - name: Bundle libraries
