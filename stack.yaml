@@ -39,7 +39,7 @@ extra-deps:
   - git: https://github.com/knitHacker/sdl2-image.git
     commit: 7e7a06c8b8493dd4c5d3113f76296b59fa2c42a5
   - git: https://github.com/knitHacker/sdl2-ttf.git
-    commit: 8f6b3bfb96fd5729092a2e774b8cf9643ff42e44
+    commit: 3f627baffcc14e0b66b51075e5c740a6fa166000
 
 # Note: The pkgconfig: false flag is only for Windows CI builds
 # On Linux/Mac, comment out the flags section to use pkg-config
