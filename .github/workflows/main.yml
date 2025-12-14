@@ -6,17 +6,17 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-    
+
     - uses: haskell-actions/setup@v2
       with:
         enable-stack: true
         stack-version: 'latest'
-    
+
     - name: Install SDL2 via Stack's MSYS2
       run: |
         stack exec -- pacman --noconfirm -Sy
         stack exec -- pacman --noconfirm -S mingw-w64-x86_64-pkg-config mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image mingw-w64-x86_64-SDL2_ttf mingw-w64-x86_64-gcc-libs
-    
+
     - name: Cache Stack dependencies
       uses: actions/cache@v4
       with:
@@ -27,10 +27,10 @@ jobs:
         key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'shark-game.cabal') }}
         restore-keys: |
           ${{ runner.os }}-stack-
-    
+
     - name: Build
       run: stack build --copy-bins --local-bin-path . --ghc-options="-D_SDL_main_h"
-    
+
     - name: Copy DLLs
       shell: bash
       run: |
@@ -40,7 +40,7 @@ jobs:
         cp $MSYS2_BIN/libstdc*.dll . || true
         cp $MSYS2_BIN/libwinpthread*.dll . || true
         ls -la *.dll *.exe
-    
+
     - uses: actions/upload-artifact@v4
       with:
         name: shark-game-windows
