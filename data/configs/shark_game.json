@@ -38,7 +38,7 @@
         "smallBoat": {
             "boatName": "Small Boat",
             "boatDescription": "A small boat for shallow waters.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estauary", "sandFlats"],
             "boatEquipmentSlots": 1,
             "boatFuelCost": 10,
             "boatPrice": 100,
@@ -47,7 +47,7 @@
         "mediumBoat": {
             "boatName": "Medium Boat",
             "boatDescription": "A medium-sized boat for various conditions.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "estauary", "sandFlats", "continentalShelf"],
             "boatEquipmentSlots": 2,
             "boatFuelCost": 20,
             "boatPrice": 2000,
@@ -56,7 +56,7 @@
         "largeBoat": {
             "boatName": "Large Boat",
             "boatDescription": "A large boat for deep waters.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest", "estauary", "sandFlats", "continentalShelf"],
             "boatEquipmentSlots": 4,
             "boatFuelCost": 30,
             "boatPrice": 30000,
@@ -139,6 +139,21 @@
                     "showText": "Sea Grass",
                     "allowedEquipment": ["fishingGear", "snorkelGear"],
                     "sharksFound": [["lemon", 10], ["tiger", 10], ["blacktip", 35], ["bonnethead", 30], ["great_hammerhead", 5], ["scalloped_hammerhead", 5], ["bull", 5]]
+                },
+                "continentalShelf": {
+                    "showText": "Continental Shelf",
+                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "sharksFound": [["sandbar", 40], ["blacktip", 30], ["bull", 20], ["great_hammerhead", 5], ["scalloped_hammerhead", 5]]
+                },
+                "estauary": {
+                    "showText": "Estuary",
+                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "sharksFound": [["bull", 50], ["blacktip", 30], ["lemon", 10], ["bonnethead", 10]]
+                },
+                "sandFlats": {
+                    "showText": "Sand Flats",
+                    "allowedEquipment": ["fishingGear", "snorkelGear", "longLine"],
+                    "sharksFound": [["bonnethead", 40], ["blacktip", 30], ["bull", 20], ["nurse", 10]]
                 }
             }
         },
@@ -324,6 +339,11 @@
         },
         "scalloped_hammerhead": {
             "sharkName": "Scalloped Hammerhead Shark",
+            "sharkImage": "bad_shark",
+            "sharkFacts": []
+        },
+        "shortfin_mako": {
+            "sharkName": "Shortfin Mako Shark",
             "sharkImage": "bad_shark",
             "sharkFacts": []
         }

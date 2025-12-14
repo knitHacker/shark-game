@@ -136,6 +136,7 @@ data SelectOption = SelectOption
 
 data OneActionListOptions a = OALOpts
     { oalOpts :: ![MenuAction a]
+    , oalBackOptM :: !(Maybe (MenuAction a))
     , oalCursor :: !CursorType
     }
 
@@ -171,9 +172,10 @@ data BasicOption a =
     | BasicCBOpts (ColumnButtonOptions a)
 
 data ScrollListOptions a = SLOpts
-    { sLScrollOpts :: BasicOption a
-    , sLFixedOpts :: [MenuAction a]
-    , sLScroll :: MenuScroll
+    { sLScrollOpts :: !(BasicOption a)
+    , sLFixedOpts :: ![MenuAction a]
+    , sLBackOptM :: !(Maybe (MenuAction a))
+    , sLScroll :: !MenuScroll
     }
 
 data MenuScroll = Scroll

@@ -34,7 +34,7 @@ import Debug.Trace
 mainMenu :: Maybe GameData -> GameMenu
 mainMenu gdM = GameMenu (textView words) (Menu optEntry Nothing)
     where
-        optEntry = selOneOpts 400 550 3 2 menuOpts cursor 0
+        optEntry = selOneOpts 400 550 3 2 menuOpts Nothing cursor 0
         cursor = CursorPointer "green_arrow"
         words = [ TextDisplay "Shark" 10 10 14 Gray Nothing
                 , TextDisplay "Research" 100 200 14 Gray Nothing
@@ -50,7 +50,7 @@ mainMenu gdM = GameMenu (textView words) (Menu optEntry Nothing)
 
 
 introPage :: GameData -> GameMenu
-introPage gd = GameMenu (textView words) (Menu (selOneOpts 450 700 3 2 opts (CursorRect White) 0) Nothing)
+introPage gd = GameMenu (textView words) (Menu (selOneOpts 450 700 3 2 opts Nothing (CursorRect White) 0) Nothing)
     where
         welcomeText1 = "You are a new researcher at the Shark Research Institute."
         welcomeText2 = "Your new position has inspired a national research committee"
@@ -71,7 +71,7 @@ introPage gd = GameMenu (textView words) (Menu (selOneOpts 450 700 3 2 opts (Cur
 
 
 researchCenterMenu :: GameData -> Graphics -> GameMenu
-researchCenterMenu gd gr = GameMenu (textView (words ++ fundWords)) (Menu (selOneOpts 300 500 4 15 opts mc 0) Nothing)
+researchCenterMenu gd gr = GameMenu (textView (words ++ fundWords)) (Menu (selOneOpts 300 500 4 15 opts Nothing mc 0) Nothing)
     where
         funds = gameDataFunds gd
         mc = CursorRect White

@@ -12,36 +12,34 @@ jobs:
         enable-stack: true
         stack-version: 'latest'
     
-    - uses: msys2/setup-msys2@v2
+    - name: Install SDL2 via Stack's MSYS2
+      run: |
+        stack exec -- pacman --noconfirm -Sy
+        stack exec -- pacman --noconfirm -S mingw-w64-x86_64-pkg-config mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image mingw-w64-x86_64-SDL2_ttf mingw-w64-x86_64-gcc-libs
+    
+    - name: Cache Stack dependencies
+      uses: actions/cache@v4
       with:
-        path-type: inherit    # This is the key!
-        update: true
-        install: >-
-          mingw-w64-x86_64-pkg-config
-          mingw-w64-x86_64-SDL2
-          mingw-w64-x86_64-SDL2_image
-          mingw-w64-x86_64-SDL2_ttf
+        path: |
+          ~\AppData\Roaming\stack
+          ~\AppData\Local\Programs\stack
+          .stack-work
+        key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml', 'shark-game.cabal') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-
     
     - name: Build
-      shell: msys2 {0}
-      run: |
-        # Show where SDL2 actually got installed
-        echo "SDL2 pkg-config info:"
-        pkg-config --cflags --libs sdl2
-    
-        # Build with explicit paths to MSYS2 libraries
-        stack build --copy-bins --local-bin-path . \
-          --extra-include-dirs=/mingw64/include \
-          --extra-include-dirs=/mingw64/include/SDL2 \
-          --extra-lib-dirs=/mingw64/lib \
-          --extra-lib-dirs=/mingw64/bin
+      run: stack build --copy-bins --local-bin-path . --ghc-options="-D_SDL_main_h"
     
     - name: Copy DLLs
-      shell: msys2 {0}
+      shell: bash
       run: |
-        cp /mingw64/bin/SDL2*.dll .
-        cp /mingw64/bin/lib*.dll . 2>/dev/null || true
-        ls -la *.dll
+        MSYS2_BIN=$(stack path --local-programs)/msys2-*/mingw64/bin
+        cp $MSYS2_BIN/SDL2*.dll . || true
+        cp $MSYS2_BIN/libgcc*.dll . || true
+        cp $MSYS2_BIN/libstdc*.dll . || true
+        cp $MSYS2_BIN/libwinpthread*.dll . || true
+        ls -la *.dll *.exe
     
     - uses: actions/upload-artifact@v4
       with:
