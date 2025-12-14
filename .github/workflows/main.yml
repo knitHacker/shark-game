@@ -77,6 +77,7 @@ jobs:
         export PKG_CONFIG_PATH="$PWD/sdl2-install/lib/pkgconfig:$PKG_CONFIG_PATH"
         stack build --copy-bins --local-bin-path . \
           --flag sdl2:-pkgconfig \
+          --flag sdl2-image:-pkgconfig \
           --extra-include-dirs="$SDL_DIR/include/SDL2" \
           --extra-include-dirs="$SDL_DIR/include" \
           --extra-lib-dirs="$SDL_DIR/lib" \
