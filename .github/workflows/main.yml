@@ -28,18 +28,15 @@ jobs:
         # Show where SDL2 actually got installed
         echo "SDL2 pkg-config info:"
         pkg-config --cflags --libs sdl2
-    
-        # Use MSYS2's gcc/ld which has libssp available, instead of GHC's bundled MinGW
-        export CC=/mingw64/bin/gcc
-        export LD=/mingw64/bin/ld
-        export LIBRARY_PATH=/mingw64/lib:$LIBRARY_PATH
         
         # Build with explicit paths to MSYS2 libraries
+        # Add -optl-lssp to link libssp (stack smashing protector) needed by SDL2main.a
         stack build --copy-bins --local-bin-path . \
           --extra-include-dirs=/mingw64/include \
           --extra-include-dirs=/mingw64/include/SDL2 \
           --extra-lib-dirs=/mingw64/lib \
-          --extra-lib-dirs=/mingw64/bin
+          --extra-lib-dirs=/mingw64/bin \
+          --ghc-options="-optl-lssp"
     
     - name: Copy DLLs
       shell: msys2 {0}
