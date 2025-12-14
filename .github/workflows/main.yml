@@ -22,6 +22,16 @@ jobs:
           mingw-w64-x86_64-SDL2_image
           mingw-w64-x86_64-SDL2_ttf
     
+    - name: Copy libssp to GHC MinGW
+      shell: msys2 {0}
+      run: |
+        # Copy libssp from MSYS2 to GHC's MinGW so hsc2hs can find it
+        GHC_MINGW="$(stack path --compiler-bin | sed 's|\\|/|g')/../lib"
+        echo "Copying libssp to: $GHC_MINGW"
+        mkdir -p "$GHC_MINGW"
+        cp /mingw64/lib/libssp.* "$GHC_MINGW/" || true
+        ls -la "$GHC_MINGW"/libssp.* || echo "No libssp files found"
+    
     - name: Build
       shell: msys2 {0}
       run: |
@@ -30,13 +40,11 @@ jobs:
         pkg-config --cflags --libs sdl2
     
         # Build with explicit paths to MSYS2 libraries
-        # Add -lssp to link stack smashing protection library (fixes __stack_chk_fail error)
         stack build --copy-bins --local-bin-path . \
           --extra-include-dirs=/mingw64/include \
           --extra-include-dirs=/mingw64/include/SDL2 \
           --extra-lib-dirs=/mingw64/lib \
-          --extra-lib-dirs=/mingw64/bin \
-          --ghc-options="-optl-lssp"
+          --extra-lib-dirs=/mingw64/bin
     
     - name: Copy DLLs
       shell: msys2 {0}
