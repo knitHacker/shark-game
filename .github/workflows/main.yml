@@ -29,14 +29,15 @@ jobs:
         echo "SDL2 pkg-config info:"
         pkg-config --cflags --libs sdl2
         
+        # Set LDFLAGS so hsc2hs will link libssp during SDL2 dependency build
+        export LDFLAGS="-lssp"
+        
         # Build with explicit paths to MSYS2 libraries
-        # Add -optl-lssp to link libssp (stack smashing protector) needed by SDL2main.a
         stack build --copy-bins --local-bin-path . \
           --extra-include-dirs=/mingw64/include \
           --extra-include-dirs=/mingw64/include/SDL2 \
           --extra-lib-dirs=/mingw64/lib \
-          --extra-lib-dirs=/mingw64/bin \
-          --ghc-options="-optl-lssp"
+          --extra-lib-dirs=/mingw64/bin
     
     - name: Copy DLLs
       shell: msys2 {0}
