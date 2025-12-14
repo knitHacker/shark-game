@@ -192,7 +192,7 @@
             "sharkImage": "bad_shark",
             "sharkFacts": [ {
                 "sharkFactTitle": "Shark Size",
-                "sharkFactInfo": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs.",
+                "sharkFactInfo": "Blacktip reef sharks are about 1.3-1.7ft when they are born but can grow up to 5ft and 30lbs.",
                 "sharkFactRevealDepends": ["blacktipReef_0"]
             } ]
         },
@@ -360,7 +360,7 @@
         },
         "nurse_0": {
             "researchPaperName": "Nurse Shark Sizes",
-            "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 700lbs. They are brownish with two barbels on their snout.",
+            "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs. They are brownish with two barbels on their snout.",
             "researchGrant": 500,
             "researchReqs": {
                 "nurse": [{ "dataType": "caught", "reqCount": 5}]
@@ -378,7 +378,7 @@
         },
         "blacktipReef_0": {
             "researchPaperName": "Blacktip Reef Shark Sizes",
-            "researchDescription": "Blacktip reef sharks are about 2ft when they are born but can grow up to 6ft and 40lbs. They are grey with black tips on their fins.",
+            "researchDescription": "Blacktip reef sharks are about 1.3-1.7ft when they are born but can grow up to 5ft and 30lbs. They are grey with black tips on their fins.",
             "researchGrant": 500,
             "researchReqs": {
                 "blacktipReef": [{ "dataType": "caught", "reqCount": 5}]
@@ -457,7 +457,7 @@
             },
             "researchDepends": ["lemon_0"]
         },
-        "great_hamnerhead_0": {
+        "great_hammerhead_0": {
             "researchPaperName": "Hammerhead Shark Senses",
             "researchDescription": "Hammerhead sharks have a unique head shape that enhances their sensory capabilities, allowing them to better detect prey.",
             "researchGrant": 800,
@@ -475,11 +475,11 @@
                 "great_hammerhead": [{ "dataType": "observed", "reqCount": 8}],
                 "scalloped_hammerhead": [{ "dataType": "observed", "reqCount": 8}]
             },
-            "researchDepends": ["hamnerhead_0"]
+            "researchDepends": ["great_hammerhead_0"]
         },
         "bonnethead_0": {
             "researchPaperName": "Bonnethead Shark Diet",
-            "researchDescription": "Bonnethead sharks primarily feed on crustaceans, mollusks, and small fish.",
+            "researchDescription": "Bonnethead sharks are omnivorous, feeding on crustaceans, mollusks, and small fish. They are the only known omnivorous shark species, with seagrass making up a significant portion of their diet.",
             "researchGrant": 500,
             "researchReqs": {
                 "bonnethead": [{ "dataType": "caught", "reqCount": 5}]
