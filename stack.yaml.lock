@@ -23,15 +23,15 @@ packages:
     commit: 7e7a06c8b8493dd4c5d3113f76296b59fa2c42a5
     git: https://github.com/knitHacker/sdl2-image.git
 - completed:
-    commit: 8f6b3bfb96fd5729092a2e774b8cf9643ff42e44
+    commit: 3f627baffcc14e0b66b51075e5c740a6fa166000
     git: https://github.com/knitHacker/sdl2-ttf.git
     name: sdl2-ttf
     pantry-tree:
-      sha256: b47b9fc5376401608bfe86215b42797e1bbfae3626da66f82253dac1697fcd71
+      sha256: cff6e66d215038c445319ea52152bb66bbbb720eaf6fd6eeb445b9c21ed8588a
       size: 595
     version: 2.1.3
   original:
-    commit: 8f6b3bfb96fd5729092a2e774b8cf9643ff42e44
+    commit: 3f627baffcc14e0b66b51075e5c740a6fa166000
     git: https://github.com/knitHacker/sdl2-ttf.git
 snapshots:
 - completed:
