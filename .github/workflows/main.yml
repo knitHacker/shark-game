@@ -18,6 +18,7 @@ jobs:
         update: true
         install: >-
           mingw-w64-x86_64-pkg-config
+          mingw-w64-x86_64-gcc
           mingw-w64-x86_64-SDL2
           mingw-w64-x86_64-SDL2_image
           mingw-w64-x86_64-SDL2_ttf
@@ -29,8 +30,10 @@ jobs:
         echo "SDL2 pkg-config info:"
         pkg-config --cflags --libs sdl2
         
-        # Set LDFLAGS so hsc2hs will link libssp during SDL2 dependency build
-        export LDFLAGS="-lssp"
+        # Put MSYS2's gcc first in PATH so hsc2hs uses it instead of GHC's bundled gcc
+        export PATH="/mingw64/bin:$PATH"
+        which gcc
+        gcc --version
         
         # Build with explicit paths to MSYS2 libraries
         stack build --copy-bins --local-bin-path . \
