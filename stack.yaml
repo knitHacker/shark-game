@@ -41,9 +41,12 @@ extra-deps:
 
 # Package-specific configuration for Windows SDL2 linking
 configure-options:
-  sdl2: --ghc-options="-optl-lssp"
-  sdl2-image: --ghc-options="-optl-lssp"
-  sdl2-ttf: --ghc-options="-optl-lssp"
+  sdl2:
+    - --ghc-options="-optl-lssp"
+  sdl2-image:
+    - --ghc-options="-optl-lssp"
+  sdl2-ttf:
+    - --ghc-options="-optl-lssp"
 #
 # extra-deps: []
 
