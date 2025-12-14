@@ -51,6 +51,11 @@ extra-deps:
 # Override default flag values for local packages and extra-deps
 # flags: {}
 
+# Package-specific GHC options
+ghc-options:
+  sdl2-image: -D_SDL_main_h
+  sdl2-ttf: -D_SDL_main_h
+
 # Extra package databases containing global packages
 # extra-package-dbs: []
 
