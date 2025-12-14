@@ -38,7 +38,8 @@ extra-deps:
   - sdl2-2.5.5.1@sha256:7e2c55ca0ec4b538351fd3cceb71dbc5f99893dd326a7db78efa4adecc43c086,12150
   - git: https://github.com/knitHacker/sdl2-image.git
     commit: 7e7a06c8b8493dd4c5d3113f76296b59fa2c42a5
-  - sdl2-ttf-2.1.3@sha256:46b4769918ee2e579d0e378ede559729293d1b9dfb5301d29efcf0470b553aa6,1916
+  - git: https://github.com/knitHacker/sdl2-ttf.git
+    commit: 8f6b3bfb96fd5729092a2e774b8cf9643ff42e44
 
 # Note: The pkgconfig: false flag is only for Windows CI builds
 # On Linux/Mac, comment out the flags section to use pkg-config

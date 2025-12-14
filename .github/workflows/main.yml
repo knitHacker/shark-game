@@ -79,6 +79,7 @@ jobs:
         stack build --copy-bins --local-bin-path . \
           --flag sdl2:-pkgconfig \
           --flag sdl2-image:-pkgconfig \
+          --flag sdl2-ttf:-pkgconfig \
           --extra-include-dirs="$SDL_DIR/include/SDL2" \
           --extra-include-dirs="$SDL_DIR/include" \
           --extra-lib-dirs="$SDL_DIR/lib" \
