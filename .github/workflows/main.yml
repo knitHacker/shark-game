@@ -35,12 +35,14 @@ jobs:
         which gcc
         gcc --version
         
-        # Build with explicit paths to MSYS2 libraries
+        # Use -D_SDL_main_h to skip SDL2main linking (avoids libssp issue)
+        # See: https://github.com/haskell-game/sdl2/issues/139
         stack build --copy-bins --local-bin-path . \
           --extra-include-dirs=/mingw64/include \
           --extra-include-dirs=/mingw64/include/SDL2 \
           --extra-lib-dirs=/mingw64/lib \
-          --extra-lib-dirs=/mingw64/bin
+          --extra-lib-dirs=/mingw64/bin \
+          --ghc-options="-D_SDL_main_h"
     
     - name: Copy DLLs
       shell: msys2 {0}
