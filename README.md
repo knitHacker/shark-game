@@ -60,6 +60,58 @@ Built with:
 - **SDL2** - Graphics and rendering
 - **Stack** - Build system and dependency management
 
+## Beta Release TODO
+
+### Critical for Playability
+- [ ] **Tutorial/First-time player guidance** - Simple text explaining game flow on first launch
+- [ ] **Controls documentation** - In-game help screen showing keyboard/mouse controls
+- [ ] **Save/load confirmation messages** - Let players know when saves succeed/fail
+- [ ] **Goal indicators** - Show progress toward next research paper or equipment unlock
+- [ ] **Feedback on actions** - Success/failure messages for trips, purchases, fundraising
+
+### Art Assets
+- [ ] Fill in entry page art
+- [ ] Fill in research institute art
+- [ ] Fill in equipment images
+- [ ] Fill in shark species images
+- [ ] Add music/sound effects
+
+### Polish
+- [ ] Come up with game name
+- [ ] **Credits screen** - Cite educational sources (important for academic use!)
+- [ ] **Settings menu** - Volume controls (if adding music), fullscreen toggle
+- [ ] **Research dependency visualization** - Help players see what unlocks what
+- [ ] **End-game content** - What happens when all research is complete? Congratulations screen?
+
+### Game Design
+- [ ] **Game balancing** - Adjust costs, grant amounts, encounter rates
+- [ ] **Check accuracy of facts** - Verify all educational content for academic use
+- [ ] **Difficulty curve** - Does the Pacific region unlock later? Should some equipment be gated by research progress?
+- [ ] **Fail states** - Can you run out of money? Should fundraising be unlimited?
+- [ ] **Replayability** - Random events? Different starting regions?
+
+### Pre-release Testing
+- [ ] **Playtest with someone unfamiliar** - Watch them play without helping
+- [ ] **Bug pass** - Test all menu transitions, edge cases (buying with no money, etc.)
+- [ ] **Typo check** - Proofread all text since it's educational
+
+## Future Feature Ideas
+- [ ] Finish fundraiser feature
+- [ ] Mini-games during trip
+- [ ] Trip to fish market / docks for
+- [ ] Different tag type deployments
+- [ ] Triggered events
+    - [ ] Fundraised money coming in over time
+    - [ ] Tag updates
+    - [ ] Washed up dead specimens
+- [ ] Staff management
+    - [ ] Hire / pay over time
+    - [ ] Skills needed / pay to train
+    - [ ] Allow multiple trips at once
+- [ ] Lab / evaluation step between collecting shark information and publishing
+- [ ] Lab live specimens for experiments?
+- [ ] Transition from menu game to 2.5D sim?
+
 ## License
 
 See [LICENSE](LICENSE) file for details.

@@ -26,6 +26,39 @@ jobs:
         cp -r SDL2_image-*/x86_64-w64-mingw32/* sdl2-install/
         cp -r SDL2_ttf-*/x86_64-w64-mingw32/* sdl2-install/
 
+    - name: Create pkg-config files
+      shell: bash
+      run: |
+        mkdir -p sdl2-install/lib/pkgconfig
+        SDL_DIR=$(cygpath -w "$PWD/sdl2-install")
+        cat > sdl2-install/lib/pkgconfig/SDL2_image.pc << EOF
+        prefix=$SDL_DIR
+        exec_prefix=\${prefix}
+        libdir=\${exec_prefix}/lib
+        includedir=\${prefix}/include/SDL2
+
+        Name: SDL2_image
+        Description: image loading library for Simple DirectMedia Layer
+        Version: 2.8.2
+        Requires: sdl2 >= 2.0.0
+        Libs: -L\${libdir} -lSDL2_image
+        Cflags: -I\${includedir}
+        EOF
+        
+        cat > sdl2-install/lib/pkgconfig/SDL2_ttf.pc << EOF
+        prefix=$SDL_DIR
+        exec_prefix=\${prefix}
+        libdir=\${exec_prefix}/lib
+        includedir=\${prefix}/include/SDL2
+
+        Name: SDL2_ttf
+        Description: ttf library for Simple DirectMedia Layer with FreeType 2 support
+        Version: 2.22.0
+        Requires: sdl2 >= 2.0.0
+        Libs: -L\${libdir} -lSDL2_ttf
+        Cflags: -I\${includedir}
+        EOF
+
     - name: Cache Stack dependencies
       uses: actions/cache@v4
       with:
@@ -41,6 +74,7 @@ jobs:
       shell: bash
       run: |
         SDL_DIR=$(cygpath -w "$PWD/sdl2-install")
+        export PKG_CONFIG_PATH="$PWD/sdl2-install/lib/pkgconfig:$PKG_CONFIG_PATH"
         stack build --copy-bins --local-bin-path . \
           --flag sdl2:-pkgconfig \
           --extra-include-dirs="$SDL_DIR/include/SDL2" \
