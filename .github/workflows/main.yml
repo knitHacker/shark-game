@@ -42,7 +42,7 @@ jobs:
         Version: 2.8.2
         Requires: sdl2 >= 2.0.0
         Libs: -L\${libdir} -lSDL2_image
-        Cflags: -I\${includedir}
+        Cflags: -I\${includedir} -D_SDL_main_h
         EOF
         
         cat > sdl2-install/lib/pkgconfig/SDL2_ttf.pc << EOF
@@ -56,7 +56,7 @@ jobs:
         Version: 2.22.0
         Requires: sdl2 >= 2.0.0
         Libs: -L\${libdir} -lSDL2_ttf
-        Cflags: -I\${includedir}
+        Cflags: -I\${includedir} -D_SDL_main_h
         EOF
 
     - name: Cache Stack dependencies
@@ -75,8 +75,11 @@ jobs:
       run: |
         SDL_DIR=$(cygpath -w "$PWD/sdl2-install")
         export PKG_CONFIG_PATH="$PWD/sdl2-install/lib/pkgconfig:$PKG_CONFIG_PATH"
+        export PATH="$PWD/sdl2-install/bin:$PATH"
         stack build --copy-bins --local-bin-path . \
           --flag sdl2:-pkgconfig \
+          --flag sdl2-image:-pkgconfig \
+          --flag sdl2-ttf:-pkgconfig \
           --extra-include-dirs="$SDL_DIR/include/SDL2" \
           --extra-include-dirs="$SDL_DIR/include" \
           --extra-lib-dirs="$SDL_DIR/lib" \
@@ -94,3 +97,5 @@ jobs:
         path: |
           *.exe
           *.dll
+          data/
+          assets/
