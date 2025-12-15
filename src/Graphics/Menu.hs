@@ -123,6 +123,7 @@ getBackOptionFromData :: MenuData a -> Maybe a
 getBackOptionFromData (MenuData (SelOneListOpts (OALOpts _ (Just backOpt) _)) _ _) = menuNextState backOpt
 getBackOptionFromData (MenuData (ScrollListOpts (SLOpts _ _ (Just backOpt) _)) _ _) = menuNextState backOpt
 getBackOptionFromData (MenuData (SelMultiListOpts (MSLOpts _ _ _ backOptM)) _ _) = backOptM
+getBackOptionFromData _ = Nothing
 
 getBackOpt :: BasicOption a -> Maybe a
 getBackOpt (BasicSOALOpts opts) = getBackOALOpts opts
