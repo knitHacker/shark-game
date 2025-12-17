@@ -247,7 +247,7 @@
         },
         "bonnethead": {
             "sharkName": "Bonnethead Shark",
-            "sharkImage": "bad_shark",
+            "sharkImage": "bonnethead_shark",
             "sharkFacts": []
         },
         "zebra": {

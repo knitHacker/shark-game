@@ -25,6 +25,11 @@
             "sizeY": 200,
             "file": "assets/images/tiger_shark.png"
         },
+        "bonnethead_shark": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/bonnethead_shark.png"
+        },
         "bad_shark": {
             "sizeX": 200,
             "sizeY": 200,
