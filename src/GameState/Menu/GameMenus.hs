@@ -27,6 +27,9 @@ import GameState.Types
 import Graphics.Types
 import Graphics.Menu
 import Graphics.TextUtil
+import Graphics.Animation
+
+import InputState
 import Util
 
 import Debug.Trace
@@ -70,16 +73,21 @@ introPage gd = GameMenu (textView words) (Menu (selOneOpts 450 700 3 2 opts Noth
 
 
 
-researchCenterMenu :: GameData -> Graphics -> GameMenu
-researchCenterMenu gd gr = GameMenu (textView (words ++ fundWords)) (Menu (selOneOpts 300 500 4 15 opts Nothing mc 0) Nothing)
+researchCenterMenu :: GameData -> InputState -> Graphics -> GameView
+researchCenterMenu gd (InputState _ _ ts) gr = GameView v Nothing [animTo] $ Just m
     where
+        v = View (words ++ fundWords) [image] [flagAnim] [] Nothing
+        m = Menu (selOneOpts 100 400 3 15 opts Nothing mc 0) Nothing
         funds = gameDataFunds gd
         mc = CursorRect White
+        image = (620, 250, 2.0, "institute")
+        flagAnim = APlace 663 515 2.0 "flag" 0 0
+        animTo = TimeoutData ts 170 $ TimeoutAnimation $ startTextAnim gr [flagAnim]
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        words = [ TextDisplay "Research" 50 10 10 White Nothing
-                , TextDisplay "Center" 200 160 10 White Nothing
+        words = [ TextDisplay "Research" 50 10 7 White Nothing
+                , TextDisplay "Center" 200 140 7 White Nothing
                 ]
-        fundWords = oneLine gr fundTxts 200 350 2
+        fundWords = oneLine gr fundTxts 630 100 2
         opts = [ MenuAction "Plan Research Trip" $ Just $ TripDestinationSelect gd
                , MenuAction "Review Data" $ Just $ DataReviewTop gd
                , MenuAction "Lab Management" $ Just $ LabManagement gd

@@ -27,6 +27,8 @@ extra-source-files:
     assets/images/bonnethead_shark.png
     assets/images/dock.png
     assets/images/empty_net_white.png
+    assets/images/flag_animation.png
+    assets/images/institute.png
     assets/images/nurse_shark.png
     assets/images/shark_placeholder.png
     assets/images/skate_swimming_animation.png
@@ -46,7 +48,9 @@ data-files:
     assets/images/shark_placeholder.png
     assets/images/empty_net_white.png
     assets/images/boat_default.png
+    assets/images/institute.png
     assets/images/skate_swimming_animation.png
+    assets/images/flag_animation.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 

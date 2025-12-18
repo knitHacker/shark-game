@@ -148,7 +148,7 @@ moveToNextState gps cfgs inputs gr =
             saveGame gd cfgs
             return $ gameMenu $ mainMenu $ Just gd
         IntroPage -> introPageIO cfgs
-        ResearchCenter gd -> return $ menuWithPause gd $ researchCenterMenu gd gr
+        ResearchCenter gd -> return $ withPause gps gd $ researchCenterMenu gd inputs gr
         TripDestinationSelect gd -> return $ menuWithPause gd $ mapMenu gd cfgs
         TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> return $ menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
