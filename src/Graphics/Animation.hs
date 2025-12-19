@@ -2,6 +2,7 @@ module Graphics.Animation
     ( updateAnimation
     , startAnimation
     , startTextAnim
+    , useUpdate
     ) where
 
 import Graphics.Types
@@ -34,3 +35,7 @@ startTextAnim gr apL = AnimationData 0 maxFrame TextureAnimAction
     where
         maxFrame = maximum $ map getMaxFrame apL
         getMaxFrame (APlace _ _ _ animTexture _ _) = animFrameCount (graphicsAnimTextures gr ! animTexture)
+
+
+useUpdate :: AnimPlacement -> AnimPlacement -> AnimPlacement
+useUpdate apPos (APlace _ _ _ _ animFrame animDepth) = apPos { animFrame = animFrame, animDepth = animDepth }

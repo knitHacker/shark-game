@@ -22,6 +22,7 @@ import Shark.Trip
 import Graphics.Types
 import Graphics.TextUtil
 import Graphics.Menu
+import Graphics.Animation
 import Configs
 import InputState
 
@@ -100,12 +101,11 @@ fundraisingMenu gd cfgs gr = GameMenu (textView words) (Menu (selOneOpts 250 450
                 ]
         backOpt = MenuAction "Return to Fundraising" $ Just $ FundraiserTop gd
 
-boatBounceAnim :: Image -> Int -> [(Int, Int, Double, Image)]
-boatBounceAnim boatI frame =
-    [ (750, 250, 0.9, "water")
-    , (870 + xAdj, 320 + yAdj , 1.3, boatI)
-    , (750, 250, 0.9, "dock")
-    ]
+boatBounceAnim :: Image -> AnimPlacement -> Int -> ((Int, Int, Double, Image), AnimPlacement)
+boatBounceAnim boatI ap frame =
+    ( (870 + xAdj, 320 + yAdj , 1.3, boatI)
+    , ap { animPosX = 955 + xAdj, animPosY = 375 + yAdj }
+    )
     where
         xAdj = case mod frame 8 of
             0 -> -5
@@ -127,11 +127,12 @@ boatBounceAnim boatI frame =
             _ -> 0
 
 fleetManagementTopMenu :: GameData -> GameConfigs -> InputState -> Graphics -> GameView
-fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to] $ Just md
+fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Just md
     where
-        v = View words imgs [] [] Nothing
+        v = View words [waterImg, boatStart, dockImg] [apStart] [] Nothing
         md = Menu (selOneOpts 200 550 4 15 opts (Just backOpt) mc 0) Nothing
         to = TimeoutData (timestamp inputs) 300 $ TimeoutAnimation $ startAnimation 10 nextFrame
+        toFlag = TimeoutData (timestamp inputs) 150 $ TimeoutAnimation $ startTextAnim gr [apStart]
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         boatI = boatImage boatInfo
@@ -145,12 +146,17 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to] $ Just md
                 , TextDisplay slotTxt 75 400 3 LightGray Nothing
                 , TextDisplay fuelTxt 75 475 3 LightGray Nothing
                 ]
-        imgs = boatBounceAnim boatI 0
+        waterImg = (750, 250, 0.9, "water")
+        dockImg = (750, 250, 0.9, "dock")
+        boatStart = (865, 320, 1.3, boatI)
+        apStart = APlace 950 375 0.9 "flag" 0 0
         opts = [ MenuAction "Change Boats" $ Just $ ChooseBoat gd
                , MenuAction "Boat Store" $ Just $ BoatStore Nothing gd
                 ]
         backOpt = MenuAction "Return to Management" $ Just $ LabManagement gd
-        nextFrame (View ws _ _ _ _) frame = View ws (boatBounceAnim boatI frame) [] [] Nothing
+        nextFrame (View ws _ aps _ _) frame =
+                let (img, ap) = boatBounceAnim boatI (head aps) frame
+                in View ws [waterImg, img, dockImg] [ap] [] Nothing
 
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
 chooseActiveBoatMenu gd cfgs = GameMenu (textView words) (Menu (md pos) Nothing)

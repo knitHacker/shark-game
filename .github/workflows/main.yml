@@ -48,7 +48,7 @@ jobs:
         Libs: -L\${libdir} -lSDL2_image
         Cflags: -I\${includedir} -D_SDL_main_h
         EOF
-        
+
         cat > sdl2-install/lib/pkgconfig/SDL2_ttf.pc << EOF
         prefix=$SDL_DIR
         exec_prefix=\${prefix}

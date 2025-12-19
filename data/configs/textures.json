@@ -64,10 +64,17 @@
             "frames": 8,
             "depth": 1
         },
-        "flag": {
+        "flag_with_shadow": {
             "sizeX": 80,
             "sizeY": 80,
             "file": "assets/images/flag_animation.png",
+            "frames": 5,
+            "depth": 1
+        },
+        "flag": {
+            "sizeX": 80,
+            "sizeY": 80,
+            "file": "assets/images/flag_no_shadow.png",
             "frames": 5,
             "depth": 1
         }
