@@ -203,7 +203,7 @@
         },
         "blacktip": {
             "sharkName": "Blacktip Shark",
-            "sharkImage": "bad_shark",
+            "sharkImage": "blacktip_shark",
             "sharkFacts": []
         },
         "nurse": {
