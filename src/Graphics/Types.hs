@@ -29,6 +29,11 @@ module Graphics.Types
     , ImagePlacement(..)
     , AnimPlacement(..)
     , AnimationAction(..)
+    , updateView
+    , mergeOverlayMenu
+    , updateMenuData
+    , updateTimeoutData
+    , updateMenu
     ) where
 
 import qualified Data.Text as T
@@ -36,20 +41,22 @@ import qualified Data.Map.Strict as M
 import Data.Int (Int64)
 
 import OutputHandles.Types
+import Data.IntMap (update)
 
 data ImageInfo = ImageInfo
     { imageSizeX :: !Int
     , imageSizeY :: !Int
-    }
+    } deriving (Show, Eq)
 
 data AnimationInfo = AnimationInfo
     { animSizeX :: !Int
     , animSizeY :: !Int
     , animFrameCount :: !Int
     , animFrameDepth :: !Int
-    }
+    } deriving (Show, Eq)
 
 data TextureInfo = ImageCfg ImageInfo | AnimationCfg AnimationInfo
+                   deriving (Show, Eq)
 
 data Graphics = Graphics
     { graphicsStaticTextures :: M.Map Image ImageInfo
@@ -57,7 +64,7 @@ data Graphics = Graphics
     , graphicsFontSize :: !FontSize -- can be map in the future
     , graphicsWindowWidth :: !Int
     , graphicsWindowHeight :: !Int
-    }
+    } deriving (Show, Eq)
 
 data OverlayMenu a = Overlay
     { bgXPos :: !Int
@@ -66,25 +73,43 @@ data OverlayMenu a = Overlay
     , bgHeight :: !Int
     , bgColor :: !Color
     , overlayData :: !(MenuData a)
-    }
+    } deriving (Show, Eq)
+
+mergeOverlayMenu :: OverlayMenu a -> OverlayMenu a -> OverlayMenu a
+mergeOverlayMenu om1 om2 = om2 { overlayData = updateMenuData (overlayData om1) (overlayData om2) }
 
 data TimeoutAction a =
       TimeoutNext a
     | TimeoutAnimation (AnimationData a)
+    deriving (Show, Eq)
 
 data TimeoutData a = TimeoutData
     { lastTimeout :: !Int64
     , timeoutLength :: !Int64
     , timeoutAction :: TimeoutAction a
-    }
+    } deriving (Show, Eq)
+
+updateTimeoutData :: [TimeoutData a] -> [TimeoutData a] -> [TimeoutData a]
+updateTimeoutData tds1 tds2 = updateTimeOutData' <$> zip tds1 tds2
+    where
+        updateTimeOutData' (td1, td2) = td2 { lastTimeout = lastTimeout td1 }
 
 data AnimationAction a = GeneralAnimAction (View a -> Int -> View a) | TextureAnimAction
+
+instance Show (AnimationAction a) where
+    show (GeneralAnimAction _) = "GeneralAnimAction <function>"
+    show TextureAnimAction = "TextureAnimAction"
+
+instance Eq (AnimationAction a) where
+    (GeneralAnimAction _) == (GeneralAnimAction _) = True
+    TextureAnimAction == TextureAnimAction = True
+    _ == _ = False
 
 data AnimationData a = AnimationData
     { animationFrame :: !Int
     , animationMaxFrames :: !Int
     , animationAction :: AnimationAction a
-    }
+    } deriving (Show, Eq)
 
 data ScrollData = ScrollData
     { startX :: !Int
@@ -93,7 +118,7 @@ data ScrollData = ScrollData
     , scrollHeight :: !Int
     , barHeight :: !Int
     , scrollMaxOffset :: !Int
-    }
+    } deriving (Show, Eq)
 
 data ViewScroll a = ViewScroll
     { subView :: View a
@@ -101,7 +126,7 @@ data ViewScroll a = ViewScroll
     , scrollMaxY :: !Int
     , scrollStep :: !Int
     , scrollData :: !ScrollData
-    }
+    } deriving (Show, Eq)
 
 data ImagePlacement = IPlace
     { imgPosX :: !Int
@@ -128,12 +153,26 @@ data View a = View
     , rects :: ![(Color, Int, Int, Int, Int, Int)]
     -- should this be a list? probably but don't have mouse position atm
     , viewScroll :: !(Maybe (ViewScroll a))
-    }
+    } deriving (Show, Eq)
+
+updateView :: View a -> View a -> View a
+updateView (View t1 i1 a1 r1 vs1) (View t2 i2 a2 r2 vs2) =
+    View t2 i2 aNew r2 vsNew
+    where
+        a1Map = M.fromList $ (\ap-> (animTexture ap, (animFrame ap, animDepth ap))) <$> a1
+        aNew = animNew <$> a2
+        animNew ap = if animTexture ap `M.member` a1Map
+                        then let (f, d) = a1Map M.! animTexture ap
+                             in ap { animFrame = f, animDepth = d }
+                        else ap
+        vsNew = case (vs1, vs2) of
+            (Just v1, Just v2) -> Just v2 { scrollOffset = scrollOffset v1 }
+            _ -> vs2
 
 data MenuAction a = MenuAction
     { menuOptionText :: !T.Text
     , menuNextState :: !(Maybe a)
-    }
+    } deriving (Show, Eq)
 
 data SelectOption = SelectOption
     { selectOptionText :: !T.Text
@@ -141,13 +180,13 @@ data SelectOption = SelectOption
     , selectSelected :: !Bool
     , selectChangeable :: !Bool
     , selectDisabled :: !Bool
-    }
+    } deriving (Show, Eq)
 
 data OneActionListOptions a = OALOpts
     { oalOpts :: ![MenuAction a]
     , oalBackOptM :: !(Maybe (MenuAction a))
     , oalCursor :: !CursorType
-    }
+    } deriving (Show, Eq)
 
 data MultiSelectListOptions a = MSLOpts
     { mslOpts :: ![SelectOption]
@@ -156,41 +195,50 @@ data MultiSelectListOptions a = MSLOpts
     , mslBackActionM :: !(Maybe a)
     }
 
+instance Eq a => Eq (MultiSelectListOptions a) where
+    (MSLOpts opts1 _ _ back1) == (MSLOpts opts2 _ _ back2) =
+        opts1 == opts2 && back1 == back2
+
+instance Show a => Show (MultiSelectListOptions a) where
+    show (MSLOpts opts _ _ back) =
+        "MSLOpts " ++ show opts ++ " <action> <continueAction> " ++ show back
+
 data ColumnAction a = ColAction
     { colOptionTexts :: ![T.Text]
     , colOptionAction :: !(Maybe a)
-    }
+    } deriving (Show, Eq)
 
 data ColumnButtonOptions a = CBOpts
     { colButOptText :: !T.Text
     , colButOptWidth :: !Int
     , colButOptHeaders :: ![T.Text]
     , colButOptActions :: [ColumnAction a]
-    }
+    } deriving (Show, Eq)
 
 data TextOption = TextOption
     { textOptionTexts :: ![[T.Text]]
     , textOptionIndent :: !Int
     , textOptionSpace :: !Int
-    }
+    } deriving (Show, Eq)
 
 data BasicOption a =
       BasicSOALOpts (OneActionListOptions a)
     | BasicMSLOpts (MultiSelectListOptions a)
     | BasicTextOpts TextOption
     | BasicCBOpts (ColumnButtonOptions a)
+    deriving (Show, Eq)
 
 data ScrollListOptions a = SLOpts
     { sLScrollOpts :: !(BasicOption a)
     , sLFixedOpts :: ![MenuAction a]
     , sLBackOptM :: !(Maybe (MenuAction a))
     , sLScroll :: !MenuScroll
-    }
+    } deriving (Show, Eq)
 
 data MenuScroll = Scroll
     { scrollMax :: !Int
     , scrollPos :: !Int
-    }
+    } deriving (Show, Eq)
 
 optionScroll :: Int -> MenuScroll
 optionScroll max = Scroll max 0
@@ -200,20 +248,23 @@ data BlockDrawInfo = BlockDrawInfo
     , blockY :: !Int
     , blockSize :: !Int
     , blockSpace :: !Int
-    }
+    } deriving (Show, Eq)
 
 data MenuData a = MenuData
     { menuOptions :: !(MenuOptionType a)
     , menuOptBlockInfo :: !BlockDrawInfo
     , cursorPosition :: !Int
-    }
+    } deriving (Show, Eq)
+
+updateMenuData :: MenuData a -> MenuData a -> MenuData a
+updateMenuData md1 md2 = md2 { cursorPosition = cursorPosition md1 }
 
 data MenuOptionType a =
       SelOneListOpts (OneActionListOptions a)
     | SelMultiListOpts (MultiSelectListOptions a)
     | ScrollListOpts (ScrollListOptions a)
+    deriving (Show, Eq)
     -- todo options at given positions
-
 
 -- Menu game state
 --  Texts are the text to show including where to display
@@ -222,7 +273,14 @@ data MenuOptionType a =
 data Menu a = Menu
     { options :: !(MenuData a)
     , popupMaybe :: !(Maybe (MenuPopup a))
-    }
+    } deriving (Show, Eq)
+
+updateMenu :: Menu a -> Menu a -> Menu a
+updateMenu m1 m2 = m2 { options = updateMenuData (options m1) (options m2) }
+    where
+        popM = case (popupMaybe m1, popupMaybe m2) of
+            (Just p1, Just p2) -> Just $ p2 { popupOptions = updateMenuData (popupOptions p1) (popupOptions p2) }
+            _ -> popupMaybe m2
 
 data MenuPopup a = MenuPopup
     { popupView :: !(View a)
@@ -232,6 +290,7 @@ data MenuPopup a = MenuPopup
     , popupWidth :: !Int
     , popupHeight :: !Int
     , popupColor :: !Color
-    }
+    } deriving (Show, Eq)
 
 data CursorType = CursorPointer Image | CursorRect Color
+                deriving (Show, Eq)

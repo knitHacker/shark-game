@@ -102,10 +102,10 @@ fundraisingMenu gd cfgs gr = GameMenu (textView words) (Menu (selOneOpts 250 450
                 ]
         backOpt = MenuAction "Return to Fundraising" $ Just $ FundraiserTop gd
 
-boatBounceAnim :: Image -> AnimPlacement -> Int -> (ImagePlacement, AnimPlacement)
-boatBounceAnim boatI ap frame =
-    ( IPlace (870 + xAdj) (320 + yAdj) 1.3 boatI 2
-    , ap { animPosX = 955 + xAdj, animPosY = 375 + yAdj }
+boatBounceAnim :: Int -> Int -> Image -> AnimPlacement -> Int -> (ImagePlacement, AnimPlacement)
+boatBounceAnim baseX baseY boatI ap frame =
+    ( IPlace (baseX + xAdj) (baseY + yAdj) 1.3 boatI 2
+    , ap { animPosX = baseX + 85 + xAdj, animPosY = baseY + 55 + yAdj }
     )
     where
         xAdj = case mod frame 8 of
@@ -147,16 +147,20 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Jus
                 , TextDisplay slotTxt 75 400 3 LightGray Nothing
                 , TextDisplay fuelTxt 75 475 3 LightGray Nothing
                 ]
-        waterImg = IPlace 750 250 0.9 "water" 1
-        dockImg = IPlace 750 250 0.9 "dock" 3
-        boatStart = IPlace 865 320 1.3 boatI 2
-        apStart = APlace 950 375 0.9 "flag" 0 0 4
+        imgBaseX = 750
+        imgBaseY = 250
+        baseBoatX = imgBaseX + 115
+        baseBoatY = imgBaseY + 50
+        waterImg = IPlace imgBaseX imgBaseY 0.9 "water" 1
+        dockImg = IPlace imgBaseX imgBaseY 0.9 "dock" 3
+        boatStart = IPlace baseBoatX baseBoatY 1.3 boatI 2
+        apStart = APlace (baseBoatX + 85) (baseBoatY + 55) 0.9 "flag" 0 0 4
         opts = [ MenuAction "Change Boats" $ Just $ ChooseBoat gd
                , MenuAction "Boat Store" $ Just $ BoatStore Nothing gd
                 ]
         backOpt = MenuAction "Return to Management" $ Just $ LabManagement gd
         nextFrame (View ws _ aps _ _) frame =
-                let (img, ap) = boatBounceAnim boatI (head aps) frame
+                let (img, ap) = boatBounceAnim baseBoatX baseBoatY boatI (head aps) frame
                 in View ws [waterImg, img, dockImg] [ap] [] Nothing
 
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu

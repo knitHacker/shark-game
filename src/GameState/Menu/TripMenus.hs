@@ -119,7 +119,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
             let (gd', sfM) = exec ta
                 tp' = newTrip sfM tl
                 lastText = T.concat ["Using ", getData h equipText]
-                nextTimeout = TimeoutData ts 3000 $ TimeoutNext $ SharkFound gd' sfM tp'
+                nextTimeout = TimeoutData ts 1000 $ TimeoutNext $ SharkFound gd' sfM tp'
             in GameView (v [TextDisplay lastText 150 280 3 Green Nothing]) Nothing [nextTimeout, animTO] Nothing
     where
         curA = length $ tripTries tp

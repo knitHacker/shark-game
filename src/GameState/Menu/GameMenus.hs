@@ -51,7 +51,7 @@ mainMenu gdM = GameMenu (textView words) (Menu optEntry Nothing)
                 , TextDisplay "Institute" 100 200 14 Gray Nothing
                 , TextDisplay "Press ENTER to select" 200 460 3 White Nothing
                 ]
-        newGame = MenuAction "New Game" $ Just IntroWelcome
+        newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
         exitOpt = MenuAction "Exit" $ Just $ GameExitState gdM
         menuOpts =
@@ -103,7 +103,7 @@ introBoat gd cfg gr = GameMenu (View ((,0) <$> words) [img] [] [] Nothing) (Menu
     where
         startBoatKey = gameActiveBoat $ gameDataEquipment gd
         startBoat = boats (sharkCfgs cfg) M.! startBoatKey
-        img = IPlace 300 350 2.0 (boatImage startBoat) 1
+        img = IPlace 500 400 2.0 (boatImage startBoat) 1
         boatText = "Luckily a retiring fisherman has decided to donate his skiff to your cause, \
                    \so you have a way to conduct your research trips. It might be old and small and smelly \
                    \but it float (most of the time). Maybe in the future we can get another boat..."
