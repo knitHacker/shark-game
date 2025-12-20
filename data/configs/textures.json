@@ -40,6 +40,11 @@
             "sizeY": 200,
             "file": "assets/images/shark_placeholder.png"
         },
+        "skiff": {
+            "sizeX": 300,
+            "sizeY": 200,
+            "file": "assets/images/boat_skiff.png"
+        },
         "default_boat": {
             "sizeX": 300,
             "sizeY": 200,
@@ -55,10 +60,25 @@
             "sizeY": 400,
             "file": "assets/images/dock.png"
         },
+        "snorkel_gear": {
+            "sizeX": 60,
+            "sizeY": 60,
+            "file": "assets/images/equipment_snorkel.png"
+        },
+        "fishing_rod": {
+            "sizeX": 60,
+            "sizeY": 60,
+            "file": "assets/images/equipment_fishing_rod.png"
+        },
         "institute": {
             "sizeX": 300,
             "sizeY": 250,
             "file": "assets/images/institute.png"
+        },
+        "no_dolphin": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/no_dolphin.png"
         }
     },
     "textureAnimations": {

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module GameState.Menu.DataReviewMenu
     ( topReviewMenu
@@ -59,10 +60,10 @@ topReviewSharksMenu gd mPrev cfgs = GameMenu (textView words) (Menu options Noth
         options = scrollOpts 200 300 3 20 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just backOpt) [] 4 cursorIdx
 
 sharkReviewMenu :: GameData -> DataEntryT SharkInfo -> GameConfigs -> Graphics -> GameMenu
-sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View (locWords ++ words') imgs [] [] Nothing) (Menu (selOneOpts 500 650 3 20 [] (Just returnOpt) mc 0) Nothing)
+sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View ((,0) <$> (locWords ++ words')) imgs [] [] Nothing) (Menu (selOneOpts 500 650 3 20 [] (Just returnOpt) mc 0) Nothing)
     where
         img = getData sharkEntry sharkImage
-        imgs = [(750, 200, 1.75, img)]
+        imgs = [IPlace 750 200 1.75 img 1]
         locsMap = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
         mc = CursorRect White

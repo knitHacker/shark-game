@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module GameState.Menu.TripMenus
     ( mapMenu
@@ -111,7 +112,7 @@ reviewTripMenu gd loc eqs cfgs = GameMenu (textView words) (Menu (selOneOpts 400
         backOpt = MenuAction "Abort Trip" $ Just (ResearchCenter gd)
 
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> Graphics -> GameView
-tripProgressMenu gd tp cfgs (InputState _ _ ts) gr =
+tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
     case tripTries tp of
         [] -> GameView (v []) Nothing [TimeoutData ts 0 $ TimeoutNext $ TripResults gd tp] Nothing
         (ta@(TripAttempt mn h):tl) ->
@@ -123,16 +124,16 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) gr =
     where
         curA = length $ tripTries tp
         allA = tripTotalTries tp
-        v w = View (words ++ w) [] [rayAnim] [backRect, progressRect] Nothing
+        v w = View ((,0) <$> (words ++ w)) [] [rayAnim] [backRect, progressRect] Nothing
         animTO = TimeoutData ts 150 $ TimeoutAnimation $ startTextAnim gr [rayAnim]
-        rayAnim = APlace 350 350 5.0 "skate" 0 0
+        rayAnim = APlace 350 350 5.0 "skate" 0 0 0
         progX = 100
         progY = 650
         progH = 80
         progW = 1000
-        backRect = (Gray, progX, progY, progW, progH)
+        backRect = (Gray, progX, progY, progW, progH, 1)
         p = floor (fromIntegral (allA - curA) / fromIntegral allA * 100)
-        progressRect = (Green, progX, progY, (progW `div` 100) * p, progH)
+        progressRect = (Green, progX, progY, (progW `div` 100) * p, progH, 2)
         words = [ TextDisplay "Trip Progress" 50 50 8 White Nothing
                 , TextDisplay "Looking for sharks..." 100 200 4 Blue Nothing
                 ]
@@ -142,7 +143,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ ts) gr =
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
 
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> GameMenu
-sharkFoundMenu gd sfM tp cfgs = GameMenu (View words imgs [] [] Nothing) (Menu (selOneOpts 400 700 3 4 opts Nothing (CursorRect White) 0) Nothing)
+sharkFoundMenu gd sfM tp cfgs = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts 400 700 3 4 opts Nothing (CursorRect White) 0) Nothing)
     where
         typeText sf = T.append (T.append "You " (getData (findEquipment sf) equipInfoType)) " a "
         sharkText sf = getData (findSpecies sf) sharkName
@@ -151,15 +152,15 @@ sharkFoundMenu gd sfM tp cfgs = GameMenu (View words imgs [] [] Nothing) (Menu (
                     Nothing -> ([ TextDisplay "No Shark" 50 20 10 White Nothing
                                , TextDisplay "Found" 150 150 10 White Nothing
                                , TextDisplay "Better luck next time!" 200 300 4 White Nothing
-                               ], [(375, 340, 1.75, "empty_net")])
+                               ], [IPlace 375 340 1.75 "empty_net" 1])
                     Just sf -> ([ TextDisplay (typeText sf) 60 20 8 White Nothing
                                , TextDisplay (sharkText sf) 200 150 5 Blue Nothing
-                               ], [(375, 275, 1.75, sharkImg sf)])
+                               ], [IPlace 375 275 1.75 (sharkImg sf) 1])
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" $ Just nextState ]
 
 tripResultsMenu :: GameData -> TripState -> GameConfigs -> Graphics -> GameMenu
-tripResultsMenu gd tp cfgs gr = GameMenu (View words [] [] [] scrollVM) (Menu (selOneOpts 200 650 3 4 [] (Just backOpt) (CursorRect White) 0) Nothing)
+tripResultsMenu gd tp cfgs gr = GameMenu (View ((,0) <$> words) [] [] [] scrollVM) (Menu (selOneOpts 200 650 3 4 [] (Just backOpt) (CursorRect White) 0) Nothing)
     where
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)

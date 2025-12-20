@@ -34,7 +34,7 @@ initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> IO GameState
 initGameState tm cfgs outs = do
     graph <- initGraphics tm outs
     gv <- mainMenuView cfgs outs
-    return $ GameState graph gv Nothing
+    return $ GameState graph (MainMenu Nothing) gv Nothing
 
 
 updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
@@ -43,13 +43,15 @@ updateGameState = do
     inputs <- readInputState
     gs <- readGameState
     outs <- getOutputs
-    let gsM = updateGameView (gameGraphics gs) inputs $ gameView gs
-    case gsM of
-        Nothing -> return gs
-        Just (Left gv) -> return $ GameState (gameGraphics gs) gv Nothing
-        Just (Right gps) -> do
-            gv <- liftIO $ moveToNextState gps cfgs inputs $ gameGraphics gs
-            return $ GameState (gameGraphics gs) gv Nothing
+    let gr' = updateGraphics (gameGraphics gs) cfgs inputs
+        gsM = updateGameView gr' inputs $ gameView gs
+    case (windowResized inputs, gsM) of
+        (Just size, Nothing) -> traceShow ("Window resized to: " ++ show size) $ return $ gs { gameGraphics = gr' }
+        (_, Nothing) -> return gs
+        (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
+        (_, Just (Right gps)) -> do
+            gv <- liftIO $ moveToNextState gps cfgs inputs gr'
+            return $ GameState gr' gps gv Nothing
 
 
 updateGameView :: Graphics -> InputState -> GameDrawInfo -> Maybe (Either GameDrawInfo GamePlayState)
@@ -85,7 +87,7 @@ updateGameViewScroll i vs = case mouseInputs i of
 
 updateGameTimeout :: Graphics -> View GamePlayState -> InputState -> [TimeoutData GamePlayState] -> Maybe (Either ([TimeoutData GamePlayState], View GamePlayState) GamePlayState)
 updateGameTimeout _ _ _ [] = Nothing
-updateGameTimeout gr vO i@(InputState _ _ ts) timeouts =
+updateGameTimeout gr vO i@(InputState _ _ _ ts) timeouts =
     case outs of
         Left (tds, v') -> Just $ Left (tds, v')
         Right gps -> Just $ Right gps
@@ -144,10 +146,18 @@ moveToNextState gps cfgs inputs gr =
             saveGame gd cfgs
             return GameExiting
         GameExitState Nothing -> return GameExiting
-        MainMenu gd -> do
-            saveGame gd cfgs
-            return $ gameMenu $ mainMenu $ Just gd
-        IntroPage -> introPageIO cfgs
+        MainMenu gdM -> do
+            case gdM of
+                Just gd -> saveGame gd cfgs
+                Nothing -> return ()
+            return $ gameMenu $ mainMenu gdM
+        IntroWelcome -> introWelcomeIO cfgs gr
+        IntroMission gd -> return $ menuWithPause gd $ introMission gd gr
+        IntroBoat gd -> return $ menuWithPause gd $ introBoat gd cfgs gr
+        IntroEquipment gd -> return $ menuWithPause gd $ introEquipment gd cfgs gr
+        IntroResearch gd -> return $ menuWithPause gd $ introResearch gd gr
+        IntroFunds gd -> return $ menuWithPause gd $ introFunds gd gr
+        IntroEnd gd -> return $ menuWithPause gd $ introEnd gd gr
         ResearchCenter gd -> return $ withPause gps gd $ researchCenterMenu gd inputs gr
         TripDestinationSelect gd -> return $ menuWithPause gd $ mapMenu gd cfgs
         TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
@@ -208,11 +218,11 @@ pauseMenu gps gd = OverlayView False (textView words) (Overlay 300 100 750 600 D
         words = [ TextDisplay "Game Menu" 350 150 8 White Nothing
                 ]
         opts = [ MenuAction "Continue" $ Just gps
-               , MenuAction "Main Menu" $ Just $ MainMenu gd
+               , MenuAction "Main Menu" $ Just $ MainMenu $ Just gd
                , MenuAction "Save & Exit" $ Just (GameExitState (Just gd))
                ]
 
-introPageIO :: GameConfigs -> IO GameDrawInfo
-introPageIO cfgs = do
+introWelcomeIO :: GameConfigs -> Graphics -> IO GameDrawInfo
+introWelcomeIO cfgs gr = do
     nGame <- startNewGame cfgs
-    return $ gameMenu $ introPage nGame
+    return $ gameMenu $ introWelcome nGame gr

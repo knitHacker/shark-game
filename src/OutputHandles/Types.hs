@@ -90,6 +90,7 @@ data Color = White
            | Green
            | Yellow
            | OtherColor !Font.Color
+           deriving (Show, Eq)
 
 data Draw = DrawTexture DrawTexture
           | DrawRectangle DrawRectangle
@@ -132,7 +133,7 @@ data TextDisplay = TextDisplay
     , wordsSize :: !Int
     , wordsColor :: !Color
     , wordsMask :: !(Maybe (SDL.Rectangle CInt))
-    }
+    } deriving (Show, Eq)
 
 type TextureMap = M.Map Image SDL.Texture
 

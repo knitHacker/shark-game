@@ -5,6 +5,7 @@ module OutputHandles
     , cleanupOutputHandles
     , executeDraw
     , getFontSize
+    , getWindowSize
     ) where
 
 
@@ -48,6 +49,11 @@ getFontSize outs =
         size <-Font.size (font outs) " "
         let size' = (fromIntegral (fst size), fromIntegral (snd size))
         return size'
+
+getWindowSize :: OutputHandles -> IO (Int, Int)
+getWindowSize outs = do
+    (V2 w h) <- SDL.get (SDL.windowSize (window outs))
+    return (fromIntegral w, fromIntegral h)
 
 initOutputHandles :: TextureCfg -> GameConfigs -> IO OutputHandles
 initOutputHandles textCfgs cfgs = do

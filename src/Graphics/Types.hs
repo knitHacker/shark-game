@@ -26,7 +26,7 @@ module Graphics.Types
     , TimeoutAction(..)
     , ImageInfo(..)
     , AnimationInfo(..)
-    , ImagePlacement
+    , ImagePlacement(..)
     , AnimPlacement(..)
     , AnimationAction(..)
     ) where
@@ -55,6 +55,8 @@ data Graphics = Graphics
     { graphicsStaticTextures :: M.Map Image ImageInfo
     , graphicsAnimTextures :: M.Map Image AnimationInfo
     , graphicsFontSize :: !FontSize -- can be map in the future
+    , graphicsWindowWidth :: !Int
+    , graphicsWindowHeight :: !Int
     }
 
 data OverlayMenu a = Overlay
@@ -101,7 +103,13 @@ data ViewScroll a = ViewScroll
     , scrollData :: !ScrollData
     }
 
-type ImagePlacement = (Int, Int, Double, Image)
+data ImagePlacement = IPlace
+    { imgPosX :: !Int
+    , imgPosY :: !Int
+    , imgScale :: !Double
+    , imgTexture :: !Image
+    , imgDepth :: !Int
+    } deriving (Show, Eq)
 
 data AnimPlacement = APlace
     { animPosX :: !Int
@@ -110,13 +118,14 @@ data AnimPlacement = APlace
     , animTexture :: !Image
     , animFrame :: !Int
     , animDepth :: !Int
-    }
+    , frameDepth :: !Int
+    } deriving (Show, Eq)
 
 data View a = View
-    { texts :: ![TextDisplay]
+    { texts :: ![(TextDisplay, Int)]
     , imgs :: ![ImagePlacement]
     , animations :: ![AnimPlacement]
-    , rects :: ![(Color, Int, Int, Int, Int)]
+    , rects :: ![(Color, Int, Int, Int, Int, Int)]
     -- should this be a list? probably but don't have mouse position atm
     , viewScroll :: !(Maybe (ViewScroll a))
     }

@@ -23,6 +23,7 @@ import Util
 
 data GameState = GameState
     { gameGraphics :: !Graphics
+    , gameLastState :: !GamePlayState
     , gameView :: !GameDrawInfo
     , gameLastDraw :: !(Maybe ToRender)
     }
@@ -48,9 +49,15 @@ data GameView = GameView
     }
 
 data GamePlayState =
-      MainMenu GameData
+      MainMenu (Maybe GameData)
     | PauseMenu GameData GamePlayState
-    | IntroPage
+    | IntroWelcome
+    | IntroMission GameData
+    | IntroBoat GameData
+    | IntroEquipment GameData
+    | IntroResearch GameData
+    | IntroFunds GameData
+    | IntroEnd GameData
     | ResearchCenter GameData
     | TripDestinationSelect GameData
     | TripEquipmentSelect GameData T.Text [T.Text] Int

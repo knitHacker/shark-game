@@ -20,6 +20,7 @@ module InputState
     , spacePressed
     , moveInputPressed
     , inputQuit
+    , wasWindowResized
     ) where
 
 import qualified SDL
@@ -52,6 +53,7 @@ data KeyPress
 data InputState = InputState
     { keyInputs :: !(Maybe KeyboardInputs)
     , mouseInputs :: !(Maybe MouseInputs)
+    , windowResized :: !(Maybe (Int, Int))
     , timestamp :: !Int64
     }
 
@@ -68,63 +70,67 @@ data KeyboardInputs = Keyboard
 
 
 initInputState :: IO InputState
-initInputState = return $ InputState Nothing Nothing 0
+initInputState = return $ InputState Nothing Nothing Nothing 0
 
 
 class Monad m => InputRead m where
     readInputState :: m InputState
 
 escapePressed :: InputState -> Bool
-escapePressed (InputState (Just (Keyboard _ _ (Just EscapePress) _)) _ _) = True
+escapePressed (InputState (Just (Keyboard _ _ (Just EscapePress) _)) _ _ _) = True
 escapePressed _ = False
 
 escapeJustPressed :: InputState -> Bool
-escapeJustPressed (InputState (Just (Keyboard _ _ (Just EscapePress) False)) _ _) = True
+escapeJustPressed (InputState (Just (Keyboard _ _ (Just EscapePress) False)) _ _ _) = True
 escapeJustPressed _ = False
 
 enterPressed :: InputState -> Bool
-enterPressed (InputState (Just (Keyboard _ _ (Just EnterPress) _)) _ _) = True
+enterPressed (InputState (Just (Keyboard _ _ (Just EnterPress) _)) _ _ _) = True
 enterPressed _ = False
 
 enterJustPressed :: InputState -> Bool
-enterJustPressed (InputState (Just (Keyboard _ _ (Just EnterPress) False)) _ _) = True
+enterJustPressed (InputState (Just (Keyboard _ _ (Just EnterPress) False)) _ _ _) = True
 enterJustPressed _ = False
 
 backPressed :: InputState -> Bool
-backPressed (InputState (Just (Keyboard _ _ (Just BackPress) _)) _ _) = True
+backPressed (InputState (Just (Keyboard _ _ (Just BackPress) _)) _ _ _) = True
 backPressed _ = False
 
 backJustPressed :: InputState -> Bool
-backJustPressed (InputState (Just (Keyboard _ _ (Just BackPress) False)) _ _) = True
+backJustPressed (InputState (Just (Keyboard _ _ (Just BackPress) False)) _ _ _) = True
 backJustPressed _ = False
 
 iPressed :: InputState -> Bool
-iPressed (InputState (Just (Keyboard _ _ (Just IPress) _)) _ _) = True
+iPressed (InputState (Just (Keyboard _ _ (Just IPress) _)) _ _ _) = True
 iPressed _ = False
 
 spacePressed :: InputState -> Bool
-spacePressed (InputState (Just (Keyboard _ _ (Just SpacePress) _)) _ _) = True
+spacePressed (InputState (Just (Keyboard _ _ (Just SpacePress) _)) _ _ _) = True
 spacePressed _ = False
 
 moveInputPressed :: InputState -> Bool
-moveInputPressed (InputState (Just (Keyboard _ (Just _) _ _)) _ _) = True
+moveInputPressed (InputState (Just (Keyboard _ (Just _) _ _)) _ _ _) = True
 moveInputPressed _ = False
 
 
 updateRepeat :: InputState -> Int64 -> InputState
-updateRepeat (InputState (Just (Keyboard sq sd c _)) _ _) ts = InputState (Just (Keyboard sq sd c True)) Nothing ts
-updateRepeat (InputState Nothing _ _) ts = InputState Nothing Nothing ts
+updateRepeat (InputState (Just (Keyboard sq sd c _)) _ _ _) ts = InputState (Just (Keyboard sq sd c True)) Nothing Nothing ts
+updateRepeat (InputState Nothing _ _ _) ts = InputState Nothing Nothing Nothing ts
 
 inputRepeating :: InputState -> Bool
-inputRepeating (InputState (Just (Keyboard _ _ _ r)) _ _) = r
+inputRepeating (InputState (Just (Keyboard _ _ _ r)) _ _ _) = r
 inputRepeating _ = False
 
+wasWindowResized :: InputState -> Bool
+wasWindowResized (InputState _ _ (Just _) _) = True
+wasWindowResized _ = False
+
 inputDirection :: InputState -> Maybe Direction
-inputDirection (InputState (Just key) _ _) = inputStateDirection key
+inputDirection (InputState (Just key) _ _ _) = inputStateDirection key
 inputDirection _ = Nothing
 
 inputQuit :: InputState -> Bool
-inputQuit (InputState (Just key) _ _) = inputStateQuit key
+inputQuit (InputState (Just key) _ _ _) = inputStateQuit key
 inputQuit _ = False
 
 updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputState
@@ -142,23 +148,24 @@ updateInput to = do
 
 
 payloadToIntent :: SDL.Event -> Int64 -> InputState
-payloadToIntent (SDL.Event _ SDL.QuitEvent) ts = InputState (Just (Keyboard True Nothing Nothing False)) Nothing ts
+payloadToIntent (SDL.Event _ SDL.QuitEvent) ts = InputState (Just (Keyboard True Nothing Nothing False)) Nothing Nothing ts
 payloadToIntent (SDL.Event _ (SDL.KeyboardEvent k)) ts =
     case getKey k of
-        Nothing -> InputState Nothing Nothing ts
-        Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) Nothing ts
-        Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) Nothing ts
-payloadToIntent (SDL.Event _ (SDL.MouseWheelEvent mwd)) ts = InputState Nothing (Just (MouseInputs (getScroll mwd))) ts
+        Nothing -> InputState Nothing Nothing Nothing ts
+        Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) Nothing Nothing ts
+        Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) Nothing Nothing ts
+payloadToIntent (SDL.Event _ (SDL.MouseWheelEvent mwd)) ts = InputState Nothing (Just (MouseInputs (getScroll mwd))) Nothing ts
+payloadToIntent (SDL.Event _ (SDL.WindowResizedEvent (SDL.WindowResizedEventData _ (SDL.V2 w h)))) ts = InputState Nothing Nothing (Just (fromIntegral w, fromIntegral h)) ts
 payloadToIntent (SDL.Event _ (SDL.ControllerButtonEvent cbd)) ts =
     case getControllerButton cbd of
-        Nothing -> InputState Nothing Nothing ts
-        Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) Nothing ts
-        Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) Nothing ts
+        Nothing -> InputState Nothing Nothing Nothing ts
+        Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) Nothing Nothing ts
+        Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) Nothing Nothing ts
 payloadToIntent (SDL.Event _ (SDL.ControllerAxisEvent cad)) ts =
     case getControllerAxis cad of
-        Nothing -> InputState Nothing Nothing ts
-        Just d -> InputState (Just (Keyboard False (Just d) Nothing False)) Nothing ts
-payloadToIntent (SDL.Event _ _) ts = InputState Nothing Nothing ts
+        Nothing -> InputState Nothing Nothing Nothing ts
+        Just d -> InputState (Just (Keyboard False (Just d) Nothing False)) Nothing Nothing ts
+payloadToIntent (SDL.Event _ _) ts = InputState Nothing Nothing Nothing ts
 
 
 getScroll :: SDL.MouseWheelEventData -> Int

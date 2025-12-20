@@ -10,32 +10,53 @@ module Graphics.TextUtil
     , rightJustSpacing
     , splitJustSpacing
     , showMoney
+    , textMiddleX
+    , wrapTextMiddleX
+    , midStart
     ) where
 
 import qualified Data.Text as T
 
 import Graphics.Types
 import OutputHandles.Types
+import Data.Text (Text)
+
+midStart :: Graphics -> Int -> Int
+midStart gr partLen = (graphicsWindowWidth gr - partLen) `div` 2
 
 fontWidth :: Graphics -> Double
-fontWidth (Graphics _ _ (w, _)) = w
+fontWidth gr = fst $ graphicsFontSize gr
 
 fontHeight :: Graphics -> Double
-fontHeight (Graphics _ _ (_, h)) = h
+fontHeight gr = snd $ graphicsFontSize gr
+
+textMiddleX :: Graphics -> T.Text -> Int -> Int -> Color -> (TextDisplay, Int)
+textMiddleX gr txt yPos fontScale c = (TextDisplay txt xMid (fromIntegral yPos) fontScale c Nothing, fromIntegral xMid)
+    where
+        letterWidth = fontWidth gr * fromIntegral fontScale
+        textWidth = fromIntegral (T.length txt) * letterWidth
+        xMid = fromIntegral $ midStart gr (floor textWidth)
+
+wrapTextMiddleX :: Graphics -> T.Text -> Int -> Int -> Int -> Int -> Color -> ([TextDisplay], Int)
+wrapTextMiddleX gr txt margin yStart lineSpace fontScale c =
+    wrapText gr txt margin yStart width lineSpace fontScale c
+    where
+        width = graphicsWindowWidth gr - 2 * margin
+        letterWidth = fontWidth gr * fromIntegral fontScale
 
 wrapText :: Graphics -> T.Text -> Int -> Int -> Int -> Int -> Int -> Color -> ([TextDisplay], Int)
-wrapText outs txt x yStart width lineSpace fontScale c = (wrapped, fromIntegral lastY)
+wrapText gr txt x yStart width lineSpace fontScale c = (wrapped, fromIntegral lastY)
     where
         (wrapped, lastY) = foldl makeTextDisplays ([], fromIntegral yStart) lines
         breakToWords = T.words txt
         (ls, last) = foldl makeLines ([], "") breakToWords
         lines = ls ++ [last]
-        maxLetters = floor $ fromIntegral width / (fontWidth outs * fromIntegral fontScale)
+        maxLetters = floor $ fromIntegral width / (fontWidth gr * fromIntegral fontScale)
         makeLines (ls, curr) w
             | T.length curr == 0 = (ls, w)
             | T.length curr + T.length w <= maxLetters = (ls, T.concat [curr, " ", w])
             | otherwise = (ls ++ [curr], w)
-        yAdjust = lineSpace + ceiling (fontHeight outs * fromIntegral fontScale)
+        yAdjust = lineSpace + ceiling (fontHeight gr * fromIntegral fontScale)
         makeTextDisplays (ts, y) line = (ts ++ [TextDisplay line (fromIntegral x) y fontScale c Nothing], y + fromIntegral yAdjust)
 
 
