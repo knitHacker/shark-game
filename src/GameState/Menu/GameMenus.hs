@@ -43,9 +43,10 @@ import Util
 
 import Debug.Trace
 
-mainMenu :: Maybe GameData -> Graphics -> GameMenu
-mainMenu gdM gr = GameMenu (View words [] [] [rect] Nothing) (Menu optEntry Nothing)
+mainMenu :: Maybe GameData -> Graphics -> GameView
+mainMenu gdM gr = GameView v Nothing [animTO, waveMoveTO] (Just $ Menu optEntry Nothing)
     where
+        v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4] [rect] Nothing
         rect = (DarkBlue, 0, 0, graphicsWindowWidth gr, graphicsWindowHeight gr, 0)
         midY = div (graphicsWindowHeight gr) 2
         xPos = midTextStart gr instTxt 3
@@ -53,10 +54,16 @@ mainMenu gdM gr = GameMenu (View words [] [] [rect] Nothing) (Menu optEntry Noth
         optEntry = selOneOpts (xPos + 100) (midY + 100) 3 2 menuOpts Nothing cursor 0
         cursor = CursorPointer "green_arrow"
         (instr, _) = textMiddleX gr instTxt (midY + 20) 3 White
-        words = [ (TextDisplay "Shark" 10 10 14 Gray Nothing, 1)
-                , (TextDisplay "Institute" 100 200 12 Gray Nothing, 1)
-                , (instr, 1)
+        words = [ (TextDisplay "Shark" 10 10 14 Gray Nothing, 2)
+                , (TextDisplay "Institute" 100 200 12 Gray Nothing, 2)
+                , (instr, 2)
                 ]
+        waveAnim = APlace 300 400 10.0 "wave" 0 0 1
+        waveAnim2 = APlace 500 800 8.0 "wave" 4 0 1
+        waveAnim3 = APlace 100 600 6.0 "wave" 7 0 1
+        waveAnim4 = APlace 700 200 7.0 "wave" 5 0 1
+        animTO = TimeoutData 0 100 $ TimeoutAnimation $ startTextAnim gr [waveAnim, waveAnim2, waveAnim3, waveAnim4]
+        waveMoveTO = TimeoutData 0 100 $ TimeoutAnimation $ startAnimation 10 nextFrame
         newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
         exitOpt = MenuAction "Exit" $ Just $ GameExitState gdM
@@ -64,6 +71,8 @@ mainMenu gdM gr = GameMenu (View words [] [] [rect] Nothing) (Menu optEntry Noth
             case gdM of
                 Nothing -> [newGame, exitOpt]
                 Just cg -> [continueGame cg, newGame, exitOpt]
+        updateWave wave = wave { animPosX = (animPosX wave + 50) `mod` graphicsWindowWidth gr}
+        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave <$> aps }
 
 
 introWelcome :: GameData -> Graphics -> GameMenu
@@ -194,8 +203,8 @@ introEnd gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts 
         optY = graphicsWindowHeight gr - 100
         opts = [ MenuAction "Begin Research" $ Just $ ResearchCenter gd ]
 
-researchCenterMenu :: GameData -> InputState -> Graphics -> GameView
-researchCenterMenu gd (InputState _ _ _ ts) gr = GameView v Nothing [animTo] $ Just m
+researchCenterMenu :: GameData -> Graphics -> GameView
+researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
     where
         v = View ((,0) <$> (words ++ fundWords)) [image] [flagAnim] [] Nothing
         m = Menu (selOneOpts 100 400 3 15 opts Nothing mc 0) Nothing
@@ -208,7 +217,7 @@ researchCenterMenu gd (InputState _ _ _ ts) gr = GameView v Nothing [animTo] $ J
         flagOffsetX = round (21 * scale)
         flagOffsetY = round (132 * scale)
         flagAnim = APlace (iX + flagOffsetX) (iY + flagOffsetY) scale "flag_with_shadow" 0 0 2
-        animTo = TimeoutData ts 170 $ TimeoutAnimation $ startTextAnim gr [flagAnim]
+        animTo = TimeoutData 0 170 $ TimeoutAnimation $ startTextAnim gr [flagAnim]
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         words = [ TextDisplay "Research" 50 10 7 White Nothing
                 , TextDisplay "Center" 200 140 7 White Nothing

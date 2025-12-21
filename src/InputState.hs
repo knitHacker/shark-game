@@ -68,10 +68,13 @@ data KeyboardInputs = Keyboard
     , inputRepeat :: !Bool
     } deriving (Show, Eq)
 
-
 initInputState :: IO InputState
-initInputState = return $ InputState Nothing Nothing Nothing 0
-
+initInputState = do
+    time <- liftIO getSystemTime
+    let ts = systemSeconds time
+        tn = systemNanoseconds time
+        tsInt = ts * 1000 + fromIntegral (div tn 1000000)
+    return $ InputState Nothing Nothing Nothing tsInt
 
 class Monad m => InputRead m where
     readInputState :: m InputState

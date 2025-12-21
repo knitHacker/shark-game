@@ -102,6 +102,13 @@
             "file": "assets/images/flag_no_shadow.png",
             "frames": 5,
             "depth": 1
+        },
+        "wave": {
+            "sizeX": 40,
+            "sizeY": 40,
+            "file": "assets/images/wave_animation.png",
+            "frames": 12,
+            "depth": 1
         }
     }
 }

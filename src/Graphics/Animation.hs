@@ -23,7 +23,7 @@ updateAnimation gr view ad@(AnimationData frame maxFrame action) = (ad { animati
                         let anim = graphicsAnimTextures gr ! animTexture
                             mxFrame = animFrameCount anim
                             mxDepth = animFrameDepth anim
-                        in ap { animFrame = newFrame `mod` mxFrame, animDepth = animDepth `mod` mxDepth }
+                        in ap { animFrame = (animFrame + 1) `mod` mxFrame, animDepth = animDepth `mod` mxDepth }
                 in view { animations = updatedAnims }
 
 startAnimation :: Int -> (View a -> Int -> View a) -> AnimationData a

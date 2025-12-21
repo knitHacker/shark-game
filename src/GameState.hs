@@ -30,10 +30,10 @@ import Control.Monad.IO.Class ( MonadIO(..) )
 import Debug.Trace
 import Data.Maybe (catMaybes)
 
-initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> IO GameState
-initGameState tm cfgs outs = do
+initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> InputState -> IO GameState
+initGameState tm cfgs outs inputs = do
     graph <- initGraphics tm outs
-    (gps, gv) <- mainMenuView cfgs outs graph
+    (gps, gv) <- mainMenuView cfgs outs graph inputs
     return $ GameState graph gps gv Nothing
 
 
@@ -73,8 +73,9 @@ updateGameView gr inputs (GameViewInfo gv@(GameView vl oM tL mM)) = if null outs
                 _ -> Nothing
         -- If overlay is open don't timeout
         out3 = case (oM, timeoutUp) of
-                (Just (OverlayView False _ _), Just (Right gps)) -> Just $ Right gps
-                (Just (OverlayView False _ _), Just (Left (td, v'))) -> Just $ Left $ GameViewInfo $ gv { viewTimeouts = td, viewLayer = v' }
+                (Just (OverlayView True _ _), _) -> Nothing  -- Overlay is active, don't process timeouts
+                (_, Just (Right gps)) -> Just $ Right gps
+                (_, Just (Left (td, v'))) -> Just $ Left $ GameViewInfo $ gv { viewTimeouts = td, viewLayer = v' }
                 _ -> Nothing
         out4 = case menuUp of
                 Just (Left m) -> Just $ Left $ GameViewInfo $ gv { viewMenu = Just m }
@@ -147,7 +148,7 @@ reDrawState gps cfgs inputs gr =
     case gps of
         GameExitState (Just gd) -> GameExiting
         GameExitState Nothing -> GameExiting
-        MainMenu gdM -> gameMenu $ mainMenu gdM gr
+        MainMenu gdM -> GameViewInfo $ mainMenu gdM gr
         IntroWelcome (Just gd)-> menuWithPause gd $ introWelcome gd gr
         IntroMission gd -> menuWithPause gd $ introMission gd gr
         IntroBoat gd -> menuWithPause gd $ introBoat gd cfgs gr
@@ -155,7 +156,7 @@ reDrawState gps cfgs inputs gr =
         IntroResearch gd -> menuWithPause gd $ introResearch gd gr
         IntroFunds gd -> menuWithPause gd $ introFunds gd gr
         IntroEnd gd -> menuWithPause gd $ introEnd gd gr
-        ResearchCenter gd -> withPause gps gd $ researchCenterMenu gd inputs gr
+        ResearchCenter gd -> withPause gps gd $ researchCenterMenu gd gr
         TripDestinationSelect gd -> menuWithPause gd $ mapMenu gd gr cfgs
         TripEquipmentSelect gd loc eqs cp -> menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
@@ -196,7 +197,7 @@ moveToNextState gps cfgs inputs gr =
             case gdM of
                 Just gd -> saveGame gd cfgs
                 Nothing -> return ()
-            return (gps, gameMenu $ mainMenu gdM gr)
+            return (gps, GameViewInfo $ mainMenu gdM gr)
         IntroWelcome (Just gd) -> return (gps, menuWithPause gd $ introWelcome gd gr)
         IntroWelcome Nothing -> do
             nGame <- startNewGame cfgs
@@ -207,7 +208,7 @@ moveToNextState gps cfgs inputs gr =
         IntroResearch gd -> return (gps, menuWithPause gd $ introResearch gd gr)
         IntroFunds gd -> return (gps, menuWithPause gd $ introFunds gd gr)
         IntroEnd gd -> return (gps, menuWithPause gd $ introEnd gd gr)
-        ResearchCenter gd -> return (gps, withPause gps gd $ researchCenterMenu gd inputs gr)
+        ResearchCenter gd -> return (gps, withPause gps gd $ researchCenterMenu gd gr)
         TripDestinationSelect gd -> return (gps, menuWithPause gd $ mapMenu gd gr cfgs)
         TripEquipmentSelect gd loc eqs cp -> return (gps, menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs)
         TripReview gd loc eqs -> return (gps, menuWithPause gd $ reviewTripMenu gd loc eqs cfgs)
@@ -243,8 +244,8 @@ saveGame gd cfgs = do
     where
         sc = (stateCfgs cfgs) { lastSaveM = Just (gameDataSaveFile gd) }
 
-mainMenuView :: GameConfigs -> OutputHandles -> Graphics -> IO (GamePlayState, GameDrawInfo)
-mainMenuView cfgs outs gr = do
+mainMenuView :: GameConfigs -> OutputHandles -> Graphics -> InputState -> IO (GamePlayState, GameDrawInfo)
+mainMenuView cfgs outs gr inputs = do
     gdM <- case lastSaveM (stateCfgs cfgs) of
                 Nothing -> return Nothing
                 Just sf -> do
@@ -254,7 +255,7 @@ mainMenuView cfgs outs gr = do
                             putStrLn $ T.unpack err
                             return Nothing
                         Right gd -> return $ Just gd
-    return (MainMenu gdM, gameMenu $ mainMenu gdM gr)
+    return (MainMenu gdM, GameViewInfo $ mainMenu gdM gr)
 
 
 withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo

@@ -159,10 +159,10 @@ updateView :: View a -> View a -> View a
 updateView (View t1 i1 a1 r1 vs1) (View t2 i2 a2 r2 vs2) =
     View t2 i2 aNew r2 vsNew
     where
-        a1Map = M.fromList $ (\ap-> (animTexture ap, (animFrame ap, animDepth ap))) <$> a1
-        aNew = animNew <$> a2
-        animNew ap = if animTexture ap `M.member` a1Map
-                        then let (f, d) = a1Map M.! animTexture ap
+        a1Map = M.fromList $ zip [0..] ((\ap-> (animFrame ap, animDepth ap)) <$> a1)
+        aNew = zipWith animNew [0..] a2
+        animNew idx ap = if idx < length a1
+                        then let (f, d) = a1Map M.! idx
                              in ap { animFrame = f, animDepth = d }
                         else ap
         vsNew = case (vs1, vs2) of
