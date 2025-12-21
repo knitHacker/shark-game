@@ -66,21 +66,21 @@ updateOverlayMenu gr d (Overlay x y w h c m) = r'
 updateGameView :: Graphics -> Int -> View a -> ToRender
 updateGameView gr d (View words imgs ans rs scrollM) = r4
     where
-        r = foldl (\rend td -> addText rend d 1 td) renderEmpty words
-        r' = foldl (\rend t -> addTexture rend d 0 (toDraw t )) r imgs
-        r'' = foldl (\rend a -> addAnimTexture rend d 0 (animToDraw gr a)) r' ans
-        r3 = foldl (\rend (c, x, y, w, h) -> addRectangle rend d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r'' rs
-        toDraw :: (Int, Int, Double, Image) -> DrawTexture
-        toDraw (x, y, s, tE) =
+        r = foldl (\rend (td, tDepth) -> addText rend d tDepth td) renderEmpty words
+        r' = foldl (\rend (t, iDepth) -> addTexture rend d iDepth t) r $ toDraw <$> imgs
+        r'' = foldl (\rend (a, fd) -> addAnimTexture rend d fd a) r' $ animToDraw gr <$> ans
+        r3 = foldl (\rend (c, x, y, w, h, rD) -> addRectangle rend d rD (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r'' rs
+        toDraw :: ImagePlacement -> (DrawTexture, Int)
+        toDraw (IPlace x y s tE rectDepth) =
             let (w, h) = getTextureSize $ ImageCfg (graphicsStaticTextures gr ! tE)
-            in DTexture tE (fromIntegral x) (fromIntegral y)
-                                        (floor (fromIntegral w * s)) (floor (fromIntegral h * s)) Nothing
+            in (DTexture tE (fromIntegral x) (fromIntegral y)
+                                        (floor (fromIntegral w * s)) (floor (fromIntegral h * s)) Nothing, rectDepth)
         r4 = case scrollM of
                 Nothing -> r3
                 Just scroll -> r3 <> updateGameViewScroll gr d scroll
 
-animToDraw :: Graphics -> AnimPlacement -> DrawAnimFrame
-animToDraw gr (APlace x y s t f d) = DFrame t x' y' w' h' s f d
+animToDraw :: Graphics -> AnimPlacement -> (DrawAnimFrame, Int)
+animToDraw gr (APlace x y s t f d fd) = (DFrame t x' y' w' h' s f d, fd)
     where
         (w, h) = getTextureSize $ AnimationCfg (graphicsAnimTextures gr ! t)
         x' = fromIntegral x
@@ -125,7 +125,7 @@ getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
 
 -- Draw the menu options for menus that you only select one option at a time
 updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
-updateSelOneListOptions gr@(Graphics _ _ (fw, fh)) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM curs) = r'
+updateSelOneListOptions gr@(Graphics _ _ (fw, fh) _ _) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM curs) = r'
     where
         allOpts = case backOptM of
                     Nothing -> ma
@@ -156,7 +156,7 @@ updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 
 
 -- Draw the menu options for menus that you can select multiple options at a time
 updateMultiListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> MultiSelectListOptions a -> ToRender
-updateMultiListOptions (Graphics _ _ fs) d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ cM backM) =
+updateMultiListOptions (Graphics _ _ fs _ _) d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ cM backM) =
     case backM of
         Nothing -> updateSelectedOptions fs s sp renderEmpty pos 0 d mo' x' y'
         Just b -> updateSelectedOptions fs s sp renderEmpty pos 0 d (moBack b) x' y'
@@ -202,13 +202,13 @@ updateMenuListOptions opts s h x = updateMenuListOptions' opts
 
 -- Draw menu options with columns and a button for each row
 updateColumnButtonOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ColumnButtonOptions a -> (ToRender, Int)
-updateColumnButtonOptions gr@(Graphics _ _ fs@(fw, fh)) d pos bdi@(BlockDrawInfo x y s sp) (CBOpts bt tw hds opts) = rend
+updateColumnButtonOptions gr@(Graphics _ _ fs@(fw, fh) _ _) d pos bdi@(BlockDrawInfo x y s sp) (CBOpts bt tw hds opts) = rend
     where
         rend = columnButtonOptionTexts gr pos d s sp tw bt hds opts (fromIntegral x) (fromIntegral y)
 
 
 columnButtonOptionTexts :: Graphics -> Int -> Int -> Int -> Int -> Int -> T.Text -> [T.Text] -> [ColumnAction a] -> Int -> Int -> (ToRender, Int)
-columnButtonOptionTexts (Graphics _ _ fs@(fw, fh)) p d s sp w butText headers opts x y = columnButtonOptionTexts' rend 0 opts (fromIntegral y + fromIntegral (sp + tH))
+columnButtonOptionTexts (Graphics _ _ fs@(fw, fh) _ _) p d s sp w butText headers opts x y = columnButtonOptionTexts' rend 0 opts (fromIntegral y + fromIntegral (sp + tH))
     where
         (lastX, rend) = foldl (\(tx, ls) t -> (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral y) s White Nothing)) (fromIntegral x, mempty) headers
         tL = ceiling $ fw * fromIntegral (s * T.length butText)
@@ -227,7 +227,7 @@ columnButtonOptionTexts (Graphics _ _ fs@(fw, fh)) p d s sp w butText headers op
 
 
 updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender
-updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh)) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts backOptM (Scroll mx off))
+updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh) _ _) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts backOptM (Scroll mx off))
     | optCount <= mx = r `mappend` fixedR
     | otherwise = rend
     where

@@ -112,6 +112,7 @@ data GameEquipment = GameEquip
     , equipPrice :: Int
     , equipInfoType :: T.Text
     , equipEffectiveness :: Int
+    , equipImage :: T.Text
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameEquipment

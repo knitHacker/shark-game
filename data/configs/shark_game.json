@@ -2,8 +2,8 @@
     "gameMechanics": {
         "mechanicsStart": {
             "startingFunds": 5000,
-            "startingBoat": "smallBoat",
-            "startingEquipment": ["fishingGear", "snorkelGear"],
+            "startingBoat": "skiff",
+            "startingEquipment": ["fishingRod", "snorkelGear"],
             "startingRegion": "tropical_west_atlantic"
         },
         "mechanicsEncounter": {
@@ -35,13 +35,22 @@
         }
     },
     "boats": {
+        "skiff": {
+            "boatName": "Skiff",
+            "boatDescription": "A small, lightweight boat suitable for calm waters.",
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estauary", "sandFlats"],
+            "boatEquipmentSlots": 1,
+            "boatFuelCost": 5,
+            "boatPrice": 100,
+            "boatImage": "skiff"
+        },
         "smallBoat": {
             "boatName": "Small Boat",
             "boatDescription": "A small boat for shallow waters.",
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estauary", "sandFlats"],
             "boatEquipmentSlots": 1,
             "boatFuelCost": 10,
-            "boatPrice": 100,
+            "boatPrice": 500,
             "boatImage": "default_boat"
         },
         "mediumBoat": {
@@ -70,7 +79,8 @@
             "equipTimeAdded": 1,
             "equipPrice": 100,
             "equipInfoType": "caught",
-            "equipEffectiveness": 80
+            "equipEffectiveness": 80,
+            "equipImage": "empty_net_white"
         },
         "longLine": {
             "equipText": "Long Line",
@@ -78,15 +88,17 @@
             "equipTimeAdded": 1,
             "equipPrice": 150,
             "equipInfoType": "caught",
-            "equipEffectiveness": 90
+            "equipEffectiveness": 90,
+            "equipImage": "empty_net_white"
         },
-        "fishingGear": {
-            "equipText": "Fishing Gear",
+        "fishingRod": {
+            "equipText": "Fishing Rod",
             "equipSize": 1,
             "equipTimeAdded": 1,
             "equipPrice": 20,
             "equipInfoType": "caught",
-            "equipEffectiveness": 60
+            "equipEffectiveness": 60,
+            "equipImage": "fishing_rod"
         },
         "snorkelGear": {
             "equipText": "Snorkel Gear",
@@ -94,7 +106,8 @@
             "equipTimeAdded": 1,
             "equipPrice": 50,
             "equipInfoType": "observed",
-            "equipEffectiveness": 50
+            "equipEffectiveness": 50,
+            "equipImage": "snorkel_gear"
         },
         "scubaGear": {
             "equipText": "Scuba Gear",
@@ -102,7 +115,8 @@
             "equipTimeAdded": 2,
             "equipPrice": 100,
             "equipInfoType": "observed",
-            "equipEffectiveness": 90
+            "equipEffectiveness": 90,
+            "equipImage": "scuba_gear"
         },
         "bruv": {
             "equipText": "BRUV",
@@ -110,7 +124,8 @@
             "equipTimeAdded": 1,
             "equipPrice": 500,
             "equipInfoType": "observed",
-            "equipEffectiveness": 80
+            "equipEffectiveness": 80,
+            "equipImage": "empty_net_white"
         }
     },
     "regions": {
@@ -122,37 +137,37 @@
             "siteLocations": {
                 "reef": {
                     "showText": "Reef",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear", "bruv"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear", "bruv"],
                     "sharksFound": [["nurse", 80], ["tiger", 20]]
                 },
                 "mangroves": {
                     "showText": "Mangroves",
-                    "allowedEquipment": ["fishingGear"],
+                    "allowedEquipment": ["fishingRod"],
                     "sharksFound": [["lemon", 40], ["nurse", 50], ["bull", 10]]
                 },
                 "openOcean": {
                     "showText": "Open Ocean",
-                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["blue", 30], ["sandbar", 30], ["bull", 15], ["tiger", 10], ["oceanicWhitetip", 10], ["white", 5]]
                 },
                 "seaGrass": {
                     "showText": "Sea Grass",
-                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "longLine", "drumLine"],
                     "sharksFound": [["lemon", 10], ["tiger", 10], ["blacktip", 35], ["bonnethead", 30], ["great_hammerhead", 5], ["scalloped_hammerhead", 5], ["bull", 5]]
                 },
                 "continentalShelf": {
                     "showText": "Continental Shelf",
-                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["sandbar", 40], ["blacktip", 30], ["bull", 20], ["great_hammerhead", 5], ["scalloped_hammerhead", 5]]
                 },
                 "estauary": {
                     "showText": "Estuary",
-                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear"],
                     "sharksFound": [["bull", 50], ["blacktip", 30], ["lemon", 10], ["bonnethead", 10]]
                 },
                 "sandFlats": {
                     "showText": "Sand Flats",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "longLine"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "longLine"],
                     "sharksFound": [["bonnethead", 40], ["blacktip", 30], ["bull", 20], ["nurse", 10]]
                 }
             }
@@ -165,22 +180,22 @@
             "siteLocations": {
                 "reef": {
                     "showText": "Reef",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear", "bruv"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear", "bruv"],
                     "sharksFound": [["blacktipReef", 70], ["whitetipReef", 30]]
                 },
                 "openOcean": {
                     "showText": "Open Ocean",
-                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["blue", 50], ["porbeagle", 30], ["thresher", 20]]
                 },
                 "seaGrass": {
                     "showText": "Sea Grass",
-                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear"],
                     "sharksFound": [["sandbar", 60], ["bull", 30], ["spinner", 10]]
                 },
                 "kelpForest": {
                     "showText": "Kelp Forest",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear"],
                     "sharksFound": [["leopard", 50], ["sevengill", 15], ["white", 5], ["horn", 30]]
                 }
             }

@@ -12,6 +12,7 @@ module SaveData
     , startNewGame
     , getRandomPercent
     , getRandomPercentS
+    , getRandomRange
     , getRandomBool
     , getRandomBoolS
     , getRandomElem
@@ -48,6 +49,12 @@ getRandomPercent gd = (gd { gameDataSeed = s' }, p)
         s = gameDataSeed gd
         (s', p) = getRandomPercentS s
 
+getRandomRange :: GameData -> Int -> Int -> (GameData, Int)
+getRandomRange gd minVal maxVal = (gd { gameDataSeed = s' }, p)
+    where
+        s = gameDataSeed gd
+        (s', p) = getRandomRangeS s minVal maxVal
+
 getRandomBool :: GameData -> (GameData, Bool)
 getRandomBool gd = (gd { gameDataSeed = s' }, p)
     where
@@ -58,6 +65,13 @@ getRandomPercentS :: Seed -> (Seed, Int)
 getRandomPercentS s = runST $ do
         gen <- restore s
         p <- uniformR (0, 100) gen
+        s' <- save gen
+        return (s', p)
+
+getRandomRangeS :: Seed -> Int -> Int -> (Seed, Int)
+getRandomRangeS s minVal maxVal = runST $ do
+        gen <- restore s
+        p <- uniformR (minVal, maxVal) gen
         s' <- save gen
         return (s', p)
 

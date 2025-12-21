@@ -26,7 +26,11 @@ data-files:
 - assets/images/shark_placeholder.png
 - assets/images/empty_net_white.png
 - assets/images/boat_default.png
+- assets/images/boat_skiff.png
+- assets/images/equipment_snorkel.png
+- assets/images/equipment_fishing_rod.png
 - assets/images/institute.png
+- assets/images/no_dolphin.png
 - assets/images/skate_swimming_animation.png
 - assets/images/flag_animation.png
 - assets/images/flag_no_shadow.png
