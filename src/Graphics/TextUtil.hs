@@ -13,6 +13,7 @@ module Graphics.TextUtil
     , textMiddleX
     , wrapTextMiddleX
     , midStart
+    , midTextStart
     , percentWidth
     ) where
 
@@ -27,6 +28,12 @@ percentWidth gr perc = floor (fromIntegral (graphicsWindowWidth gr) * perc)
 
 midStart :: Graphics -> Int -> Int
 midStart gr partLen = (graphicsWindowWidth gr - partLen) `div` 2
+
+midTextStart :: Graphics -> T.Text -> Double -> Int
+midTextStart gr txt fontScale = midStart gr textWidth
+    where
+        letterWidth = fontWidth gr * fontScale
+        textWidth = ceiling $ fromIntegral (T.length txt) * letterWidth
 
 fontWidth :: Graphics -> Double
 fontWidth gr = fst $ graphicsFontSize gr

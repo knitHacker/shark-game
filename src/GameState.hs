@@ -33,7 +33,7 @@ import Data.Maybe (catMaybes)
 initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> IO GameState
 initGameState tm cfgs outs = do
     graph <- initGraphics tm outs
-    (gps, gv) <- mainMenuView cfgs outs
+    (gps, gv) <- mainMenuView cfgs outs graph
     return $ GameState graph gps gv Nothing
 
 
@@ -147,7 +147,7 @@ reDrawState gps cfgs inputs gr =
     case gps of
         GameExitState (Just gd) -> GameExiting
         GameExitState Nothing -> GameExiting
-        MainMenu gdM -> gameMenu $ mainMenu gdM
+        MainMenu gdM -> gameMenu $ mainMenu gdM gr
         IntroWelcome (Just gd)-> menuWithPause gd $ introWelcome gd gr
         IntroMission gd -> menuWithPause gd $ introMission gd gr
         IntroBoat gd -> menuWithPause gd $ introBoat gd cfgs gr
@@ -196,7 +196,7 @@ moveToNextState gps cfgs inputs gr =
             case gdM of
                 Just gd -> saveGame gd cfgs
                 Nothing -> return ()
-            return (gps, gameMenu $ mainMenu gdM)
+            return (gps, gameMenu $ mainMenu gdM gr)
         IntroWelcome (Just gd) -> return (gps, menuWithPause gd $ introWelcome gd gr)
         IntroWelcome Nothing -> do
             nGame <- startNewGame cfgs
@@ -243,8 +243,8 @@ saveGame gd cfgs = do
     where
         sc = (stateCfgs cfgs) { lastSaveM = Just (gameDataSaveFile gd) }
 
-mainMenuView :: GameConfigs -> OutputHandles -> IO (GamePlayState, GameDrawInfo)
-mainMenuView cfgs outs = do
+mainMenuView :: GameConfigs -> OutputHandles -> Graphics -> IO (GamePlayState, GameDrawInfo)
+mainMenuView cfgs outs gr = do
     gdM <- case lastSaveM (stateCfgs cfgs) of
                 Nothing -> return Nothing
                 Just sf -> do
@@ -254,7 +254,7 @@ mainMenuView cfgs outs = do
                             putStrLn $ T.unpack err
                             return Nothing
                         Right gd -> return $ Just gd
-    return (MainMenu gdM, gameMenu $ mainMenu gdM)
+    return (MainMenu gdM, gameMenu $ mainMenu gdM gr)
 
 
 withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo
