@@ -44,17 +44,18 @@ import Util
 import Debug.Trace
 
 mainMenu :: Maybe GameData -> Graphics -> GameMenu
-mainMenu gdM gr = GameMenu (textView words) (Menu optEntry Nothing)
+mainMenu gdM gr = GameMenu (View words [] [] [rect] Nothing) (Menu optEntry Nothing)
     where
+        rect = (DarkBlue, 0, 0, graphicsWindowWidth gr, graphicsWindowHeight gr, 0)
         midY = div (graphicsWindowHeight gr) 2
         xPos = midTextStart gr instTxt 3
         instTxt = "Press Enter to select"
         optEntry = selOneOpts (xPos + 100) (midY + 100) 3 2 menuOpts Nothing cursor 0
         cursor = CursorPointer "green_arrow"
         (instr, _) = textMiddleX gr instTxt (midY + 20) 3 White
-        words = [ TextDisplay "Shark" 10 10 14 Gray Nothing
-                , TextDisplay "Institute" 100 200 12 Gray Nothing
-                , instr
+        words = [ (TextDisplay "Shark" 10 10 14 Gray Nothing, 1)
+                , (TextDisplay "Institute" 100 200 12 Gray Nothing, 1)
+                , (instr, 1)
                 ]
         newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
