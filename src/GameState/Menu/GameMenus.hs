@@ -106,7 +106,7 @@ introBoat gd cfg gr = GameMenu (View ((,0) <$> words) [img] [] [] Nothing) (Menu
         img = IPlace 500 400 2.0 (boatImage startBoat) 1
         boatText = "Luckily a retiring fisherman has decided to donate his skiff to your cause, \
                    \so you have a way to conduct your research trips. It might be old and small and smelly \
-                   \but it float (most of the time). Maybe in the future we can get another boat..."
+                   \but it floats (most of the time). Maybe in the future we can get another boat..."
         (wrappedBoat, yEnd) = wrapTextMiddleX gr boatText 75 320 3 2 White
         words = TextDisplay "A Kind" 40 20 8 White Nothing
               : TextDisplay "Neighbor" 100 130 9 White Nothing
@@ -120,8 +120,8 @@ introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (se
     where
         eqKeys = gameOwnedEquipment $ gameDataEquipment gd
         eqs = map (\k -> equipment (sharkCfgs cfg) M.! k) eqKeys
-        eqCatch = head $ filter (\e -> equipInfoType e == "caught") eqs
-        eqObs = head $ filter (\e -> equipInfoType e == "observed") eqs
+        eqCatch = head $ filter (\e -> equipInfoType e == Caught) eqs
+        eqObs = head $ filter (\e -> equipInfoType e == Observed) eqs
         equipmentText = "With the initial funds you were also able to purchase some basic research equipment \
                         \to get your center up and running. It's not much, but it's a start. \
                         \Hopefully as you make progress in your research you can acquire more advanced gear."

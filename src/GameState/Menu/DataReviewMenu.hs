@@ -70,7 +70,9 @@ sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View ((,0) <$> (locWords ++ wo
         infoCnts = getInfoCounts sharkFinds
         returnOpt = MenuAction "Back" $ Just $ SharkReviewTop gd (Just (entryKey sharkEntry))
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
-        countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", i, " ", T.pack (show c)]) infoCnts
+        equipInfoTypeToText Caught = "caught"
+        equipInfoTypeToText Observed = "observed"
+        countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", equipInfoTypeToText i, " ", T.pack (show c)]) infoCnts
         -- Format locations grouped by region
         (locWords, end) = foldl formatRegion ([], 200) $ M.toList locsMap
         formatRegion (displays, yPos) (region, sites) =
@@ -139,7 +141,9 @@ investigateResearchMenu gd researchEntry cfgs gr = GameMenu (textView words') (M
         makeReqTxt (l, y) (sN, rrs) = (l ++ [sharkHeader] ++ infoRqs, y'' + 75)
                 where
                         sharkHeader = TextDisplay sN 150 y 2 White Nothing
-                        toText it gsd c = T.concat [T.toTitle it, " ", T.pack (show (length gsd)), "/", T.pack (show c)]
+                        equipInfoTypeToText Caught = "caught"
+                        equipInfoTypeToText Observed = "observed"
+                        toText it gsd c = T.concat [T.toTitle (equipInfoTypeToText it), " ", T.pack (show (length gsd)), "/", T.pack (show c)]
                         (infoRqs, y'') = foldl (\(l', y') (it, gsd, c) -> (l' ++ [TextDisplay (toText it gsd c) 200 y' 2 White Nothing], y' + 30)) ([], y + 50) rrs
 
 awardGrantMenu :: GameData -> DataEntryT ResearchData -> GameConfigs -> Graphics -> GameMenu

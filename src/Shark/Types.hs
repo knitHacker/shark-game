@@ -13,8 +13,7 @@ module Shark.Types
     , TripInfo(..)
     , ResearchReq(..)
     , ResearchData(..)
-    , Boat(..)
-    , checkPlayConfigs
+    , Boat(..)    , checkPlayConfigs
     , StartMechanics(..)
     , EncounterMechanics(..)
     , Fundraisers(..)
@@ -23,15 +22,43 @@ module Shark.Types
     , SiteLocation(..)
     , RegionInformation(..)
     , FullLocation(..)
+    , EquipInfoType(..)
+    , SharkEncounterRate(..)
     ) where
 
 import GHC.Generics ( Generic )
-import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
-import Data.Aeson.Types ( FromJSON, ToJSON )
+import Data.Aeson ( FromJSON(..), ToJSON(..), eitherDecodeFileStrict, encodeFile, Value(..), object, (.:), (.=) )
+import Data.Aeson.Types ( Parser )
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import Util
+
+data EquipInfoType = Caught | Observed
+    deriving (Generic, Show, Eq, Ord)
+
+instance FromJSON EquipInfoType where
+    parseJSON = \v -> do
+        s <- parseJSON v
+        case (s :: T.Text) of
+            "caught" -> return Caught
+            "observed" -> return Observed
+            _ -> fail "EquipInfoType must be 'caught' or 'observed'"
+
+instance ToJSON EquipInfoType where
+    toJSON Caught = String "caught"
+    toJSON Observed = String "observed"
+
+data SharkEncounterRate = SharkEncounterRate
+    { caughtRate :: Int
+    , observedRate :: Int
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON SharkEncounterRate where
+    parseJSON = \_ -> fail "SharkEncounterRate should not be parsed directly"
+
+instance ToJSON SharkEncounterRate where
+    toJSON (SharkEncounterRate caught observed) = toJSON [caught, observed]
 
 data StartMechanics = Mechanics
     { startingFunds :: Int
@@ -110,7 +137,7 @@ data GameEquipment = GameEquip
     , equipSize :: Int
     , equipTimeAdded :: Int
     , equipPrice :: Int
-    , equipInfoType :: T.Text
+    , equipInfoType :: EquipInfoType
     , equipEffectiveness :: Int
     , equipImage :: T.Text
     } deriving (Generic, Show, Eq)
@@ -119,18 +146,42 @@ instance FromJSON GameEquipment
 instance ToJSON GameEquipment
 
 checkGameLocation :: GameLocation -> Bool
-checkGameLocation loc = foldl (\p (_, c) -> p + c) 0 shks == 100
+checkGameLocation loc = (totalCaught == 100) && (totalObserved == 100)
     where
-        shks = sharksFound loc
+        rates = M.elems $ sharksFound loc
+        totalCaught = sum $ caughtRate <$> rates
+        totalObserved = sum $ observedRate <$> rates
 
 data GameLocation = GameLoc
     { showText :: T.Text
+    , biomeDescription :: T.Text
     , allowedEquipment :: [T.Text]
-    , sharksFound :: [(T.Text, Int)]
+    , sharksFound :: M.Map T.Text SharkEncounterRate
     } deriving (Generic, Show, Eq)
 
-instance FromJSON GameLocation
-instance ToJSON GameLocation
+instance FromJSON GameLocation where
+    parseJSON = \v -> do
+        obj <- parseJSON v
+        showTxt <- obj .: "showText"
+        desc <- obj .: "biomeDescription"
+        equip <- obj .: "allowedEquipment"
+        sharksArr <- obj .: "sharksFound" :: Parser [[Value]]
+        let parseShark [nameVal, caughtVal, observedVal] = do
+                name <- parseJSON nameVal
+                caught <- parseJSON caughtVal
+                observed <- parseJSON observedVal
+                return (name, SharkEncounterRate caught observed)
+            parseShark _ = fail "sharksFound array must have format [name, caughtRate, observedRate]"
+        sharksList <- mapM parseShark sharksArr
+        return $ GameLoc showTxt desc equip (M.fromList sharksList)
+
+instance ToJSON GameLocation where
+    toJSON (GameLoc showTxt desc equip sharks) =
+        object [ "showText" .= showTxt
+               , "biomeDescription" .= desc
+               , "allowedEquipment" .= equip
+               , "sharksFound" .= ((\(name, SharkEncounterRate c o) -> toJSON [toJSON name, toJSON c, toJSON o]) <$> M.toList sharks)
+               ]
 
 data SharkFact = SharkFact
     { sharkFactTitle :: T.Text
@@ -151,7 +202,7 @@ instance FromJSON SharkInfo
 instance ToJSON SharkInfo
 
 data ResearchReq = ResearchReq
-    { dataType :: T.Text
+    { dataType :: EquipInfoType
     , reqCount :: Int
     } deriving (Generic, Show, Eq)
 

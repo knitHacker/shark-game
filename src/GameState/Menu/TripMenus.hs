@@ -146,7 +146,11 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> GameMenu
 sharkFoundMenu gd sfM tp cfgs = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts 400 700 3 4 opts Nothing (CursorRect White) 0) Nothing)
     where
-        typeText sf = T.append (T.append "You " (getData (findEquipment sf) equipInfoType)) " a "
+        typeText sf = T.append (T.append "You " infoTypeText) " a "
+            where
+                infoTypeText = case getData (findEquipment sf) equipInfoType of
+                    Caught -> "caught"
+                    Observed -> "observed"
         sharkText sf = getData (findSpecies sf) sharkName
         sharkImg sf = getData (findSpecies sf) sharkImage
         (words, imgs) = case sfM of
@@ -166,7 +170,11 @@ tripResultsMenu gd tp cfgs gr = GameMenu (View ((,0) <$> words) [] [] [] scrollV
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
         words = [TextDisplay "Trip Complete!" 50 50 8 White Nothing]
-        findText sf = T.concat ["- ", getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) equipInfoType]
+        findText sf = T.concat ["- ", getData (findSpecies sf) sharkName, " ", infoTypeText]
+            where
+                infoTypeText = case getData (findEquipment sf) equipInfoType of
+                    Caught -> "caught"
+                    Observed -> "observed"
         findDisplays (i, sf) = [ TextDisplay (findText sf) 130 (250 + (i * 75)) 3 White Nothing
                                -- , TextDisplay (T.append "at " (monthToText (findMonth sf))) 200 (300 + (i * 100)) 3 White
                                ]
