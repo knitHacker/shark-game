@@ -121,7 +121,7 @@ completedResearchMenu gd cfgs = GameMenu (textView words') (Menu options Nothing
         opts = (\s -> MenuAction (getData s researchPaperName) $ Just (CompletedResearchReviewMenu gd s)) <$> availResearch
         backOpt = MenuAction "Back" $ Just $ ResearchReviewTop gd
         options = scrollOpts 150 250 3 25 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just backOpt) [] 4 0
-        words' = if null research then words ++ [TextDisplay "No completed research" 20 100 2 Red Nothing] else words
+        words' = if null research then words ++ [TextDisplay "No completed research" 150 180 3 Red Nothing] else words
 
 investigateResearchMenu :: GameData -> DataEntryT ResearchData -> GameConfigs -> Graphics -> GameMenu
 investigateResearchMenu gd researchEntry cfgs gr = GameMenu (textView words') (Menu (selOneOpts 200 500 3 20 [completeOpt] (Just returnOpt) mc 0) Nothing)
