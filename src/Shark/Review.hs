@@ -37,7 +37,7 @@ getSeenLocations cfgs gd se = foldr addLocation M.empty $ L.nub $ findLocation <
                 site = getData lE (showText . locationSite)
             in M.insertWith (++) region [site] acc
 
-getInfoCounts :: [SharkFind] -> M.Map T.Text Int
+getInfoCounts :: [SharkFind] -> M.Map EquipInfoType Int
 getInfoCounts = getInfoCounts' M.empty
     where
         getInfoCounts' m [] = m
@@ -68,7 +68,7 @@ shouldShowResearch cfgs gd re = rSharks `S.isSubsetOf` kSharks && depends `S.isS
         completed = S.fromList $ M.keys $ gameDataResearchComplete gd
         depends = S.fromList $ researchDepends (entryData re)
 
-type SharkReq = (T.Text, [SharkIndex], Int)
+type SharkReq = (EquipInfoType, [SharkIndex], Int)
 type ResearchReqData = (T.Text, [SharkReq])
 
 getResearchRequirements :: PlayConfigs -> GameData -> DataEntryT ResearchData -> [ResearchReqData]
@@ -85,7 +85,7 @@ getResearchRequirement cfgs gd sk req = (iType, sInfos, reqCount req)
         iType = dataType req
         sInfos = fst <$> L.filter (\(i, sd) -> getSharkInfo cfgs sd == iType) ((\sdi -> (sdi, getShark gd sdi)) <$> sds)
 
-getSharkInfo :: PlayConfigs -> GameSharkData -> T.Text
+getSharkInfo :: PlayConfigs -> GameSharkData -> EquipInfoType
 getSharkInfo cfgs sd = equipInfoType $ equipment cfgs M.! gameSharkEquipment sd
 
 canCompleteResearch :: [ResearchReqData] -> Bool

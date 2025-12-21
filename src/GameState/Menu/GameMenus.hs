@@ -35,6 +35,7 @@ import GameState.Types
 import Graphics.Types
 import Graphics.Menu
 import Graphics.TextUtil
+import Graphics.ImageUtil
 import Graphics.Animation
 
 import InputState
@@ -106,7 +107,7 @@ introBoat gd cfg gr = GameMenu (View ((,0) <$> words) [img] [] [] Nothing) (Menu
         img = IPlace 500 400 2.0 (boatImage startBoat) 1
         boatText = "Luckily a retiring fisherman has decided to donate his skiff to your cause, \
                    \so you have a way to conduct your research trips. It might be old and small and smelly \
-                   \but it float (most of the time). Maybe in the future we can get another boat..."
+                   \but it floats (most of the time). Maybe in the future we can get another boat..."
         (wrappedBoat, yEnd) = wrapTextMiddleX gr boatText 75 320 3 2 White
         words = TextDisplay "A Kind" 40 20 8 White Nothing
               : TextDisplay "Neighbor" 100 130 9 White Nothing
@@ -120,8 +121,8 @@ introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (se
     where
         eqKeys = gameOwnedEquipment $ gameDataEquipment gd
         eqs = map (\k -> equipment (sharkCfgs cfg) M.! k) eqKeys
-        eqCatch = head $ filter (\e -> equipInfoType e == "caught") eqs
-        eqObs = head $ filter (\e -> equipInfoType e == "observed") eqs
+        eqCatch = head $ filter (\e -> equipInfoType e == Caught) eqs
+        eqObs = head $ filter (\e -> equipInfoType e == Observed) eqs
         equipmentText = "With the initial funds you were also able to purchase some basic research equipment \
                         \to get your center up and running. It's not much, but it's a start. \
                         \Hopefully as you make progress in your research you can acquire more advanced gear."
@@ -195,8 +196,13 @@ researchCenterMenu gd (InputState _ _ _ ts) gr = GameView v Nothing [animTo] $ J
         m = Menu (selOneOpts 100 400 3 15 opts Nothing mc 0) Nothing
         funds = gameDataFunds gd
         mc = CursorRect White
-        image = IPlace 620 250 2.0 "institute" 1
-        flagAnim = APlace 663 515 2.0 "flag_with_shadow" 0 0 2
+        xEnd = 620
+        iY = 250
+        (image, iX, scale) = scalingRecenterImage gr xEnd iY 40 40 2.0 "institute"
+        -- scale the offset of the start of the flag animation to put it in the right place
+        flagOffsetX = round (21 * scale)
+        flagOffsetY = round (132 * scale)
+        flagAnim = APlace (iX + flagOffsetX) (iY + flagOffsetY) scale "flag_with_shadow" 0 0 2
         animTo = TimeoutData ts 170 $ TimeoutAnimation $ startTextAnim gr [flagAnim]
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         words = [ TextDisplay "Research" 50 10 7 White Nothing

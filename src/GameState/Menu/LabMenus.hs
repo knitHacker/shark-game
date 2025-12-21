@@ -255,7 +255,10 @@ mkStoreEntry gd (k, e) = ColAction txt action
         cost = equipPrice e
         name = equipText e
         price = T.pack $ "$" ++ show cost
-        txt = [name, equipInfoType e, price] -- [Text]
+        infoType = case equipInfoType e of
+            Caught -> "caught"
+            Observed -> "observed"
+        txt = [name, infoType, price] -- [Text]
         confirmBuy = buyEquipment gd k cost
         action = if equipPrice e > gameDataFunds gd then Nothing else Just (EquipmentStore (Just (name, cost, confirmBuy)) gd)
 

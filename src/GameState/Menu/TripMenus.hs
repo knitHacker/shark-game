@@ -28,17 +28,18 @@ import Data.Maybe (isJust, fromJust)
 import Graphics.Types
 import Graphics.Menu
 import Graphics.TextUtil
+import Graphics.ImageUtil
 import Graphics.Animation
 
 import Debug.Trace
 
-mapMenu :: GameData -> GameConfigs -> GameMenu
-mapMenu gd cfgs = GameMenu (textView words) (Menu options Nothing)
+mapMenu :: GameData -> Graphics -> GameConfigs -> GameMenu
+mapMenu gd gr cfgs = GameMenu (textView words) (Menu options Nothing)
     where
         region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
-        options = scrollOpts 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just rtOpt) [] 4 0
+        options = resizingScrollOpts gr 50 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just rtOpt) [] 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (getData region siteLocations)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
@@ -127,11 +128,11 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
         allA = tripTotalTries tp
         v w = View ((,0) <$> (words ++ w)) [] [rayAnim] [backRect, progressRect] Nothing
         animTO = TimeoutData ts 150 $ TimeoutAnimation $ startTextAnim gr [rayAnim]
-        rayAnim = APlace 350 350 5.0 "skate" 0 0 0
-        progX = 100
+        rayAnim = centerAnimation gr 350 5.0 "skate"
+        progX = midStart gr progW
         progY = 650
         progH = 80
-        progW = 1000
+        progW = max 1000 $ percentWidth gr 0.8
         backRect = (Gray, progX, progY, progW, progH, 1)
         p = floor (fromIntegral (allA - curA) / fromIntegral allA * 100)
         progressRect = (Green, progX, progY, (progW `div` 100) * p, progH, 2)
@@ -143,20 +144,30 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
                             Just sf -> tp { tripTries = tl, sharkFinds = sharkFinds tp ++ [sf]}
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
 
-sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> GameMenu
-sharkFoundMenu gd sfM tp cfgs = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts 400 700 3 4 opts Nothing (CursorRect White) 0) Nothing)
+sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Graphics -> GameMenu
+sharkFoundMenu gd sfM tp cfgs gr = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts menuOptX (imgEnd + 50) 3 4 opts Nothing (CursorRect White) 0) Nothing)
     where
-        typeText sf = T.append (T.append "You " (getData (findEquipment sf) equipInfoType)) " a "
+        menuOptX = graphicsWindowWidth gr - 400
+        typeText sf = T.append (T.append "You " infoTypeText) " a "
+            where
+                infoTypeText = case getData (findEquipment sf) equipInfoType of
+                    Caught -> "caught"
+                    Observed -> "observed"
         sharkText sf = getData (findSpecies sf) sharkName
-        sharkImg sf = getData (findSpecies sf) sharkImage
-        (words, imgs) = case sfM of
-                    Nothing -> ([ TextDisplay "No Shark" 50 20 10 White Nothing
-                               , TextDisplay "Found" 150 150 10 White Nothing
-                               , TextDisplay "Better luck next time!" 200 300 4 White Nothing
-                               ], [IPlace 375 340 1.75 "empty_net" 1])
-                    Just sf -> ([ TextDisplay (typeText sf) 60 20 8 White Nothing
-                               , TextDisplay (sharkText sf) 200 150 5 Blue Nothing
-                               ], [IPlace 375 275 1.75 (sharkImg sf) 1])
+        sharkImgKey sf = getData (findSpecies sf) sharkImage
+        makeImg yStart = centerScalingImage gr yStart 100 200 1.6
+        (words, imgs, imgEnd) = case sfM of
+                    Nothing ->
+                        let (netImage, xStart, yEnd, _) = makeImg 360 "empty_net"
+                        in ([ TextDisplay "No Shark" 50 20 10 White Nothing
+                           , TextDisplay "Found" 150 150 8 White Nothing
+                           , TextDisplay "Better luck next time!" 200 280 4 White Nothing
+                           ], [netImage], yEnd)
+                    Just sf ->
+                        let (sharkImg, xStart, yEnd, scale) = makeImg 275 $ sharkImgKey sf
+                        in ([ TextDisplay (typeText sf) 60 20 8 White Nothing
+                            , TextDisplay (sharkText sf) 200 150 5 Blue Nothing
+                            ], [sharkImg], yEnd)
         nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
         opts = [ MenuAction "Continue Trip" $ Just nextState ]
 
@@ -166,7 +177,11 @@ tripResultsMenu gd tp cfgs gr = GameMenu (View ((,0) <$> words) [] [] [] scrollV
         sfMap = gameDataFoundSharks gd
         gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
         words = [TextDisplay "Trip Complete!" 50 50 8 White Nothing]
-        findText sf = T.concat ["- ", getData (findSpecies sf) sharkName, " ", getData (findEquipment sf) equipInfoType]
+        findText sf = T.concat ["- ", getData (findSpecies sf) sharkName, " ", infoTypeText]
+            where
+                infoTypeText = case getData (findEquipment sf) equipInfoType of
+                    Caught -> "caught"
+                    Observed -> "observed"
         findDisplays (i, sf) = [ TextDisplay (findText sf) 130 (250 + (i * 75)) 3 White Nothing
                                -- , TextDisplay (T.append "at " (monthToText (findMonth sf))) 200 (300 + (i * 100)) 3 White
                                ]

@@ -85,11 +85,16 @@ executeTrip cfgs gd trip (TripAttempt mnth eq) =
         Just shark ->  (gd', Just (SharkFind (curMnth + mnth - 1) (getEntry (sharks cfgs) shark) (tripDestination trip) eq))
     where
         eqChance = getData eq equipEffectiveness
+        eqType = getData eq equipInfoType
         curMnth = gameDataMonth gd
         loc = entryData (tripDestination trip)
         (gd', caughtP) = getRandomPercent gd
         caughtAnything = eqChance > caughtP
-        (_, sharkChances) = foldl (\(p, ls) (s, c) -> (p + c, ls ++ [(s, p+c)])) (0, []) (sharksFound $ locationSite loc)
+        sharkRates = M.toList (sharksFound $ locationSite loc)
+        rateForType = case eqType of
+            Caught -> caughtRate
+            Observed -> observedRate
+        (_, sharkChances) = foldl (\(p, ls) (s, rate) -> (p + rateForType rate, ls ++ [(s, p + rateForType rate)])) (0, []) sharkRates
         (gd'', sharkChoice) = getRandomPercent gd'
         sharkMatch m (s, p)
             | isJust m = m

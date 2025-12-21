@@ -90,6 +90,7 @@ library
       Graphics
       Graphics.Animation
       Graphics.Draw
+      Graphics.ImageUtil
       Graphics.Menu
       Graphics.TextUtil
       Graphics.Types
