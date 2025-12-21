@@ -64,7 +64,7 @@ sharkReviewMenu :: GameData -> DataEntryT SharkInfo -> GameConfigs -> Graphics -
 sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View ((,0) <$> (locWords ++ words')) [img] [] [] Nothing) (Menu (selOneOpts 500 650 3 20 [] (Just returnOpt) mc 0) Nothing)
     where
         imgKey = getData sharkEntry sharkImage
-        (img,_, _) = scalingRecenterImage gr 750 200 1.75 imgKey
+        (img, _, _) = scalingRecenterImage gr 750 200 50 40 1.75 imgKey
         locsMap = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
         mc = CursorRect White

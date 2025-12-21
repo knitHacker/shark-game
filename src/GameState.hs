@@ -160,7 +160,7 @@ reDrawState gps cfgs inputs gr =
         TripEquipmentSelect gd loc eqs cp -> menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
         TripProgress gd tp -> withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr
-        SharkFound gd sf tp -> gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs
+        SharkFound gd sf tp -> gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs gr
         TripResults gd tp -> gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr
         DataReviewTop gd -> menuWithPause gd $ topReviewMenu gd cfgs
         SharkReviewTop gd mP -> menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr
@@ -212,7 +212,7 @@ moveToNextState gps cfgs inputs gr =
         TripEquipmentSelect gd loc eqs cp -> return (gps, menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs)
         TripReview gd loc eqs -> return (gps, menuWithPause gd $ reviewTripMenu gd loc eqs cfgs)
         TripProgress gd tp -> return (gps, withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr)
-        SharkFound gd sf tp -> return (gps, gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs)
+        SharkFound gd sf tp -> return (gps, gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs gr)
         TripResults gd tp -> return (gps, gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr)
         DataReviewTop gd -> return (gps, menuWithPause gd $ topReviewMenu gd cfgs)
         SharkReviewTop gd mP -> return (gps, menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr)

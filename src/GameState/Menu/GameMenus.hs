@@ -198,7 +198,7 @@ researchCenterMenu gd (InputState _ _ _ ts) gr = GameView v Nothing [animTo] $ J
         mc = CursorRect White
         xEnd = 620
         iY = 250
-        (image, iX, scale) = scalingRecenterImage gr xEnd iY 2.0 "institute"
+        (image, iX, scale) = scalingRecenterImage gr xEnd iY 40 40 2.0 "institute"
         -- scale the offset of the start of the flag animation to put it in the right place
         flagOffsetX = round (21 * scale)
         flagOffsetY = round (132 * scale)

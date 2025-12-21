@@ -13,6 +13,7 @@ module Graphics.TextUtil
     , textMiddleX
     , wrapTextMiddleX
     , midStart
+    , percentWidth
     ) where
 
 import qualified Data.Text as T
@@ -20,6 +21,9 @@ import qualified Data.Text as T
 import Graphics.Types
 import OutputHandles.Types
 import Data.Text (Text)
+
+percentWidth :: Graphics -> Double -> Int
+percentWidth gr perc = floor (fromIntegral (graphicsWindowWidth gr) * perc)
 
 midStart :: Graphics -> Int -> Int
 midStart gr partLen = (graphicsWindowWidth gr - partLen) `div` 2
