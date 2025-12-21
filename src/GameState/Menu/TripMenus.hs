@@ -117,7 +117,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
         [] -> GameView (v []) Nothing [TimeoutData ts 0 $ TimeoutNext $ TripResults gd tp] Nothing
         (ta@(TripAttempt mn h):tl) ->
             let (gd', sfM) = exec ta
-                (gd'', randomDelay) = getRandomRange gd' 1000 3000
+                (gd'', randomDelay) = getRandomRange gd' 800 4000
                 tp' = newTrip gd'' sfM tl
                 lastText = T.concat ["Using ", getData h equipText]
                 nextTimeout = TimeoutData ts (fromIntegral randomDelay) $ TimeoutNext $ SharkFound gd'' sfM tp'
