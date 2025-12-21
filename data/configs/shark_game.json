@@ -137,37 +137,37 @@
             "siteLocations": {
                 "reef": {
                     "showText": "Reef",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear", "bruv"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear", "bruv"],
                     "sharksFound": [["nurse", 80], ["tiger", 20]]
                 },
                 "mangroves": {
                     "showText": "Mangroves",
-                    "allowedEquipment": ["fishingGear"],
+                    "allowedEquipment": ["fishingRod"],
                     "sharksFound": [["lemon", 40], ["nurse", 50], ["bull", 10]]
                 },
                 "openOcean": {
                     "showText": "Open Ocean",
-                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["blue", 30], ["sandbar", 30], ["bull", 15], ["tiger", 10], ["oceanicWhitetip", 10], ["white", 5]]
                 },
                 "seaGrass": {
                     "showText": "Sea Grass",
-                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "longLine", "drumLine"],
                     "sharksFound": [["lemon", 10], ["tiger", 10], ["blacktip", 35], ["bonnethead", 30], ["great_hammerhead", 5], ["scalloped_hammerhead", 5], ["bull", 5]]
                 },
                 "continentalShelf": {
                     "showText": "Continental Shelf",
-                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["sandbar", 40], ["blacktip", 30], ["bull", 20], ["great_hammerhead", 5], ["scalloped_hammerhead", 5]]
                 },
                 "estauary": {
                     "showText": "Estuary",
-                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear"],
                     "sharksFound": [["bull", 50], ["blacktip", 30], ["lemon", 10], ["bonnethead", 10]]
                 },
                 "sandFlats": {
                     "showText": "Sand Flats",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "longLine"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "longLine"],
                     "sharksFound": [["bonnethead", 40], ["blacktip", 30], ["bull", 20], ["nurse", 10]]
                 }
             }
@@ -180,22 +180,22 @@
             "siteLocations": {
                 "reef": {
                     "showText": "Reef",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear", "bruv"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear", "bruv"],
                     "sharksFound": [["blacktipReef", 70], ["whitetipReef", 30]]
                 },
                 "openOcean": {
                     "showText": "Open Ocean",
-                    "allowedEquipment": ["fishingGear", "longLine", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["blue", 50], ["porbeagle", 30], ["thresher", 20]]
                 },
                 "seaGrass": {
                     "showText": "Sea Grass",
-                    "allowedEquipment": ["fishingGear", "snorkelGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear"],
                     "sharksFound": [["sandbar", 60], ["bull", 30], ["spinner", 10]]
                 },
                 "kelpForest": {
                     "showText": "Kelp Forest",
-                    "allowedEquipment": ["fishingGear", "snorkelGear", "scubaGear"],
+                    "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear"],
                     "sharksFound": [["leopard", 50], ["sevengill", 15], ["white", 5], ["horn", 30]]
                 }
             }
