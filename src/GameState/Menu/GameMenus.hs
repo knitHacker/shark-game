@@ -35,6 +35,7 @@ import GameState.Types
 import Graphics.Types
 import Graphics.Menu
 import Graphics.TextUtil
+import Graphics.ImageUtil
 import Graphics.Animation
 
 import InputState
@@ -195,8 +196,13 @@ researchCenterMenu gd (InputState _ _ _ ts) gr = GameView v Nothing [animTo] $ J
         m = Menu (selOneOpts 100 400 3 15 opts Nothing mc 0) Nothing
         funds = gameDataFunds gd
         mc = CursorRect White
-        image = IPlace 620 250 2.0 "institute" 1
-        flagAnim = APlace 663 515 2.0 "flag_with_shadow" 0 0 2
+        xEnd = 620
+        iY = 250
+        (image, iX, scale) = scalingRecenterImage gr xEnd iY 2.0 "institute"
+        -- scale the offset of the start of the flag animation to put it in the right place
+        flagOffsetX = round (21 * scale)
+        flagOffsetY = round (132 * scale)
+        flagAnim = APlace (iX + flagOffsetX) (iY + flagOffsetY) scale "flag_with_shadow" 0 0 2
         animTo = TimeoutData ts 170 $ TimeoutAnimation $ startTextAnim gr [flagAnim]
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         words = [ TextDisplay "Research" 50 10 7 White Nothing

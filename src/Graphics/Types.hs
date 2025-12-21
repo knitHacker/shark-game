@@ -59,8 +59,8 @@ data TextureInfo = ImageCfg ImageInfo | AnimationCfg AnimationInfo
                    deriving (Show, Eq)
 
 data Graphics = Graphics
-    { graphicsStaticTextures :: M.Map Image ImageInfo
-    , graphicsAnimTextures :: M.Map Image AnimationInfo
+    { graphicsStaticTextures :: !(M.Map Image ImageInfo)
+    , graphicsAnimTextures :: !(M.Map Image AnimationInfo)
     , graphicsFontSize :: !FontSize -- can be map in the future
     , graphicsWindowWidth :: !Int
     , graphicsWindowHeight :: !Int
@@ -86,7 +86,7 @@ data TimeoutAction a =
 data TimeoutData a = TimeoutData
     { lastTimeout :: !Int64
     , timeoutLength :: !Int64
-    , timeoutAction :: TimeoutAction a
+    , timeoutAction :: !(TimeoutAction a)
     } deriving (Show, Eq)
 
 updateTimeoutData :: [TimeoutData a] -> [TimeoutData a] -> [TimeoutData a]
@@ -257,7 +257,16 @@ data MenuData a = MenuData
     } deriving (Show, Eq)
 
 updateMenuData :: MenuData a -> MenuData a -> MenuData a
-updateMenuData md1 md2 = md2 { cursorPosition = cursorPosition md1 }
+updateMenuData md1 md2 = md2
+    { cursorPosition = cursorPosition md1
+    , menuOptions = updateMenuOptions (menuOptions md1) (menuOptions md2)
+    }
+    where
+        updateMenuOptions (ScrollListOpts sl1) (ScrollListOpts sl2) =
+            ScrollListOpts $ sl2 { sLScroll = updateScroll (sLScroll sl1) (sLScroll sl2) }
+        updateMenuOptions _ opts2 = opts2
+
+        updateScroll scroll1 scroll2 = scroll2 { scrollPos = scrollPos scroll1 }
 
 data MenuOptionType a =
       SelOneListOpts (OneActionListOptions a)
@@ -276,7 +285,10 @@ data Menu a = Menu
     } deriving (Show, Eq)
 
 updateMenu :: Menu a -> Menu a -> Menu a
-updateMenu m1 m2 = m2 { options = updateMenuData (options m1) (options m2) }
+updateMenu m1 m2 = m2
+    { options = updateMenuData (options m1) (options m2)
+    , popupMaybe = popM
+    }
     where
         popM = case (popupMaybe m1, popupMaybe m2) of
             (Just p1, Just p2) -> Just $ p2 { popupOptions = updateMenuData (popupOptions p1) (popupOptions p2) }

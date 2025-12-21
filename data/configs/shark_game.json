@@ -153,7 +153,7 @@
                     "biomeDescription": "Waters far from shore.",
                     "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["blue", 35, 20], ["sandbar", 30, 25], ["bull", 10, 10],
-                                    ["tiger", 10, 10], ["oceanicWhitetip", 10, 10],
+                                    ["tiger", 10, 10], ["oceanicWhitetip", 5, 10],
                                     ["white", 5, 5], ["shortfin_mako", 5, 5], ["whale", 0, 15]]
                 },
                 "seaGrass": {
@@ -178,7 +178,7 @@
                     "showText": "Sand Flats",
                     "biomeDescription": "Shallow, sandy areas often exposed during low tide.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "longLine"],
-                    "sharksFound": [["bonnethead", 30, 50], ["blacktip", 25, 40], ["bull", 20, 15], ["nurse", 5, 20]]
+                    "sharksFound": [["bonnethead", 35, 40], ["blacktip", 30, 40], ["bull", 30, 15], ["nurse", 5, 5]]
                 }
             }
         },

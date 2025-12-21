@@ -32,13 +32,13 @@ import Graphics.Animation
 
 import Debug.Trace
 
-mapMenu :: GameData -> GameConfigs -> GameMenu
-mapMenu gd cfgs = GameMenu (textView words) (Menu options Nothing)
+mapMenu :: GameData -> Graphics -> GameConfigs -> GameMenu
+mapMenu gd gr cfgs = GameMenu (textView words) (Menu options Nothing)
     where
         region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
-        options = scrollOpts 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just rtOpt) [] 4 0
+        options = resizingScrollOpts gr 50 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just rtOpt) [] 0
         locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (getData region siteLocations)
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 50 50 8 White Nothing

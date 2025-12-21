@@ -46,7 +46,7 @@ updateGameState = do
     let gr' = updateGraphics (gameGraphics gs) cfgs inputs
         gsM = updateGameView gr' inputs $ gameView gs
     case (windowResized inputs, gsM) of
-        (Just _, Nothing) ->
+        (Just resize, _) ->
             let gv = reDrawState (gameLastState gs) cfgs inputs gr'
             in return $ GameState gr' (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
         (Nothing, Nothing) -> return gs
@@ -156,18 +156,18 @@ reDrawState gps cfgs inputs gr =
         IntroFunds gd -> menuWithPause gd $ introFunds gd gr
         IntroEnd gd -> menuWithPause gd $ introEnd gd gr
         ResearchCenter gd -> withPause gps gd $ researchCenterMenu gd inputs gr
-        TripDestinationSelect gd -> menuWithPause gd $ mapMenu gd cfgs
+        TripDestinationSelect gd -> menuWithPause gd $ mapMenu gd gr cfgs
         TripEquipmentSelect gd loc eqs cp -> menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
         TripProgress gd tp -> withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr
         SharkFound gd sf tp -> gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs
         TripResults gd tp -> gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr
         DataReviewTop gd -> menuWithPause gd $ topReviewMenu gd cfgs
-        SharkReviewTop gd mP -> menuWithPause gd $ topReviewSharksMenu gd mP cfgs
+        SharkReviewTop gd mP -> menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr
         SharkReview gd se -> menuWithPause gd $ sharkReviewMenu gd se cfgs gr
         ResearchReviewTop gd -> menuWithPause gd $ topLabMenu gd cfgs
-        OpenResearchMenu gd -> menuWithPause gd $ openResearchMenu gd cfgs
-        CompletedResearchMenu gd -> menuWithPause gd $ completedResearchMenu gd cfgs
+        OpenResearchMenu gd -> menuWithPause gd $ openResearchMenu gd cfgs gr
+        CompletedResearchMenu gd -> menuWithPause gd $ completedResearchMenu gd cfgs gr
         InvestigateResearchMenu gd rd -> menuWithPause gd $ investigateResearchMenu gd rd cfgs gr
         AwardGrantMenu gd rd -> menuWithPause gd $ awardGrantMenu gd rd cfgs gr
         CompletedResearchReviewMenu gd rd -> menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
@@ -208,18 +208,18 @@ moveToNextState gps cfgs inputs gr =
         IntroFunds gd -> return (gps, menuWithPause gd $ introFunds gd gr)
         IntroEnd gd -> return (gps, menuWithPause gd $ introEnd gd gr)
         ResearchCenter gd -> return (gps, withPause gps gd $ researchCenterMenu gd inputs gr)
-        TripDestinationSelect gd -> return (gps, menuWithPause gd $ mapMenu gd cfgs)
+        TripDestinationSelect gd -> return (gps, menuWithPause gd $ mapMenu gd gr cfgs)
         TripEquipmentSelect gd loc eqs cp -> return (gps, menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs)
         TripReview gd loc eqs -> return (gps, menuWithPause gd $ reviewTripMenu gd loc eqs cfgs)
         TripProgress gd tp -> return (gps, withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr)
         SharkFound gd sf tp -> return (gps, gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs)
         TripResults gd tp -> return (gps, gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr)
         DataReviewTop gd -> return (gps, menuWithPause gd $ topReviewMenu gd cfgs)
-        SharkReviewTop gd mP -> return (gps, menuWithPause gd $ topReviewSharksMenu gd mP cfgs)
+        SharkReviewTop gd mP -> return (gps, menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr)
         SharkReview gd se -> return (gps, menuWithPause gd $ sharkReviewMenu gd se cfgs gr)
         ResearchReviewTop gd -> return (gps, menuWithPause gd $ topLabMenu gd cfgs)
-        OpenResearchMenu gd -> return (gps, menuWithPause gd $ openResearchMenu gd cfgs)
-        CompletedResearchMenu gd -> return (gps, menuWithPause gd $ completedResearchMenu gd cfgs)
+        OpenResearchMenu gd -> return (gps, menuWithPause gd $ openResearchMenu gd cfgs gr)
+        CompletedResearchMenu gd -> return (gps, menuWithPause gd $ completedResearchMenu gd cfgs gr)
         InvestigateResearchMenu gd rd -> return (gps, menuWithPause gd $ investigateResearchMenu gd rd cfgs gr)
         AwardGrantMenu gd rd -> return (gps, menuWithPause gd $ awardGrantMenu gd rd cfgs gr)
         CompletedResearchReviewMenu gd rd -> return (gps, menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr)

@@ -5,6 +5,7 @@ module Graphics.Menu
     , selOneOpts
     , selMultOpts
     , scrollOpts
+    , resizingScrollOpts
     , getNextMenu
     , getNextOption
     , getBackOption
@@ -17,6 +18,7 @@ module Graphics.Menu
     , getOptSize
     , getTextureSize
     , textView
+    , getOptionHeight
     ) where
 
 import qualified Data.Text as T
@@ -58,6 +60,11 @@ mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
 getTextureSize :: TextureInfo -> (Int, Int)
 getTextureSize (ImageCfg (ImageInfo sx sy)) = (sx, sy)
 getTextureSize (AnimationCfg (AnimationInfo sx sy _ _)) = (sx, sy)
+
+-- Calculate the height of a menu option given BlockDrawInfo and font size
+-- This matches the calculation used in Graphics.Draw
+getOptionHeight :: FontSize -> Int -> Int -> Int
+getOptionHeight (_, fh) s sp = sp + ceiling (fh * fromIntegral s)
 
 getViewSize :: Graphics -> View a -> Maybe ((Int, Int), (Int, Int))
 getViewSize _ (View [] [] [] [] Nothing) = Nothing
@@ -102,6 +109,24 @@ scrollOpts x y s sp opts backM fixed maxScroll pos = MenuData (ScrollListOpts $ 
         -- If cursor is within the first maxScroll items, no offset needed
         -- Otherwise, offset so the cursor is visible (centered when possible)
         initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
+
+
+resizingScrollOpts :: Graphics -> Int -> Int -> Int -> Int -> Int -> BasicOption a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> MenuData a
+resizingScrollOpts gr margin x y s sp opts backM fixed pos = MenuData (ScrollListOpts $ SLOpts opts fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
+    where
+        windowHeight = graphicsWindowHeight gr
+        fontSize = graphicsFontSize gr
+        availableHeight = windowHeight - y - margin
+        optionHeight = getOptionHeight fontSize s sp
+        additionalOptsCount = length fixed + (if isJust backM then 1 else 0)
+        maxVisibleOptions = max 1 (availableHeight `div` optionHeight)
+        maxScroll = max 1 (maxVisibleOptions - additionalOptsCount)
+        -- Calculate initial scroll offset to ensure cursor position is visible
+        -- If cursor is within the first maxScroll items, no offset needed
+        -- Otherwise, offset so the cursor is visible (centered when possible)
+        initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
+
+
 
 getNextOption :: MenuData a -> Maybe a
 getNextOption (MenuData (SelOneListOpts opts) _ pos) = getNextOALOpts opts pos
