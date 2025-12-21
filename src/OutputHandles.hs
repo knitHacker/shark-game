@@ -63,10 +63,10 @@ initOutputHandles textCfgs cfgs = do
     window <- SDL.createWindow "My Game" SDL.defaultWindow
         { SDL.windowInitialSize = V2 screenWidth screenHeight
         , SDL.windowHighDPI = True
-        , SDL.windowMode = if fs then SDL.FullscreenDesktop else SDL.Windowed
+        , SDL.windowMode = SDL.Windowed
         , SDL.windowResizable = True
         }
-    --when fs $ SDL.setWindowMode window SDL.Maximized
+    when fs $ SDL.setWindowMode window SDL.FullscreenDesktop
     SDL.showWindow window
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
