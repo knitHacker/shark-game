@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Install Stack
       run: |
@@ -67,7 +67,7 @@ jobs:
         dpkg-deb --build package shark-game_${GITHUB_REF_NAME#v}_amd64.deb
         
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: shark-game-deb
         path: shark-game_*.deb
