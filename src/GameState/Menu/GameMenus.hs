@@ -62,7 +62,8 @@ mainMenu gdM gr = GameView v Nothing [animTO, waveMoveTO] (Just $ Menu optEntry 
         waveAnim2 = APlace 500 800 8.0 "wave" 4 0 1
         waveAnim3 = APlace 100 600 6.0 "wave" 7 0 1
         waveAnim4 = APlace 700 200 7.0 "wave" 5 0 1
-        animTO = TimeoutData 0 100 $ TimeoutAnimation $ startTextAnim gr [waveAnim, waveAnim2, waveAnim3, waveAnim4]
+        waveAnim5 = APlace 200 650 5.5 "wave" 2 0 1
+        animTO = TimeoutData 0 100 $ TimeoutAnimation $ startTextAnim gr [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5]
         waveMoveTO = TimeoutData 0 100 $ TimeoutAnimation $ startAnimation 10 nextFrame
         newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
@@ -71,8 +72,11 @@ mainMenu gdM gr = GameView v Nothing [animTO, waveMoveTO] (Just $ Menu optEntry 
             case gdM of
                 Nothing -> [newGame, exitOpt]
                 Just cg -> [continueGame cg, newGame, exitOpt]
-        updateWave wave = wave { animPosX = (animPosX wave + 50) `mod` graphicsWindowWidth gr}
-        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave <$> aps }
+        updateWave (i, wave) =
+            let newX = animPosX wave + 30 + (i * round (animScale wave))
+                newY = if newX > graphicsWindowWidth gr then animPosY wave + 210 - i * 10 else animPosY wave
+            in wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50) }
+        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave <$> zip [1..] aps }
 
 
 introWelcome :: GameData -> Graphics -> GameMenu
