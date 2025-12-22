@@ -111,7 +111,7 @@ openResearchMenu gd cfgs gr = GameMenu (textView words') (Menu options Nothing)
         opts = (\s -> MenuAction (getData s researchPaperName) $ Just (InvestigateResearchMenu gd s)) <$> availResearch
         backOpt = MenuAction "Back" $ Just $ ResearchReviewTop gd
         options = resizingScrollOpts gr 50 150 250 3 25 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just backOpt) [] 0
-        words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 20 100 2 Red Nothing] else words
+        words' = if null opts then words ++ [TextDisplay "Find more sharks to come up with research ideas" 150 180 3 Red Nothing] else words
 
 completedResearchMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
 completedResearchMenu gd cfgs gr = GameMenu (textView words') (Menu options Nothing)

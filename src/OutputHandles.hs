@@ -58,7 +58,7 @@ getWindowSize outs = do
 initOutputHandles :: TextureCfg -> GameConfigs -> IO OutputHandles
 initOutputHandles textCfgs cfgs = do
     fontPath <- getGameFullPath fontFile
-    SDL.initialize []
+    SDL.initializeAll
     Font.initialize
     window <- SDL.createWindow "My Game" SDL.defaultWindow
         { SDL.windowInitialSize = V2 screenWidth screenHeight
