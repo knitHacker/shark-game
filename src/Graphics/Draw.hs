@@ -68,7 +68,7 @@ updateGameView gr d (View words imgs ans rs scrollM) = r4
     where
         r = foldl (\rend (td, tDepth) -> addText rend d tDepth td) renderEmpty words
         r' = foldl (\rend (t, iDepth) -> addTexture rend d iDepth t) r $ toDraw <$> imgs
-        r'' = foldl (\rend (a, fd) -> addAnimTexture rend d fd a) r' $ animToDraw gr <$> ans
+        r'' = foldl (\rend (s, a, fd) -> if s then addAnimTexture rend d fd a else rend) r' $ animToDraw gr <$> ans
         r3 = foldl (\rend (c, x, y, w, h, rD) -> addRectangle rend d rD (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r'' rs
         toDraw :: ImagePlacement -> (DrawTexture, Int)
         toDraw (IPlace x y s tE rectDepth) =
@@ -79,8 +79,8 @@ updateGameView gr d (View words imgs ans rs scrollM) = r4
                 Nothing -> r3
                 Just scroll -> r3 <> updateGameViewScroll gr d scroll
 
-animToDraw :: Graphics -> AnimPlacement -> (DrawAnimFrame, Int)
-animToDraw gr (APlace x y s t f d fd) = (DFrame t x' y' w' h' s f d, fd)
+animToDraw :: Graphics -> AnimPlacement -> (Bool, DrawAnimFrame, Int)
+animToDraw gr (APlace x y s t f d fd show) = (show, DFrame t x' y' w' h' s f d, fd)
     where
         (w, h) = getTextureSize $ AnimationCfg (graphicsAnimTextures gr ! t)
         x' = fromIntegral x

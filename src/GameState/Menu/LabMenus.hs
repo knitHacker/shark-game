@@ -133,7 +133,7 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Jus
         v = View ((,0) <$> words) [waterImg, boatStart, dockImg] [apStart] [] Nothing
         md = Menu (selOneOpts 200 550 4 15 opts (Just backOpt) mc 0) Nothing
         to = TimeoutData (timestamp inputs) 300 $ TimeoutAnimation $ startAnimation 10 nextFrame
-        toFlag = TimeoutData (timestamp inputs) 150 $ TimeoutAnimation $ startTextAnim gr [apStart]
+        toFlag = TimeoutData (timestamp inputs) 150 $ TimeoutAnimation $ startTextAnim gr
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         boatI = boatImage boatInfo
@@ -154,7 +154,7 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Jus
         waterImg = IPlace imgBaseX imgBaseY 0.9 "water" 1
         dockImg = IPlace imgBaseX imgBaseY 0.9 "dock" 3
         boatStart = IPlace baseBoatX baseBoatY 1.3 boatI 2
-        apStart = APlace (baseBoatX + 85) (baseBoatY + 55) 0.9 "flag" 0 0 4
+        apStart = APlace (baseBoatX + 85) (baseBoatY + 55) 0.9 "flag" 0 0 4 True
         opts = [ MenuAction "Change Boats" $ Just $ ChooseBoat gd
                , MenuAction "Boat Store" $ Just $ BoatStore Nothing gd
                 ]

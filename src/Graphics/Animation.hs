@@ -19,23 +19,18 @@ updateAnimation gr view ad@(AnimationData frame maxFrame action) = (ad { animati
             TextureAnimAction ->
                 let anims = animations view
                     updatedAnims = map updateAnim anims
-                    updateAnim ap@(APlace x y scale animTexture animFrame animDepth d) =
+                    updateAnim ap@(APlace x y scale animTexture animFrame animDepth d True) =
                         let anim = graphicsAnimTextures gr ! animTexture
                             mxFrame = animFrameCount anim
-                            mxDepth = animFrameDepth anim
-                        in ap { animFrame = (animFrame + 1) `mod` mxFrame, animDepth = animDepth `mod` mxDepth }
+                        in ap { animFrame = (animFrame + 1) `mod` mxFrame }
+                    updateAnim ap = ap
                 in view { animations = updatedAnims }
 
 startAnimation :: Int -> (View a -> Int -> View a) -> AnimationData a
 startAnimation toLen f = AnimationData 0 toLen $ GeneralAnimAction f
 
-startTextAnim :: Graphics -> [AnimPlacement] -> AnimationData a
-startTextAnim _ [] = AnimationData 0 1 TextureAnimAction
-startTextAnim gr apL = AnimationData 0 maxFrame TextureAnimAction
-    where
-        maxFrame = maximum $ map getMaxFrame apL
-        getMaxFrame (APlace _ _ _ animTexture _ _ _) = animFrameCount (graphicsAnimTextures gr ! animTexture)
-
+startTextAnim :: Graphics -> AnimationData a
+startTextAnim gr = AnimationData 0 maxBound TextureAnimAction
 
 useUpdate :: AnimPlacement -> AnimPlacement -> AnimPlacement
-useUpdate apPos (APlace _ _ _ _ animFrame animDepth _) = apPos { animFrame = animFrame, animDepth = animDepth }
+useUpdate apPos (APlace _ _ _ _ animFrame animDepth _ show) = apPos { animFrame = animFrame, animDepth = animDepth, animShow = show }

@@ -144,6 +144,7 @@ data AnimPlacement = APlace
     , animFrame :: !Int
     , animDepth :: !Int
     , frameDepth :: !Int
+    , animShow :: !Bool
     } deriving (Show, Eq)
 
 data View a = View
