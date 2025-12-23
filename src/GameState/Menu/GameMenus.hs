@@ -50,7 +50,6 @@ updateWave gr fr (i, wave) = wave { animPosX = newX `mod` graphicsWindowWidth gr
         nextFrame = animFrame wave + 1 `mod` fr
         newX = animPosX wave + 30 + (i * round (animScale wave))
         newY = if newX > graphicsWindowWidth gr then animPosY wave + 210 - i * 10 else animPosY wave
-        moveWave = wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50), animShow = True }
         show = nextFrame <= maxWaveFrame
 
 mainMenu :: Maybe GameData -> Graphics -> GameView
