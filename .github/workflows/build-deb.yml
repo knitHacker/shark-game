@@ -1,4 +1,4 @@
-name: Build Pop!_OS Package
+name: Build Deb Package
 
 on:
   push:
@@ -9,81 +9,52 @@ on:
 jobs:
   build-deb:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Stack
-      run: |
-        if ! command -v stack &> /dev/null; then
-          curl -sSL https://get.haskellstack.org/ | sh
-        fi
-        stack --version
-    
-    - name: Install SDL2 dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
-        
-    - name: Build executable
-      run: |
-        stack build --copy-bins --local-bin-path ./bin
-        
-    - name: Create package structure
-      run: |
-        mkdir -p package/DEBIAN
-        mkdir -p package/usr/local/bin
-        mkdir -p package/usr/share/shark-game/assets
-        mkdir -p package/usr/share/shark-game/data
-        mkdir -p package/usr/share/applications
-        mkdir -p package/usr/share/icons/hicolor/256x256/apps
-        
-    - name: Copy files
-      run: |
-        cp ./bin/shark-game-exe package/usr/local/bin/shark-game
-        chmod +x package/usr/local/bin/shark-game
-        cp -r assets/* package/usr/share/shark-game/assets/
-        cp -r data/configs package/usr/share/shark-game/data/
-        mkdir -p package/usr/share/shark-game/data/saves
-        
-    - name: Create control file
-      run: |
-        cat > package/DEBIAN/control << EOF
-        Package: shark-game
-        Version: ${GITHUB_REF_NAME#v}
-        Architecture: amd64
-        Maintainer: Your Name <your.email@example.com>
-        Description: Shark Research Center Game
-         A game about managing a shark research center and conducting research trips.
-        Depends: libgmp10, zlib1g, libsdl2-2.0-0, libsdl2-ttf-2.0-0, libsdl2-image-2.0-0
-        EOF
-        
-    - name: Create desktop file (optional)
-      run: |
-        cat > package/usr/share/applications/shark-game.desktop << EOF
-        [Desktop Entry]
-        Type=Application
-        Name=Shark Game
-        Comment=Shark Research Center Management
-        Exec=/usr/local/bin/shark-game
-        Terminal=false
-        Categories=Game;
-        EOF
-        
-    - name: Build .deb package
-      run: |
-        dpkg-deb --build package shark-game_${GITHUB_REF_NAME#v}_amd64.deb
-        
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: shark-game-deb
-        path: shark-game_*.deb
-        
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: shark-game_*.deb
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev
+
+      - name: Build
+        run: stack build --copy-bins --local-bin-path ./
+
+      - name: Package
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          mkdir -p .debpkg/usr/local/bin
+          mkdir -p .debpkg/usr/share/shark-game
+          mkdir -p .debpkg/DEBIAN
+
+          # Copy binary
+          cp shark-game-exe .debpkg/usr/local/bin/shark-game
+          chmod +x .debpkg/usr/local/bin/shark-game
+
+          # Copy assets
+          cp -r assets data .debpkg/usr/share/shark-game/
+
+          # Create control file
+          cat > .debpkg/DEBIAN/control << EOF
+          Package: shark-game
+          Version: $VERSION
+          Architecture: amd64
+          Maintainer: Lianne Lairmore <lianne.lairmore@gmail.com>
+          Description: Shark Institute Game
+          Depends: libsdl2-2.0-0, libsdl2-ttf-2.0-0, libsdl2-image-2.0-0
+          EOF
+
+          # Build deb
+          dpkg-deb --build .debpkg shark-game_${VERSION}_amd64.deb
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: shark-game_*.deb
