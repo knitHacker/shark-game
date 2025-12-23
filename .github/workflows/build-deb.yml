@@ -28,7 +28,12 @@ jobs:
 
       - name: Package
         run: |
+          # Use tag version if available, otherwise use 0.0.0-dev
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
           VERSION=${GITHUB_REF_NAME#v}
+          else
+            VERSION="0.0.0-dev"
+          fi
           mkdir -p .debpkg/usr/local/bin
           mkdir -p .debpkg/usr/share/shark-game
           mkdir -p .debpkg/DEBIAN
