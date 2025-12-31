@@ -75,4 +75,4 @@ centerAnimation gr yPos scale animName = animation
         windowWidth = graphicsWindowWidth gr
         ai = graphicsAnimTextures gr M.! animName
         iX = (windowWidth - round (fromIntegral (animSizeX ai) * scale)) `div` 2
-        animation = APlace iX yPos scale animName 0 0 1
+        animation = APlace iX yPos scale animName 0 0 1 True

@@ -1,4 +1,3 @@
-{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -43,10 +42,26 @@ import Util
 
 import Debug.Trace
 
-mainMenu :: Maybe GameData -> Graphics -> GameView
-mainMenu gdM gr = GameView v Nothing [animTO, waveMoveTO] (Just $ Menu optEntry Nothing)
+updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
+updateWave gr fr (i, wave)
+    | newX < graphicsWindowWidth gr = wave { animPosX = newX, animShow = show, animFrame = nextFrame }
+    | mod (fr + nextFrame) 3 == 0 = wave { animShow = False }
+    | otherwise = wave { animPosX = xMod + fr, animPosY = newY, animShow = True, animFrame = 1 }
     where
-        v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4] [rect] Nothing
+        maxWaveFrame = animFrameCount $ graphicsAnimTextures gr M.! animTexture wave
+        nextFrame = (animFrame wave + 1) `mod` maxWaveFrame
+        xMod = i * 2 + round (2 * animScale wave)
+        newX = if animShow wave then animPosX wave + 30 + xMod else animPosX wave + (xMod * 4) + 100
+        newY = max (100 + fr * 10) $ (animPosY wave + 50) `mod` (graphicsWindowHeight gr - 100)
+        show
+            | nextFrame == 0 && animShow wave = False
+            | nextFrame == 0 && fr `mod` 3 == 0 = False
+            | otherwise = True
+
+mainMenu :: Maybe GameData -> Graphics -> GameView
+mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
+    where
+        v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5] [rect] Nothing
         rect = (DarkBlue, 0, 0, graphicsWindowWidth gr, graphicsWindowHeight gr, 0)
         midY = div (graphicsWindowHeight gr) 2
         xPos = midTextStart gr instTxt 3
@@ -58,13 +73,13 @@ mainMenu gdM gr = GameView v Nothing [animTO, waveMoveTO] (Just $ Menu optEntry 
                 , (TextDisplay "Institute" 100 200 12 Gray Nothing, 2)
                 , (instr, 2)
                 ]
-        waveAnim = APlace 300 400 10.0 "wave" 0 0 1
-        waveAnim2 = APlace 500 800 8.0 "wave" 4 0 1
-        waveAnim3 = APlace 100 600 6.0 "wave" 7 0 1
-        waveAnim4 = APlace 700 200 7.0 "wave" 5 0 1
-        waveAnim5 = APlace 200 650 5.5 "wave" 2 0 1
-        animTO = TimeoutData 0 100 $ TimeoutAnimation $ startTextAnim gr [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5]
-        waveMoveTO = TimeoutData 0 100 $ TimeoutAnimation $ startAnimation 10 nextFrame
+        animKey = "wave"
+        waveAnim = APlace 340 400 10.0 animKey 0 0 1 False
+        waveAnim2 = APlace 500 900 8.0 animKey 4 0 1 True
+        waveAnim3 = APlace 100 750 6.0 animKey 7 0 1 True
+        waveAnim4 = APlace 700 200 7.0 animKey 5 0 1 True
+        waveAnim5 = APlace 1100 150 5.5 animKey 2 0 1 True
+        waveMoveTO = TimeoutData 0 120 $ TimeoutAnimation $ startAnimation 15 nextFrame
         newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
         exitOpt = MenuAction "Exit" $ Just $ GameExitState gdM
@@ -72,11 +87,7 @@ mainMenu gdM gr = GameView v Nothing [animTO, waveMoveTO] (Just $ Menu optEntry 
             case gdM of
                 Nothing -> [newGame, exitOpt]
                 Just cg -> [continueGame cg, newGame, exitOpt]
-        updateWave (i, wave) =
-            let newX = animPosX wave + 30 + (i * round (animScale wave))
-                newY = if newX > graphicsWindowWidth gr then animPosY wave + 210 - i * 10 else animPosY wave
-            in wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50) }
-        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave <$> zip [1..] aps }
+        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave gr frame <$> zip [1..] aps }
 
 
 introWelcome :: GameData -> Graphics -> GameMenu
@@ -220,8 +231,8 @@ researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
         -- scale the offset of the start of the flag animation to put it in the right place
         flagOffsetX = round (21 * scale)
         flagOffsetY = round (132 * scale)
-        flagAnim = APlace (iX + flagOffsetX) (iY + flagOffsetY) scale "flag_with_shadow" 0 0 2
-        animTo = TimeoutData 0 170 $ TimeoutAnimation $ startTextAnim gr [flagAnim]
+        flagAnim = APlace (iX + flagOffsetX) (iY + flagOffsetY) scale "flag_with_shadow" 0 0 2 True
+        animTo = TimeoutData 0 170 $ TimeoutAnimation $ startTextAnim gr
         fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
         words = [ TextDisplay "Research" 50 10 7 White Nothing
                 , TextDisplay "Center" 200 140 7 White Nothing

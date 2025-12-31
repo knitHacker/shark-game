@@ -36,8 +36,10 @@ import Debug.Trace
 type FontSize = (Double, Double)
 
 -- first number is layer number
--- third number is priority
-type Position = (Int, Int, Int)
+-- second number is priority
+-- third number is yEnd
+-- fourth number is incremental when added for stable sort
+type Position = (Int, Int, Int, Int)
 
 type Draws = M.Map Position Draw
 
@@ -67,7 +69,14 @@ filterDraws f (ToRender n ds dbs) = ToRender n (M.mapMaybe f ds) dbs
 addDraw :: ToRender -> Int -> Int -> Draw -> ToRender
 addDraw (ToRender n ds dbs) depth priority d = ToRender (n + 1) ds' dbs
     where
-        ds' = M.insert (depth, priority, n) d ds
+        ds' = M.insert (depth, priority, endY d, n) d ds
+
+endY :: Draw -> Int
+endY (DrawTexture dt) = fromIntegral $ drawPosY dt + drawHeight dt
+endY (DrawRectangle dr) = fromIntegral $ rectPosY dr + rectHeight dr
+endY (DrawAnimFrame daf) = fromIntegral $ drawPosAY daf + drawAHeight daf
+-- Just using startX for text because height is based on font size, not actual text height
+endY (DrawTextDisplay td) = fromIntegral $ wordsPosY td
 
 instance Monoid ToRender where
     mempty :: ToRender
@@ -77,7 +86,7 @@ instance Semigroup ToRender where
    (<>) :: ToRender -> ToRender -> ToRender
    (<>) (ToRender n1 m1 d1) (ToRender n2 m2 d2) = ToRender (n1+n2) (m1 <> m2') (d1 <> d2)
     where
-        m2' = M.mapKeys (\(a, b, c) -> (a, b, c + n1)) m2
+        m2' = M.mapKeys (\(a, b, c, d) -> (a, b, c, d + n1)) m2
 
 data Color = White
            | Gray
