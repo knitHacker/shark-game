@@ -1,4 +1,3 @@
-{-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
 
@@ -44,13 +43,18 @@ import Util
 import Debug.Trace
 
 updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
-updateWave gr fr (i, wave) = wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50), animShow = show }
+updateWave gr fr (i, wave) = wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50), animShow = show, animFrame = nextFrame }
     where
         maxWaveFrame = animFrameCount $ graphicsAnimTextures gr M.! animTexture wave
-        nextFrame = animFrame wave + 1 `mod` fr
-        newX = animPosX wave + 30 + (i * round (animScale wave))
+        step = fr + animFrame wave
+        nextFrame = (animFrame wave + 1) `mod` maxWaveFrame
+        xMod = i * round (animScale wave)
+        newX = if animShow wave then animPosX wave + 30 + xMod else animPosX wave + (xMod * 2) + 100
         newY = if newX > graphicsWindowWidth gr then animPosY wave + 210 - i * 10 else animPosY wave
-        show = nextFrame <= maxWaveFrame
+        show
+            | nextFrame == 0 && animShow wave = False
+            | nextFrame == 0 && fr `mod` 3 == 0 = False
+            | otherwise = True
 
 mainMenu :: Maybe GameData -> Graphics -> GameView
 mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
@@ -73,7 +77,7 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
         waveAnim3 = APlace 100 600 6.0 animKey 7 0 1 True
         waveAnim4 = APlace 700 200 7.0 animKey 5 0 1 True
         waveAnim5 = APlace 200 650 5.5 animKey 2 0 1 True
-        waveMoveTO = TimeoutData 0 100 $ TimeoutAnimation $ startAnimation 14 nextFrame
+        waveMoveTO = TimeoutData 0 120 $ TimeoutAnimation $ startAnimation 15 nextFrame
         newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
         exitOpt = MenuAction "Exit" $ Just $ GameExitState gdM
@@ -81,12 +85,7 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
             case gdM of
                 Nothing -> [newGame, exitOpt]
                 Just cg -> [continueGame cg, newGame, exitOpt]
-        updateWave fr (i, wave) =
-            let newX = animPosX wave + 30 + (i * round (animScale wave))
-                newY = if newX > graphicsWindowWidth gr then animPosY wave + 210 - i * 10 else animPosY wave
-                moveWave = wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50), animShow = True }
-            in if animShow wave && animFrame wave == 0 then moveWave { animShow = False, animPosX = newX + 200, animPosY = newY + 30 } else moveWave
-        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave frame <$> zip [1..] aps }
+        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave gr frame <$> zip [1..] aps }
 
 
 introWelcome :: GameData -> Graphics -> GameMenu
