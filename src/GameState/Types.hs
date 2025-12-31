@@ -83,9 +83,9 @@ data GamePlayState =
     | IntroFunds GameData
     | IntroEnd GameData
     | ResearchCenter GameData
-    | TripDestinationSelect GameData
-    | TripEquipmentSelect GameData T.Text [T.Text] Int
-    | TripReview GameData T.Text [T.Text]
+    | TripDestinationSelect GameData Int
+    | TripEquipmentSelect GameData (Int, T.Text) [T.Text] Int
+    | TripReview GameData (Int, T.Text) [T.Text]
     | TripProgress GameData TripState
     | GameExitState (Maybe GameData)
     | SharkFound GameData (Maybe SharkFind) TripState

@@ -166,7 +166,7 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Jus
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
 chooseActiveBoatMenu gd cfgs = GameMenu (textView words) (Menu (md pos) Nothing)
     where
-        md = scrollOpts 250 550 4 8 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just cancelOpt) [] 4
+        md = scrollOpts 250 550 4 8 (BasicSOALOpts (OALOpts opts Nothing Nothing mc)) (Just cancelOpt) [] 4
         cancelOpt = MenuAction "Back" $ Just $ FleetManagement gd
         mc = CursorRect White
         bts = boats $ sharkCfgs cfgs

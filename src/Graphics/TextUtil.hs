@@ -12,7 +12,8 @@ module Graphics.TextUtil
     , showMoney
     , textMiddleX
     , wrapTextMiddleX
-    , midStart
+    , midStartX
+    , midStartY
     , midTextStart
     , percentWidth
     ) where
@@ -26,11 +27,14 @@ import Data.Text (Text)
 percentWidth :: Graphics -> Double -> Int
 percentWidth gr perc = floor (fromIntegral (graphicsWindowWidth gr) * perc)
 
-midStart :: Graphics -> Int -> Int
-midStart gr partLen = (graphicsWindowWidth gr - partLen) `div` 2
+midStartX :: Graphics -> Int -> Int
+midStartX gr partLen = (graphicsWindowWidth gr - partLen) `div` 2
+
+midStartY :: Graphics -> Int -> Int
+midStartY gr partLen = (graphicsWindowHeight gr - partLen) `div` 2
 
 midTextStart :: Graphics -> T.Text -> Double -> Int
-midTextStart gr txt fontScale = midStart gr textWidth
+midTextStart gr txt fontScale = midStartX gr textWidth
     where
         letterWidth = fontWidth gr * fontScale
         textWidth = ceiling $ fromIntegral (T.length txt) * letterWidth
@@ -46,7 +50,7 @@ textMiddleX gr txt yPos fontScale c = (TextDisplay txt xMid (fromIntegral yPos) 
     where
         letterWidth = fontWidth gr * fromIntegral fontScale
         textWidth = fromIntegral (T.length txt) * letterWidth
-        xMid = fromIntegral $ midStart gr (floor textWidth)
+        xMid = fromIntegral $ midStartX gr (floor textWidth)
 
 wrapTextMiddleX :: Graphics -> T.Text -> Int -> Int -> Int -> Int -> Color -> ([TextDisplay], Int)
 wrapTextMiddleX gr txt margin yStart lineSpace fontScale c =

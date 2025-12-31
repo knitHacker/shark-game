@@ -125,7 +125,7 @@ getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
 
 -- Draw the menu options for menus that you only select one option at a time
 updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
-updateSelOneListOptions gr@(Graphics _ _ (fw, fh) _ _) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM curs) = r'
+updateSelOneListOptions gr@(Graphics _ _ (fw, fh) _ _) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM _ curs) = r'
     where
         allOpts = case backOptM of
                     Nothing -> ma
@@ -237,19 +237,22 @@ updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh) _ _) d p bdi@(BlockDrawInfo
         scrollHeight = h * end
         optCount = getOptSize opts
         end = min mx optCount
-        indicatorHeight = fromIntegral (scrollHeight - sp)
-        moveAmt = indicatorHeight `div` fromIntegral optCount
-        darkHeight = moveAmt * fromIntegral end
+        -- Calculate scroll bar dimensions based on visible/total ratio
+        totalHeight = fromIntegral (scrollHeight - sp)
+        -- darkHeight represents the visible portion as a fraction of total content
+        darkHeight = (totalHeight * fromIntegral end) `div` fromIntegral optCount
+        -- Calculate scroll position proportionally
+        maxScrollY = totalHeight - darkHeight
+        ry = fromIntegral y + ((maxScrollY * fromIntegral off) `div` fromIntegral (optCount - end))
         rx = fromIntegral (x - 40)
-        ry = fromIntegral y + (fromIntegral off * moveAmt)
-        -- height is recalculated because of rounding errors with division with integers
-        rect = DRectangle DarkGray rx (fromIntegral y - 1) 20 (moveAmt * fromIntegral optCount + 2)
+        -- Total track height represents the full scrollable area
+        rect = DRectangle DarkGray rx (fromIntegral y - 1) 20 (totalHeight + 2)
         rect2 = DRectangle Gray rx ry 20 darkHeight
         ((r, yEnd), cur) = case opts of
-                    BasicSOALOpts (OALOpts oal _ c) -> ((updateSelOneListOptions gr d p' bdi $ OALOpts (take mx (drop off oal)) Nothing c, y + scrollHeight), c)
+                    BasicSOALOpts oo@(OALOpts oal _ _ c) -> ((updateSelOneListOptions gr d p' bdi $ oo { oalOpts = take mx (drop off oal) }, y + scrollHeight), c)
                     BasicMSLOpts mo@(MSLOpts msl _ _ _) -> ((updateMultiListOptions gr d p' bdi $ mo { mslOpts = take mx (drop off msl) }, y + scrollHeight), CursorRect White)
                     BasicCBOpts cbo@(CBOpts _ _  _ opts) -> (updateColumnButtonOptions gr d p' bdi $ cbo { colButOptActions = take mx (drop off opts) }, CursorRect White)
         -- Fixed options cursor position: p is in scroll area if < optCount, else subtract optCount to get fixed index
         fixedP = p - optCount
-        fixedR = updateSelOneListOptions gr d fixedP (bdi { blockY = yEnd })  $ OALOpts fixedOpts backOptM cur
+        fixedR = updateSelOneListOptions gr d fixedP (bdi { blockY = yEnd }) $ OALOpts fixedOpts backOptM Nothing cur
         rend = addRectangle (addRectangle r d 1 rect `mappend` fixedR) d 2 rect2

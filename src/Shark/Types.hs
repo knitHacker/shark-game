@@ -134,6 +134,7 @@ data TripState = TripState
 
 data GameEquipment = GameEquip
     { equipText :: T.Text
+    , equipmentDescription :: T.Text
     , equipSize :: Int
     , equipTimeAdded :: Int
     , equipPrice :: Int

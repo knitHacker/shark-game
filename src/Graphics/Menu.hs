@@ -25,7 +25,6 @@ import qualified Data.Text as T
 import Data.Map.Strict ((!))
 import Data.Maybe (isJust, catMaybes)
 
-
 import OutputHandles.Types
 import OutputHandles.Text
 import Graphics.Types
@@ -94,7 +93,7 @@ getViewSize (Graphics tm _ fs _ _) (View txts imgs ans rects Nothing) = Just ((x
         h = (maximum $ catMaybes [imgMaxYM, rcMaxYM, txMaxYM]) - y
 
 selOneOpts :: Int -> Int -> Int -> Int -> [MenuAction a] -> Maybe (MenuAction a) -> CursorType -> Int -> MenuData a
-selOneOpts x y s sp opts backM curs = MenuData (SelOneListOpts $ OALOpts opts backM curs) (BlockDrawInfo x y s sp)
+selOneOpts x y s sp opts backM curs = MenuData (SelOneListOpts $ OALOpts opts backM Nothing curs) (BlockDrawInfo x y s sp)
 
 selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
             -> ([T.Text] -> Int -> a)
@@ -147,7 +146,7 @@ getBackOption (Menu _ (Just mp)) = getBackOptionFromData (popupOptions mp)
 getBackOption (Menu mo Nothing) = getBackOptionFromData mo
 
 getBackOptionFromData :: MenuData a -> Maybe a
-getBackOptionFromData (MenuData (SelOneListOpts (OALOpts _ (Just backOpt) _)) _ _) = menuNextState backOpt
+getBackOptionFromData (MenuData (SelOneListOpts (OALOpts _ (Just backOpt) _ _)) _ _) = menuNextState backOpt
 getBackOptionFromData (MenuData (ScrollListOpts (SLOpts _ _ (Just backOpt) _)) _ _) = menuNextState backOpt
 getBackOptionFromData (MenuData (SelMultiListOpts (MSLOpts _ _ _ backOptM)) _ _) = backOptM
 getBackOptionFromData _ = Nothing
@@ -157,7 +156,7 @@ getBackOpt (BasicSOALOpts opts) = getBackOALOpts opts
 getBackOpt _ = Nothing
 
 getBackOALOpts :: OneActionListOptions a -> Maybe a
-getBackOALOpts (OALOpts opts backM _) =
+getBackOALOpts (OALOpts opts backM _ _) =
     case backM of
         Just backOpt -> menuNextState backOpt
         Nothing -> Nothing
@@ -175,10 +174,10 @@ getOptSize (BasicCBOpts opts) = length $ colButOptActions opts
 getOptSize (BasicTextOpts to) = length $ textOptionTexts to
 
 getNextOALOpts :: OneActionListOptions a -> Int -> Maybe a
-getNextOALOpts (OALOpts opts Nothing _) pos
+getNextOALOpts (OALOpts opts Nothing _ _) pos
     | pos < length opts = menuNextState (opts !! pos)
     | otherwise = Nothing
-getNextOALOpts (OALOpts opts (Just back) _) pos
+getNextOALOpts (OALOpts opts (Just back) _ _) pos
     | pos < length opts = menuNextState (opts !! pos)
     | pos == length opts = menuNextState back
     | otherwise = Nothing
@@ -246,21 +245,21 @@ decrementMenuOpt mo@(MenuData _ _ p)
     | otherwise = mo { cursorPosition = p - 1 }
 
 
-incrementMenuCursor :: Menu a -> Menu a
-incrementMenuCursor m@(Menu _ (Just mp)) = m { popupMaybe = Just (mp { popupOptions = incrementMenuOpt (popupOptions mp) }) }
-incrementMenuCursor m@(Menu mo Nothing) = m { options = incrementMenuOpt mo }
+incrementMenuCursor :: Menu a -> Either (Menu a) a
+incrementMenuCursor m@(Menu _ (Just mp)) = Left $ m { popupMaybe = Just (mp { popupOptions = incrementMenuOpt (popupOptions mp) }) }
+incrementMenuCursor m@(Menu mo Nothing) = Left $ m { options = incrementMenuOpt mo }
 
-decrementMenuCursor :: Menu a -> Menu a
-decrementMenuCursor m@(Menu _ (Just mp)) = m { popupMaybe = Just (mp { popupOptions = decrementMenuOpt (popupOptions mp) }) }
+decrementMenuCursor :: Menu a -> Either (Menu a) a
+decrementMenuCursor m@(Menu _ (Just mp)) = Left $ m { popupMaybe = Just (mp { popupOptions = decrementMenuOpt (popupOptions mp) }) }
 decrementMenuCursor m@(Menu mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ _ (Scroll mx off))) _ p) Nothing)
-    | p == 0 = m
-    | p > off = m { options = mo { cursorPosition = p - 1 } }
-    | otherwise = m { options = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off - 1) })
+    | p == 0 = Left m
+    | p > off = Left $ m { options = mo { cursorPosition = p - 1 } }
+    | otherwise = Left $ m { options = mo { menuOptions = ScrollListOpts (sl { sLScroll = Scroll mx (off - 1) })
                                    , cursorPosition = p - 1 }
                     }
 decrementMenuCursor m@(Menu mo@(MenuData _ _ p) Nothing)
-    | p == 0 = m
-    | otherwise = m { options = mo { cursorPosition = p - 1 } }
+    | p == 0 = Left m
+    | otherwise = Left $ m { options = mo { cursorPosition = p - 1 } }
 
 scrollView :: ViewScroll a -> Int -> ViewScroll a
 scrollView vs sAmt = vs { scrollOffset = newOffset }

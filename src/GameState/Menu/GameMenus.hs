@@ -13,10 +13,8 @@ module GameState.Menu.GameMenus
     , introEnd
     ) where
 
-
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-
 
 import Configs
 import SaveData
@@ -164,7 +162,7 @@ introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (se
         imgs = [ IPlace (rectStartX + 10) (rectStartY + 50) 4.0 (equipImage eqCatch) 2
                , IPlace (rectStartX + 345) (rectStartY + 50) 4.0 (equipImage eqObs) 2
                ]
-        rectStartX = midStart gr 600
+        rectStartX = midStartX gr 600
         rectStartY = 180
         rects = [ (LightGray, rectStartX, rectStartY, 600, 300, 1)]
         optX = div (graphicsWindowWidth gr) 2
@@ -238,7 +236,7 @@ researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
                 , TextDisplay "Center" 200 140 7 White Nothing
                 ]
         fundWords = oneLine gr fundTxts 630 100 2
-        opts = [ MenuAction "Plan Research Trip" $ Just $ TripDestinationSelect gd
+        opts = [ MenuAction "Plan Research Trip" $ Just $ TripDestinationSelect gd 0
                , MenuAction "Review Data" $ Just $ DataReviewTop gd
                , MenuAction "Lab Management" $ Just $ LabManagement gd
                ]

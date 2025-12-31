@@ -33,26 +33,26 @@ import Graphics.Animation
 
 import Debug.Trace
 
-mapMenu :: GameData -> Graphics -> GameConfigs -> GameMenu
-mapMenu gd gr cfgs = GameMenu (textView words) (Menu options Nothing)
+mapMenu :: GameData -> Int -> Graphics -> GameConfigs -> GameMenu
+mapMenu gd chsn gr cfgs = GameMenu (textView words) (Menu options Nothing)
     where
         region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
-        options = resizingScrollOpts gr 50 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing mc)) (Just rtOpt) [] 0
-        locs = (\(loc, lCfg) -> (loc, showText lCfg)) <$> M.assocs (getData region siteLocations)
+        options = resizingScrollOpts gr 50 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing Nothing mc)) (Just rtOpt) [] chsn
+        locs = (\(idx, (loc, lCfg)) -> (idx, (loc, showText lCfg))) <$> zip [1..] (M.assocs (getData region siteLocations))
         mc = CursorRect White
         words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
                 , TextDisplay "Destination" 150 200 10 White Nothing
                 ]
         opts = mkOptEntry <$> locs
         rtOpt = MenuAction "Return to Lab" $ Just $ ResearchCenter gd
-        mkOptEntry (loc, txt) = MenuAction txt $ if loc `elem` boatReachableBiomes boatInfo then Just (TripEquipmentSelect gd loc [] 0) else Nothing
+        mkOptEntry (idx, (loc, txt)) = MenuAction txt $ if loc `elem` boatReachableBiomes boatInfo then Just (TripEquipmentSelect gd (idx, loc) [] 0) else Nothing
 
 -- assuming I add ability to have more than one boat, need to select boat in new menu
 
-equipmentPickMenu :: GameData -> T.Text -> [T.Text] -> Int -> GameConfigs -> GameMenu
-equipmentPickMenu gd loc chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
+equipmentPickMenu :: GameData -> (Int, T.Text) -> [T.Text] -> Int -> GameConfigs -> GameMenu
+equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
     where
         region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myEquip = gameDataEquipment gd
@@ -75,13 +75,13 @@ equipmentPickMenu gd loc chsn pos cfgs = GameMenu (textView words) (Menu (selMul
                 , TextDisplay slotTxt 200 400 3 Green Nothing
                 ]
         opts' = (\(k, s, t) -> SelectOption t k (k `elem` chsn) True $ s > openSlots) <$> aEs'
-        update = TripEquipmentSelect gd loc
-        act = if null chsn  || usedSlots > slots then Nothing else Just $ \ls -> TripReview gd loc ls
-        back = TripDestinationSelect gd
+        update = TripEquipmentSelect gd (idx, loc)
+        act = if null chsn  || usedSlots > slots then Nothing else Just $ \ls -> TripReview gd (idx, loc) ls
+        back = TripDestinationSelect gd idx
 
 
-reviewTripMenu :: GameData -> T.Text -> [T.Text] -> GameConfigs -> GameMenu
-reviewTripMenu gd loc eqs cfgs = GameMenu (textView words) (Menu (selOneOpts 400 600 3 5 opts (Just backOpt) (CursorRect White) 0) Nothing)
+reviewTripMenu :: GameData -> (Int, T.Text) -> [T.Text] -> GameConfigs -> GameMenu
+reviewTripMenu gd (idx, loc) eqs cfgs = GameMenu (textView words) (Menu (selOneOpts 400 600 3 5 opts (Just backOpt) (CursorRect White) 0) Nothing)
     where
         region = gameCurrentRegion gd
         boat = gameActiveBoat $ gameDataEquipment gd
@@ -108,7 +108,7 @@ reviewTripMenu gd loc eqs cfgs = GameMenu (textView words) (Menu (selOneOpts 400
         (gd'', atmpts) = initTripProgress gd' (gameCurrentRegion gd) loc boat eqs cfgs
         progress = TripProgress
         opts = [ MenuAction "Start Trip" (if enoughFunds then Just (TripProgress gd'' atmpts) else Nothing)
-               , MenuAction "Back to equipment" $ Just (TripEquipmentSelect gd loc eqs 0)
+               , MenuAction "Back to equipment" $ Just (TripEquipmentSelect gd (idx, loc) eqs 0)
                ]
         backOpt = MenuAction "Abort Trip" $ Just (ResearchCenter gd)
 
@@ -129,7 +129,7 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
         v w = View ((,0) <$> (words ++ w)) [] [rayAnim] [backRect, progressRect] Nothing
         animTO = TimeoutData ts 150 $ TimeoutAnimation $ startTextAnim gr
         rayAnim = centerAnimation gr 350 5.0 "skate"
-        progX = midStart gr progW
+        progX = midStartX gr progW
         progY = 650
         progH = 80
         progW = max 1000 $ percentWidth gr 0.8

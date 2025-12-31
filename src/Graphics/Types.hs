@@ -186,8 +186,17 @@ data SelectOption = SelectOption
 data OneActionListOptions a = OALOpts
     { oalOpts :: ![MenuAction a]
     , oalBackOptM :: !(Maybe (MenuAction a))
+    , oalUpdateM :: !(Maybe (Int -> a))
     , oalCursor :: !CursorType
-    } deriving (Show, Eq)
+    }
+
+instance Eq a => Eq (OneActionListOptions a) where
+    (OALOpts opts1 back1 update1 cur1) == (OALOpts opts2 back2 update2 cur2) =
+        opts1 == opts2 && back1 == back2 && cur1 == cur2
+
+instance Show a => Show (OneActionListOptions a) where
+    show (OALOpts opts back update cur) =
+        "OALOpts " ++ show opts ++ " " ++ show back ++ " <update> " ++ show cur
 
 data MultiSelectListOptions a = MSLOpts
     { mslOpts :: ![SelectOption]

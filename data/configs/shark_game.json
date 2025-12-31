@@ -9,7 +9,7 @@
         "mechanicsEncounter": {
             "baseAttempts": 3,
             "bonusAttemptChancePercent": 60,
-            "bonusMaxAttempts": 5
+            "bonusMaxAttempts": 3
         },
         "mechanicsFundraising": {
             "fundraisers": {
@@ -38,7 +38,7 @@
         "skiff": {
             "boatName": "Skiff",
             "boatDescription": "A small, lightweight boat suitable for calm waters.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estauary", "sandFlats"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estuary", "sandFlats"],
             "boatEquipmentSlots": 1,
             "boatFuelCost": 5,
             "boatPrice": 100,
@@ -47,7 +47,7 @@
         "smallBoat": {
             "boatName": "Small Boat",
             "boatDescription": "A small boat for shallow waters.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estauary", "sandFlats"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estuary", "sandFlats"],
             "boatEquipmentSlots": 1,
             "boatFuelCost": 10,
             "boatPrice": 500,
@@ -56,7 +56,7 @@
         "mediumBoat": {
             "boatName": "Medium Boat",
             "boatDescription": "A medium-sized boat for various conditions.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "estauary", "sandFlats", "continentalShelf"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "estuary", "sandFlats", "continentalShelf"],
             "boatEquipmentSlots": 2,
             "boatFuelCost": 20,
             "boatPrice": 2000,
@@ -65,7 +65,7 @@
         "largeBoat": {
             "boatName": "Large Boat",
             "boatDescription": "A large boat for deep waters.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest", "estauary", "sandFlats", "continentalShelf"],
+            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest", "estuary", "sandFlats", "continentalShelf"],
             "boatEquipmentSlots": 4,
             "boatFuelCost": 30,
             "boatPrice": 30000,
@@ -85,6 +85,7 @@
         },
         "longLine": {
             "equipText": "Long Line",
+            "equipmentDescription": "A long line with multiple baited hooks used to catch a variety of sharks.",
             "equipSize": 1,
             "equipTimeAdded": 1,
             "equipPrice": 150,
@@ -94,6 +95,7 @@
         },
         "fishingRod": {
             "equipText": "Fishing Rod",
+            "equipmentDescription": "A basic fishing rod for catching sharks one at a time.",
             "equipSize": 1,
             "equipTimeAdded": 1,
             "equipPrice": 20,
@@ -103,6 +105,7 @@
         },
         "snorkelGear": {
             "equipText": "Snorkel Gear",
+            "equipmentDescription": "Basic snorkel gear for observing sharks in shallow waters.",
             "equipSize": 1,
             "equipTimeAdded": 1,
             "equipPrice": 50,
@@ -112,6 +115,7 @@
         },
         "scubaGear": {
             "equipText": "Scuba Gear",
+            "equipmentDescription": "Scuba gear for observing sharks in deeper waters.",
             "equipSize": 2,
             "equipTimeAdded": 2,
             "equipPrice": 100,
@@ -121,6 +125,7 @@
         },
         "bruv": {
             "equipText": "BRUV",
+            "equipmentDescription": "Baited Remote Underwater Video system for observing sharks without human presence.",
             "equipSize": 2,
             "equipTimeAdded": 1,
             "equipPrice": 500,
@@ -160,7 +165,7 @@
                     "showText": "Sea Grass",
                     "biomeDescription": "Shallow areas with abundant sea grass.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "longLine", "drumLine"],
-                    "sharksFound": [["lemon", 10, 10], ["tiger", 10, 10], ["blacktip", 35, 35], ["bonnethead", 30, 30], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5], ["bull", 5, 5]]
+                    "sharksFound": [["nurse", 10, 10], ["lemon", 10, 10], ["tiger", 5, 5], ["blacktip", 35, 35], ["bonnethead", 25, 25], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5], ["bull", 5, 5]]
                 },
                 "continentalShelf": {
                     "showText": "Continental Shelf",
@@ -168,11 +173,11 @@
                     "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["sandbar", 40, 40], ["blacktip", 30, 30], ["bull", 20, 20], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5]]
                 },
-                "estauary": {
+                "estuary": {
                     "showText": "Estuary",
                     "biomeDescription": "Brackish water where rivers meet the sea. Usually cloudy water with lots of nutrients.",
                     "allowedEquipment": ["fishingRod", "snorkelGear"],
-                    "sharksFound": [["bull", 50, 50], ["blacktip", 30, 30], ["lemon", 10, 10], ["bonnethead", 10, 10]]
+                    "sharksFound": [["nurse", 10, 10], ["bull", 30, 30], ["blacktip", 30, 30], ["lemon", 15, 15], ["bonnethead", 15, 15]]
                 },
                 "sandFlats": {
                     "showText": "Sand Flats",
@@ -219,11 +224,7 @@
         "blacktipReef": {
             "sharkName": "Blacktip Reef Shark",
             "sharkImage": "bad_shark",
-            "sharkFacts": [ {
-                "sharkFactTitle": "Shark Size",
-                "sharkFactInfo": "Blacktip reef sharks are about 1.3-1.7ft when they are born but can grow up to 5ft and 30lbs.",
-                "sharkFactRevealDepends": ["blacktipReef_0"]
-            } ]
+            "sharkFacts": []
         },
         "whitetipReef": {
             "sharkName": "Whitetip Reef Shark",
@@ -241,7 +242,7 @@
             "sharkFacts": [ {
                 "sharkFactTitle": "Shark Size",
                 "sharkFactInfo": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs.",
-                "sharkFactRevealDepends": ["nurse_0"]
+                "sharkFactRevealDepends": ["nurse_size"]
             } ]
         },
         "lemon": {
@@ -395,50 +396,149 @@
             },
             "researchDepends": []
         },
-        "nurse_0": {
+        "nurse_characteristics": {
+            "researchPaperName": "Nurse Shark Physical Characteristics",
+            "researchDescription": "Nurse sharks have a broad, rounded head with small eyes and barbels near their nostrils. Their dorsal fins are rounded, and they have a distinctive brownish color with extremely tough skin.",
+            "researchGrant": 300,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 3}]
+            },
+            "researchDepends": []
+        },
+        "nurse_size": {
             "researchPaperName": "Nurse Shark Sizes",
-            "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs. They are brownish with two barbels on their snout.",
+            "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 9ft and 250lbs. They reach sexual maturity at about 7.5ft for females and 7ft for males.",
             "researchGrant": 500,
             "researchReqs": {
                 "nurse": [{ "dataType": "caught", "reqCount": 5}]
             },
             "researchDepends": []
         },
-        "nurse_1": {
-            "researchPaperName": "Nurse Shark Reproduction",
-            "researchDescription": "Nurse sharks are ovoviviparous, meaning they give live birth but their embryos develop inside eggs within the mother's body. They have a gestation period of 6 months and can have up to 40 pups.",
+        "nurse_habitat": {
+            "researchPaperName": "Nurse Shark Habitat",
+            "researchDescription": "Nurse sharks are a bottom-dwelling species commonly found in warm, shallow waters such as coral reefs, seagrass beds, and sandy flats.",
             "researchGrant": 1000,
             "researchReqs": {
-                "nurse": [{ "dataType": "caught", "reqCount": 10}]
+                "nurse": [{ "dataType": "observed", "reqCount": 5}]
             },
-            "researchDepends": ["nurse_0"]
+            "researchDepends": ["nurse_characteristics"]
         },
-        "blacktipReef_0": {
-            "researchPaperName": "Blacktip Reef Shark Sizes",
-            "researchDescription": "Blacktip reef sharks are about 1.3-1.7ft when they are born but can grow up to 5ft and 30lbs. They are grey with black tips on their fins.",
-            "researchGrant": 500,
+        "nurse_diet": {
+            "researchPaperName": "Nurse Shark Diet",
+            "researchDescription": "Nurse sharks are opportunistic feeders that primarily consume crustaceans, mollusks, and small fish. They can create suction in their mouths to pull in prey.",
+            "researchGrant": 1200,
             "researchReqs": {
-                "blacktipReef": [{ "dataType": "caught", "reqCount": 5}]
+                "nurse": [{ "dataType": "observed", "reqCount": 8}, { "dataType": "caught", "reqCount": 8}]
             },
-            "researchDepends": []
+            "researchDepends": ["nurse_size", "nurse_habitat"]
         },
-        "tiger_0": {
-            "researchPaperName": "Tiger Shark Diet",
-            "researchDescription": "Tiger sharks are known for their diverse diet, which includes fish, seals, birds, and even inedible objects.",
+        "nurse_age": {
+            "researchPaperName": "Nurse Shark Lifespan",
+            "researchDescription": "Nurse sharks reach sexual maturity around 25 years of age and can live up to 35 years in the wild.",
             "researchGrant": 800,
             "researchReqs": {
-                "tiger": [{ "dataType": "caught", "reqCount": 4}]
+                "nurse": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["nurse_diet"]
+        },
+        "nurse_behavior_0": {
+            "researchPaperName": "Nurse Shark Behavior",
+            "researchDescription": "Nurse sharks hide inbetween rocks and under ledges on the sea floor during the day and becoming more active at night.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 15}]
+            },
+            "researchDepends": ["nurse_habitat", "nurse_characteristics", "nurse_diet"]
+        },
+        "nurse_reproduction_0": {
+            "researchPaperName": "Nurse Shark Reproduction",
+            "researchDescription": "Nurse sharks are ovoviviparous, meaning the eggs hatch inside the female's body and the young are born live. They have a gestation period of about 6 months and can give birth to 20-30 pups at a time.",
+            "researchGrant": 2000,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["nurse_age", "nurse_behavior_0"]
+        },
+        "nurse_reproduction_1": {
+            "researchPaperName": "Nurse Shark Pregnancies",
+            "researchDescription": "Nurse sharks can take several weeks to produce eggs after mating. The embryos develop inside the mother and are nourished by a yolk sac until they are born over a few days with the egg casing also being expelled",
+            "researchGrant": 2500,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 30}, { "dataType": "observed", "reqCount": 30}]
+            },
+            "researchDepends": ["nurse_reproduction_0"]
+        },
+        "nurse_behavior_1": {
+            "researchPaperName": "Nurse Shark Social Behavior",
+            "researchDescription": "Nurse sharks are known to form groups, especially during the day when they rest together in crevices or under ledges. These groups are segregated by size and sex.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 25}]
+            },
+            "researchDepends": ["nurse_behavior_0"]
+        },
+        "nurse_behavior_2": {
+            "researchPaperName": "Nurse Shark Unique Behaviors",
+            "researchDescription": "Nurse sharks have flexible and muscular pectoral fins that allow them to maneuver in tight spaces and position their bodies in unusual ways to get food.",
+            "researchGrant": 1800,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 35}, { "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["nurse_behavior_1", "nurse_diet", "nurse_characteristics", "nurse_habitat"]
+        },
+        "tiger_characteristics": {
+            "researchPaperName": "Tiger Shark Characteristics",
+            "researchDescription": "Tiger sharks are known for their distinctive dark stripes on their bodies, which fade as they mature. They have a robust body and a blunt snout.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "tiger": [{ "dataType": "observed", "reqCount": 4}]
             },
             "researchDepends": []
         },
-        "tiger_1": {
-            "researchPaperName": "Tiger Shark Behavior",
-            "researchDescription": "Tiger sharks are mostly solitary but are known to congregate in areas with abundant food sources.",
-            "researchGrant": 1200,
+        "tiger_size": {
+            "researchPaperName": "Tiger Shark Sizes",
+            "researchDescription": "Tiger sharks are born at about 2.5-3ft long and can grow up to 11-15ft and weigh between 700-2000 lbs.",
+            "researchGrant": 600,
             "researchReqs": {
                 "tiger": [{ "dataType": "caught", "reqCount": 8}]
             },
-            "researchDepends": ["tiger_0"]
+            "researchDepends": ["tiger_characteristics"]
+        },
+        "tiger_habitat": {
+            "researchPaperName": "Tiger Shark Habitat",
+            "researchDescription": "Tiger sharks are highly versatile and can be found in a variety of marine environments, from shallow coastal areas to deep oceanic waters.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "tiger": [{ "dataType": "observed", "reqCount": 8}]
+            },
+            "researchDepends": []
+        },
+        "tiger_diet": {
+            "researchPaperName": "Tiger Shark Diet",
+            "researchDescription": "Tiger sharks are apex predators with a diverse diet that includes fish, seals, birds, squid, and even other sharks. They are known for their ability to consume a wide range of prey.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 10}, { "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["tiger_size", "tiger_habitat"]
+        },
+        "tiger_age": {
+            "researchPaperName": "Tiger Shark Lifespan",
+            "researchDescription": "Tiger sharks reach sexual maturity around 4-13 years of age and can live up to 27-37 years.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["tiger_diet"]
+        },
+        "tiger_reproduction": {
+            "researchPaperName": "Tiger Shark Reproduction",
+            "researchDescription": "Tiger sharks are ovoviviparous, with females giving birth to live young after a gestation period of about 15-16 months. They can give birth to an average of 26-33 pups but have been known to have larger litters with up to 80.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["tiger_age", "tiger_habitat", "tiger_characteristics"]
         },
         "blacktip_0": {
             "researchPaperName": "Blacktip Shark Migration",

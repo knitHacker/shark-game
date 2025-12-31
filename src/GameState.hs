@@ -20,6 +20,7 @@ import Graphics
 import Graphics.Types
 import Graphics.Menu
 import Graphics.Animation
+import Graphics.TextUtil
 
 import qualified Data.Text as T
 
@@ -129,8 +130,8 @@ updateGameMenu inputs m
     | selected = Right <$> getNextMenu m
     | backSelected = Right <$> getBackOption m
     | inputRepeating inputs = Nothing
-    | inputDirection inputs == Just DDown = Just $ Left $ incrementMenuCursor m
-    | inputDirection inputs == Just DUp = Just $ Left $ decrementMenuCursor m
+    | inputDirection inputs == Just DDown = Just $ incrementMenuCursor m
+    | inputDirection inputs == Just DUp = Just $ decrementMenuCursor m
     | otherwise = Nothing
     where
         selected = enterJustPressed inputs
@@ -139,8 +140,8 @@ updateGameMenu inputs m
 gameMenu :: GameMenu -> GameDrawInfo
 gameMenu (GameMenu v m) = GameViewInfo $ GameView v Nothing [] (Just m)
 
-gameMenuPause :: GamePlayState -> GameData -> GameMenu -> GameDrawInfo
-gameMenuPause gps gd (GameMenu v m) = withPause gps gd $ GameView v Nothing [] (Just m)
+gameMenuPause :: Graphics -> GamePlayState -> GameData -> GameMenu -> GameDrawInfo
+gameMenuPause gr gps gd (GameMenu v m) = withPause gr gps gd $ GameView v Nothing [] (Just m)
 
 
 reDrawState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> GameDrawInfo
@@ -156,13 +157,13 @@ reDrawState gps cfgs inputs gr =
         IntroResearch gd -> menuWithPause gd $ introResearch gd gr
         IntroFunds gd -> menuWithPause gd $ introFunds gd gr
         IntroEnd gd -> menuWithPause gd $ introEnd gd gr
-        ResearchCenter gd -> withPause gps gd $ researchCenterMenu gd gr
-        TripDestinationSelect gd -> menuWithPause gd $ mapMenu gd gr cfgs
+        ResearchCenter gd -> withPause gr gps gd $ researchCenterMenu gd gr
+        TripDestinationSelect gd idx -> menuWithPause gd $ mapMenu gd idx gr cfgs
         TripEquipmentSelect gd loc eqs cp -> menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
         TripReview gd loc eqs -> menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
-        TripProgress gd tp -> withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr
-        SharkFound gd sf tp -> gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs gr
-        TripResults gd tp -> gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr
+        TripProgress gd tp -> withPause gr gps gd $ tripProgressMenu gd tp cfgs inputs gr
+        SharkFound gd sf tp -> gameMenuPause gr gps gd $ sharkFoundMenu gd sf tp cfgs gr
+        TripResults gd tp -> gameMenuPause gr gps gd $ tripResultsMenu gd tp cfgs gr
         DataReviewTop gd -> menuWithPause gd $ topReviewMenu gd cfgs
         SharkReviewTop gd mP -> menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr
         SharkReview gd se -> menuWithPause gd $ sharkReviewMenu gd se cfgs gr
@@ -174,7 +175,7 @@ reDrawState gps cfgs inputs gr =
         CompletedResearchReviewMenu gd rd -> menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
         LabManagement gd -> menuWithPause gd $ labTopMenu gd gr
         FundraiserTop gd -> menuWithPause gd $ fundraiserTopMenu gd cfgs gr
-        FleetManagement gd -> withPause gps gd $ fleetManagementTopMenu gd cfgs inputs gr
+        FleetManagement gd -> withPause gr gps gd $ fleetManagementTopMenu gd cfgs inputs gr
         EquipmentManagement gd -> menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
         EquipmentStore popup gd -> menuWithPause gd $ equipmentStoreMenu popup gd cfgs gr
         BoatStore popup gd -> menuWithPause gd $ boatStoreMenu popup gd cfgs gr
@@ -182,7 +183,7 @@ reDrawState gps cfgs inputs gr =
         ViewDonors gd -> menuWithPause gd $ donorList gd gr
         NewFundraiser gd -> menuWithPause gd $ fundraisingMenu gd cfgs gr
     where
-        menuWithPause = gameMenuPause gps
+        menuWithPause = gameMenuPause gr gps
 
 
 
@@ -208,13 +209,13 @@ moveToNextState gps cfgs inputs gr =
         IntroResearch gd -> return (gps, menuWithPause gd $ introResearch gd gr)
         IntroFunds gd -> return (gps, menuWithPause gd $ introFunds gd gr)
         IntroEnd gd -> return (gps, menuWithPause gd $ introEnd gd gr)
-        ResearchCenter gd -> return (gps, withPause gps gd $ researchCenterMenu gd gr)
-        TripDestinationSelect gd -> return (gps, menuWithPause gd $ mapMenu gd gr cfgs)
+        ResearchCenter gd -> return (gps, withPause gr gps gd $ researchCenterMenu gd gr)
+        TripDestinationSelect gd idx -> return (gps, menuWithPause gd $ mapMenu gd idx gr cfgs)
         TripEquipmentSelect gd loc eqs cp -> return (gps, menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs)
         TripReview gd loc eqs -> return (gps, menuWithPause gd $ reviewTripMenu gd loc eqs cfgs)
-        TripProgress gd tp -> return (gps, withPause gps gd $ tripProgressMenu gd tp cfgs inputs gr)
-        SharkFound gd sf tp -> return (gps, gameMenuPause gps gd $ sharkFoundMenu gd sf tp cfgs gr)
-        TripResults gd tp -> return (gps, gameMenuPause gps gd $ tripResultsMenu gd tp cfgs gr)
+        TripProgress gd tp -> return (gps, withPause gr gps gd $ tripProgressMenu gd tp cfgs inputs gr)
+        SharkFound gd sf tp -> return (gps, gameMenuPause gr gps gd $ sharkFoundMenu gd sf tp cfgs gr)
+        TripResults gd tp -> return (gps, gameMenuPause gr gps gd $ tripResultsMenu gd tp cfgs gr)
         DataReviewTop gd -> return (gps, menuWithPause gd $ topReviewMenu gd cfgs)
         SharkReviewTop gd mP -> return (gps, menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr)
         SharkReview gd se -> return (gps, menuWithPause gd $ sharkReviewMenu gd se cfgs gr)
@@ -226,7 +227,7 @@ moveToNextState gps cfgs inputs gr =
         CompletedResearchReviewMenu gd rd -> return (gps, menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr)
         LabManagement gd -> return (gps, menuWithPause gd $ labTopMenu gd gr)
         FundraiserTop gd -> return (gps, menuWithPause gd $ fundraiserTopMenu gd cfgs gr)
-        FleetManagement gd -> return (gps, withPause gps gd $ fleetManagementTopMenu gd cfgs inputs gr)
+        FleetManagement gd -> return (gps, withPause gr gps gd $ fleetManagementTopMenu gd cfgs inputs gr)
         EquipmentManagement gd -> return (gps, menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr)
         EquipmentStore popup gd -> return (gps, menuWithPause gd $ equipmentStoreMenu popup gd cfgs gr)
         BoatStore popup gd -> return (gps, menuWithPause gd $ boatStoreMenu popup gd cfgs gr)
@@ -234,7 +235,7 @@ moveToNextState gps cfgs inputs gr =
         ViewDonors gd -> return (gps, menuWithPause gd $ donorList gd gr)
         NewFundraiser gd -> return (gps, menuWithPause gd $ fundraisingMenu gd cfgs gr)
     where
-        menuWithPause = gameMenuPause gps
+        menuWithPause = gameMenuPause gr gps
 
 
 saveGame :: GameData -> GameConfigs -> IO ()
@@ -258,14 +259,16 @@ mainMenuView cfgs outs gr inputs = do
     return (MainMenu gdM, GameViewInfo $ mainMenu gdM gr)
 
 
-withPause :: GamePlayState -> GameData -> GameView -> GameDrawInfo
-withPause gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gps gd }
+withPause :: Graphics -> GamePlayState -> GameData -> GameView -> GameDrawInfo
+withPause gr gps gd gv = GameViewInfo $ gv { viewOverlay = Just $ pauseMenu gr gps gd }
 
-pauseMenu :: GamePlayState -> GameData -> OverlayView GamePlayState
-pauseMenu gps gd = OverlayView False (textView words) (Overlay 300 100 750 600 DarkBlue menuOpt)
+pauseMenu :: Graphics -> GamePlayState -> GameData -> OverlayView GamePlayState
+pauseMenu gr gps gd = OverlayView False (textView words) (Overlay overlayX overlayY 750 600 DarkBlue menuOpt)
     where
-        menuOpt = MenuData (SelOneListOpts $ OALOpts opts Nothing (CursorRect White)) (BlockDrawInfo 450 400 4 15) 0
-        words = [ TextDisplay "Game Menu" 350 150 8 White Nothing
+        overlayX = midStartX gr 750
+        overlayY = midStartY gr 600
+        menuOpt = MenuData (SelOneListOpts $ OALOpts opts Nothing Nothing (CursorRect White)) (BlockDrawInfo (overlayX + 150) (overlayY + 300) 4 15) 0
+        words = [ TextDisplay "Game Menu" (fromIntegral (overlayX + 50)) (fromIntegral (overlayY + 50)) 8 White Nothing
                 ]
         opts = [ MenuAction "Continue" $ Just gps
                , MenuAction "Main Menu" $ Just $ MainMenu $ Just gd

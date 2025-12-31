@@ -1,5 +1,6 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE InstanceSigs #-}
+
 module OutputHandles.Types
     ( OutputHandles(..)
     , OutputRead(..)
