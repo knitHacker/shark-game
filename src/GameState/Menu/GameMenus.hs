@@ -43,14 +43,16 @@ import Util
 import Debug.Trace
 
 updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
-updateWave gr fr (i, wave) = wave { animPosX = newX `mod` graphicsWindowWidth gr, animPosY = newY `mod` (graphicsWindowHeight gr - 50), animShow = show, animFrame = nextFrame }
+updateWave gr fr (i, wave)
+    | newX < graphicsWindowWidth gr = wave { animPosX = newX, animShow = show, animFrame = nextFrame }
+    | mod (fr + nextFrame) 3 == 0 = wave { animShow = False }
+    | otherwise = wave { animPosX = xMod + fr, animPosY = newY, animShow = True, animFrame = 1 }
     where
         maxWaveFrame = animFrameCount $ graphicsAnimTextures gr M.! animTexture wave
-        step = fr + animFrame wave
         nextFrame = (animFrame wave + 1) `mod` maxWaveFrame
-        xMod = i * round (animScale wave)
-        newX = if animShow wave then animPosX wave + 30 + xMod else animPosX wave + (xMod * 2) + 100
-        newY = if newX > graphicsWindowWidth gr then animPosY wave + 210 - i * 10 else animPosY wave
+        xMod = i * 2 + round (2 * animScale wave)
+        newX = if animShow wave then animPosX wave + 30 + xMod else animPosX wave + (xMod * 4) + 100
+        newY = max (100 + fr * 10) $ (animPosY wave + 50) `mod` (graphicsWindowHeight gr - 100)
         show
             | nextFrame == 0 && animShow wave = False
             | nextFrame == 0 && fr `mod` 3 == 0 = False
@@ -59,7 +61,7 @@ updateWave gr fr (i, wave) = wave { animPosX = newX `mod` graphicsWindowWidth gr
 mainMenu :: Maybe GameData -> Graphics -> GameView
 mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
     where
-        v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4] [rect] Nothing
+        v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5] [rect] Nothing
         rect = (DarkBlue, 0, 0, graphicsWindowWidth gr, graphicsWindowHeight gr, 0)
         midY = div (graphicsWindowHeight gr) 2
         xPos = midTextStart gr instTxt 3
@@ -72,11 +74,11 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
                 , (instr, 2)
                 ]
         animKey = "wave"
-        waveAnim = APlace 300 400 10.0 animKey 1 0 1 True
-        waveAnim2 = APlace 500 800 8.0 animKey 4 0 1 True
-        waveAnim3 = APlace 100 600 6.0 animKey 7 0 1 True
+        waveAnim = APlace 340 400 10.0 animKey 0 0 1 False
+        waveAnim2 = APlace 500 900 8.0 animKey 4 0 1 True
+        waveAnim3 = APlace 100 750 6.0 animKey 7 0 1 True
         waveAnim4 = APlace 700 200 7.0 animKey 5 0 1 True
-        waveAnim5 = APlace 200 650 5.5 animKey 2 0 1 True
+        waveAnim5 = APlace 1100 150 5.5 animKey 2 0 1 True
         waveMoveTO = TimeoutData 0 120 $ TimeoutAnimation $ startAnimation 15 nextFrame
         newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
         continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
