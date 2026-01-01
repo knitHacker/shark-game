@@ -5,6 +5,7 @@ module Graphics.Menu
     , selOneOpts
     , selMultOpts
     , scrollOpts
+    , scrollOptsBasic
     , resizingScrollOpts
     , getNextMenu
     , getNextOption
@@ -101,17 +102,22 @@ selMultOpts :: Int -> Int -> Int -> Int -> [SelectOption]
             -> Maybe a -> Int -> MenuData a
 selMultOpts x y s sp opts up act back = MenuData (SelMultiListOpts $ MSLOpts opts up act back) (BlockDrawInfo x y s sp)
 
-scrollOpts :: Int -> Int -> Int -> Int -> BasicOption a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> Int -> MenuData a
-scrollOpts x y s sp opts backM fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
+scrollOpts :: Int -> Int -> Int -> Int -> OneActionListOptions a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> Int -> MenuData a
+scrollOpts x y s sp opts backM fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts (BasicSOALOpts opts) fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
     where
         -- Calculate initial scroll offset to ensure cursor position is visible
         -- If cursor is within the first maxScroll items, no offset needed
         -- Otherwise, offset so the cursor is visible (centered when possible)
         initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
 
+-- Version that takes BasicOption directly for non-OneActionListOptions cases
+scrollOptsBasic :: Int -> Int -> Int -> Int -> BasicOption a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> Int -> MenuData a
+scrollOptsBasic x y s sp opts backM fixed maxScroll pos = MenuData (ScrollListOpts $ SLOpts opts fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
+    where
+        initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
 
-resizingScrollOpts :: Graphics -> Int -> Int -> Int -> Int -> Int -> BasicOption a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> MenuData a
-resizingScrollOpts gr margin x y s sp opts backM fixed pos = MenuData (ScrollListOpts $ SLOpts opts fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
+resizingScrollOpts :: Graphics -> Int -> Int -> Int -> Int -> Int -> OneActionListOptions a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> MenuData a
+resizingScrollOpts gr margin x y s sp opts backM fixed pos = MenuData (ScrollListOpts $ SLOpts (BasicSOALOpts opts) fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
     where
         windowHeight = graphicsWindowHeight gr
         fontSize = graphicsFontSize gr
@@ -120,10 +126,13 @@ resizingScrollOpts gr margin x y s sp opts backM fixed pos = MenuData (ScrollLis
         additionalOptsCount = length fixed + (if isJust backM then 1 else 0)
         maxVisibleOptions = max 1 (availableHeight `div` optionHeight)
         maxScroll = max 1 (maxVisibleOptions - additionalOptsCount)
+        scrollableCount = length (oalOpts opts)
         -- Calculate initial scroll offset to ensure cursor position is visible
+        -- If cursor is in fixed options area, clamp to show end of scrollable list
         -- If cursor is within the first maxScroll items, no offset needed
         -- Otherwise, offset so the cursor is visible (centered when possible)
-        initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
+        scrollPos = min pos (scrollableCount - 1)
+        initialOffset = if scrollPos < maxScroll then 0 else max 0 (scrollPos - maxScroll + 1)
 
 
 
@@ -251,11 +260,17 @@ incrementMenuCursor m@(Menu md@(MenuData (SelOneListOpts opt@(OALOpts _ _ (Just 
     | otherwise = Right $ update $ cp + 1
     where
         optLen = optionLength md
+incrementMenuCursor m@(Menu md@(MenuData (ScrollListOpts (SLOpts (BasicSOALOpts (OALOpts _ _ (Just update) _)) _ _ _)) _ cp) Nothing)
+    | cp + 1 >= optionLength md = Left m
+    | otherwise = Right $ update $ cp + 1
 incrementMenuCursor m@(Menu mo Nothing) = Left $ m { options = incrementMenuOpt mo }
 
 decrementMenuCursor :: Menu a -> Either (Menu a) a
 decrementMenuCursor m@(Menu _ (Just mp)) = Left $ m { popupMaybe = Just (mp { popupOptions = decrementMenuOpt (popupOptions mp) }) }
 decrementMenuCursor m@(Menu md@(MenuData (SelOneListOpts opt@(OALOpts _ _ (Just update) _)) _ cp) _)
+    | cp == 0 = Left m
+    | otherwise = Right $ update $ cp - 1
+decrementMenuCursor m@(Menu md@(MenuData (ScrollListOpts (SLOpts (BasicSOALOpts (OALOpts _ _ (Just update) _)) _ _ _)) _ cp) Nothing)
     | cp == 0 = Left m
     | otherwise = Right $ update $ cp - 1
 decrementMenuCursor m@(Menu mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ _ (Scroll mx off))) _ p) Nothing)
