@@ -39,15 +39,20 @@ mapMenu gd chsn gr cfgs = GameMenu (textView words) (Menu options Nothing)
         region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
-        options = resizingScrollOpts gr 50 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing Nothing mc)) (Just rtOpt) [] chsn
-        locs = (\(idx, (loc, lCfg)) -> (idx, (loc, showText lCfg))) <$> zip [1..] (M.assocs (getData region siteLocations))
+        options = resizingScrollOpts gr 50 250 400 4 8 (BasicSOALOpts (OALOpts opts Nothing (Just update) mc)) (Just rtOpt) [] chsn
+        allLocs = M.assocs (getData region siteLocations)
+        locs = (\(idx, (loc, lCfg)) -> (idx, (loc, showText lCfg, lCfg))) <$> zip [1..] allLocs
         mc = CursorRect White
+        selectedLocCfg = if chsn > 0 && chsn <= length allLocs then snd (allLocs !! (chsn - 1)) else snd (head allLocs)
+        descText = biomeDescription selectedLocCfg
+        (wrappedDesc, _) = wrapText gr descText 700 300 400 10 3 White
         words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
                 , TextDisplay "Destination" 150 200 10 White Nothing
-                ]
+                ] ++ wrappedDesc
         opts = mkOptEntry <$> locs
         rtOpt = MenuAction "Return to Lab" $ Just $ ResearchCenter gd
-        mkOptEntry (idx, (loc, txt)) = MenuAction txt $ if loc `elem` boatReachableBiomes boatInfo then Just (TripEquipmentSelect gd (idx, loc) [] 0) else Nothing
+        mkOptEntry (idx, (loc, txt, _)) = MenuAction txt $ if loc `elem` boatReachableBiomes boatInfo then Just (TripEquipmentSelect gd (idx, loc) [] 0) else Nothing
+        update = TripDestinationSelect gd
 
 -- assuming I add ability to have more than one boat, need to select boat in new menu
 

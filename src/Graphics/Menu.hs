@@ -244,13 +244,20 @@ decrementMenuOpt mo@(MenuData _ _ p)
     | p == 0 = mo
     | otherwise = mo { cursorPosition = p - 1 }
 
-
 incrementMenuCursor :: Menu a -> Either (Menu a) a
 incrementMenuCursor m@(Menu _ (Just mp)) = Left $ m { popupMaybe = Just (mp { popupOptions = incrementMenuOpt (popupOptions mp) }) }
+incrementMenuCursor m@(Menu md@(MenuData (SelOneListOpts opt@(OALOpts _ _ (Just update) _)) _ cp) _)
+    | optLen >= cp + 1 = Left m
+    | otherwise = Right $ update $ cp + 1
+    where
+        optLen = optionLength md
 incrementMenuCursor m@(Menu mo Nothing) = Left $ m { options = incrementMenuOpt mo }
 
 decrementMenuCursor :: Menu a -> Either (Menu a) a
 decrementMenuCursor m@(Menu _ (Just mp)) = Left $ m { popupMaybe = Just (mp { popupOptions = decrementMenuOpt (popupOptions mp) }) }
+decrementMenuCursor m@(Menu md@(MenuData (SelOneListOpts opt@(OALOpts _ _ (Just update) _)) _ cp) _)
+    | cp == 0 = Left m
+    | otherwise = Right $ update $ cp - 1
 decrementMenuCursor m@(Menu mo@(MenuData (ScrollListOpts sl@(SLOpts _ _ _ (Scroll mx off))) _ p) Nothing)
     | p == 0 = Left m
     | p > off = Left $ m { options = mo { cursorPosition = p - 1 } }
