@@ -267,7 +267,7 @@
         },
         "sandbar": {
             "sharkName": "Sandbar Shark",
-            "sharkImage": "bad_shark",
+            "sharkImage": "sandbar_shark",
             "sharkFacts": []
         },
         "leopard": {
