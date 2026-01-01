@@ -115,7 +115,6 @@ splitJustSpacing txts = zipWith addSpaces txts diffs
         diffs = zipWith (\l r -> maxLeftLen - l + maxRightLen - r) leftLengths rightLengths
         addSpaces (txtL, txtR) diff = T.concat [txtL, T.replicate diff " ", txtR]
 
-
 showMoney :: Int -> T.Text
 showMoney m = T.pack $ "$" ++ insertCommas nStr
     where

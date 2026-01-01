@@ -114,4 +114,3 @@ data GamePlayState =
 -- Class for reading game state from the top level monad
 class Monad m => GameStateRead m where
     readGameState :: m GameState
-

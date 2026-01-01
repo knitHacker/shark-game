@@ -166,7 +166,7 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Jus
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
 chooseActiveBoatMenu gd cfgs = GameMenu (textView words) (Menu (md pos) Nothing)
     where
-        md = scrollOpts 250 550 4 8 (BasicSOALOpts (OALOpts opts Nothing Nothing mc)) (Just cancelOpt) [] 4
+        md = scrollOpts 250 550 4 8 (OALOpts opts Nothing Nothing mc) (Just cancelOpt) [] 4
         cancelOpt = MenuAction "Back" $ Just $ FleetManagement gd
         mc = CursorRect White
         bts = boats $ sharkCfgs cfgs
@@ -187,7 +187,7 @@ boatStoreMenu :: Maybe (T.Text, Int, GameData) -> GameData -> GameConfigs -> Gra
 boatStoreMenu popupGd gd cfgs gr = GameMenu v $ Menu (md 0) pop
     where
         v = View ((,0) <$> words) [] [] [] Nothing
-        md = scrollOpts 100 300 3 10 colOpts Nothing opts 6
+        md = scrollOptsBasic 100 300 3 10 colOpts Nothing opts 6
         mc = CursorRect White
         bts = boats $ sharkCfgs cfgs
         owned = gameOwnedBoats $ gameDataEquipment gd
@@ -267,7 +267,7 @@ equipmentStoreMenu :: Maybe (T.Text, Int, GameData) -> GameData -> GameConfigs -
 equipmentStoreMenu popupGd gd cfgs gr = GameMenu v $ Menu md pop
     where
         v = View ((,0) <$> words) [] [] [] Nothing
-        md = scrollOpts 100 300 3 10 colOpts (Just backOpt) [] 6 0
+        md = scrollOptsBasic 100 300 3 10 colOpts (Just backOpt) [] 6 0
         mc = CursorRect White
         equips = equipment $ sharkCfgs cfgs
         owned = gameOwnedEquipment $ gameDataEquipment gd

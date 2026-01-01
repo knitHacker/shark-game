@@ -143,19 +143,19 @@
             "siteLocations": {
                 "reef": {
                     "showText": "Reef",
-                    "biomeDescription": "Coral reefs teeming with life.",
+                    "biomeDescription": "Shallow area where light can reach coral so it can build up towering structures, creating a maze of crevices and overhangs where a variety of marine life can live.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "scubaGear", "bruv"],
                     "sharksFound": [["nurse", 80, 95], ["tiger", 20, 5]]
                 },
                 "mangroves": {
                     "showText": "Mangroves",
-                    "biomeDescription": "Shallow waters with dense mangrove roots.",
+                    "biomeDescription": "Shallow, coastal areas with dense mangrove tree roots with constantly changing salinity and water levels as the tides ebb and flow.",
                     "allowedEquipment": ["fishingRod", "drumLine", "longLine"],
                     "sharksFound": [["lemon", 40, 45], ["nurse", 50, 50], ["bull", 10, 5]]
                 },
                 "openOcean": {
                     "showText": "Open Ocean",
-                    "biomeDescription": "Waters far from shore.",
+                    "biomeDescription": "Far from shore, with the seafloor too far down to see, featureless with nowhere to hide.",
                     "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["blue", 35, 20], ["sandbar", 30, 25], ["bull", 10, 10],
                                     ["tiger", 10, 10], ["oceanicWhitetip", 5, 10],
@@ -163,25 +163,25 @@
                 },
                 "seaGrass": {
                     "showText": "Sea Grass",
-                    "biomeDescription": "Shallow areas with abundant sea grass.",
+                    "biomeDescription": "Shallow areas with sandy or muddy bottom covered with a carpet of sea grass swaying in the currents, filtering the light from above.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "longLine", "drumLine"],
                     "sharksFound": [["nurse", 10, 10], ["lemon", 10, 10], ["tiger", 5, 5], ["blacktip", 35, 35], ["bonnethead", 25, 25], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5], ["bull", 5, 5]]
                 },
                 "continentalShelf": {
                     "showText": "Continental Shelf",
-                    "biomeDescription": "Area where the depth drops off into the deep ocean. Updraft of nutrients attracts many species.",
+                    "biomeDescription": "Shallow area that quickly drops off into the deep ocean. This mixing of depths causes changes in water temperature and nutrient levels, attracting a variety of marine life.",
                     "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
                     "sharksFound": [["sandbar", 40, 40], ["blacktip", 30, 30], ["bull", 20, 20], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5]]
                 },
                 "estuary": {
                     "showText": "Estuary",
-                    "biomeDescription": "Brackish water where rivers meet the sea. Usually cloudy water with lots of nutrients.",
+                    "biomeDescription": "Brackish water where rivers meet the sea, a changing mix of fresh and saltwater that is usually muddy from the sediments being pushed by tides and currents.",
                     "allowedEquipment": ["fishingRod", "snorkelGear"],
                     "sharksFound": [["nurse", 10, 10], ["bull", 30, 30], ["blacktip", 30, 30], ["lemon", 15, 15], ["bonnethead", 15, 15]]
                 },
                 "sandFlats": {
                     "showText": "Sand Flats",
-                    "biomeDescription": "Shallow, sandy areas often exposed during low tide.",
+                    "biomeDescription": "Expansive shallow areas with sandy bottoms, often exposed during low tide, an ideal habitat for burrowing marine life.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "longLine"],
                     "sharksFound": [["bonnethead", 35, 40], ["blacktip", 30, 40], ["bull", 30, 15], ["nurse", 5, 5]]
                 }
