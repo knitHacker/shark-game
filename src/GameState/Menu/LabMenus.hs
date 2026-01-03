@@ -86,7 +86,7 @@ donorList gd gr = GameMenu (View words [] [] [] scrollData) (Menu (selOneOpts 20
                 , (TextDisplay "List" 80 150 9 White Nothing, 0)
                 , (TextDisplay "No donors yet." 150 300 4 LightGray Nothing, 0)
                 ]
-        scrollData = mkScrollView gr donorDis [] 0 500 5
+        scrollData = mkScrollView gr donorDis [] [] 0 500 5
         backOpt = MenuAction "Return to Fundraising" $ Just $ FundraiserTop gd
 
 fundraisingMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
@@ -214,7 +214,7 @@ equipmentManagementTopMenu gd cfgs gr = GameMenu (View ((,0) <$> words) [] [] []
                 , TextDisplay "Management" 175 120 8 White Nothing
                 , TextDisplay "Owned Equipment" 300 275 4 LightGray Nothing
                 ]
-        scrollData = mkScrollView gr equipDis [] 0 570 5
+        scrollData = mkScrollView gr equipDis [] [] 0 570 5
         opts = [ MenuAction "Equipment Store" $ Just $ EquipmentStore Nothing gd ]
         backOpt = MenuAction "Return to Management" $ Just $ LabManagement gd
 

@@ -24,6 +24,7 @@ module Shark.Types
     , FullLocation(..)
     , EquipInfoType(..)
     , SharkEncounterRate(..)
+    , SharkFact(..)
     ) where
 
 import GHC.Generics ( Generic )

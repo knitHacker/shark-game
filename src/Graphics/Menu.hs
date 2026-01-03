@@ -34,28 +34,28 @@ import InputState
 import Data.IntMap (update)
 
 import Debug.Trace
-import System.Console.GetOpt (getOpt)
 
 textView :: [TextDisplay] -> View a
 textView words = View ((,0) <$> words) [] [] [] Nothing
 
-mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> Int -> Int -> Int -> Maybe (ViewScroll a)
-mkScrollView graphics words images offset maxY step = ViewScroll v offset maxY step <$> sdM
+mkScrollView :: Graphics -> [TextDisplay] -> [(Int, Int, Double, Image)] -> [RectPlacement] -> Int -> Int -> Int -> Maybe (ViewScroll a)
+mkScrollView graphics words images rects offset maxY step = ViewScroll v offset maxY step <$> sdM
     where
-        v = View ((,0) <$> words) ((\ (x, y, s, tE) -> IPlace x y s tE 1) <$> images) [] [] Nothing
+        v = View ((,1) <$> words) ((\ (x, y, s, tE) -> IPlace x y s tE 1) <$> images) [] rects Nothing
         sdM = mkScrollData graphics v offset maxY step
 
 
 mkScrollData :: Graphics -> View a -> Int -> Int -> Int -> Maybe ScrollData
-mkScrollData gr v offset maxY step = mkScrollData' <$> getViewSize gr v
+mkScrollData gr v offset maxY step = getViewSize gr v >>= mkScrollData'
     where
         mkScrollData' ((startX, startY), (w, h)) =
-            let h2 = maxY - startY
-                h4 = floor $ (fromIntegral h2^2) / (fromIntegral h)
-                -- Maximum scroll should allow us to see the bottom of the content
-                maxScrollPixels = max 0 (h - h2)
-                maxStep = ceiling $ fromIntegral maxScrollPixels / fromIntegral step
-            in ScrollData startX startY h h2 h4 maxStep
+            let vHeight = maxY - startY
+                ratio = fromIntegral vHeight / fromIntegral h
+                bHeight = round $ fromIntegral vHeight * ratio
+                maxStep = ceiling $ fromIntegral (h - vHeight) / fromIntegral step
+                bStep = max 1 $ fromIntegral step * ratio
+                -- maxStep' = if maxStep * step + bHeight >= vHeight then maxStep else maxStep + 1
+            in if startY > maxY || vHeight <= 0 then Nothing else Just $ ScrollData startX startY vHeight h bHeight bStep maxStep
 
 getTextureSize :: TextureInfo -> (Int, Int)
 getTextureSize (ImageCfg (ImageInfo sx sy)) = (sx, sy)
@@ -72,16 +72,16 @@ getViewSize (Graphics tm _ fs _ _) (View txts imgs ans rects Nothing) = Just ((x
     where
         imgRects = (\(IPlace x y s tE _) ->
                         let (tw, th) = getTextureSize $ ImageCfg $ tm ! tE
-                        in (x, y, round ((fromIntegral tw) * s), round ((fromIntegral th) * s))
+                        in (x, y, round (fromIntegral tw * s), round (fromIntegral th * s))
                      ) <$> imgs
         txMinYM = getTextMinY $ fst <$> txts
         txMaxYM = getTextMaxY fs $ fst <$> txts
         txMinXM = getTextMinX $ fst <$> txts
         txMaxXM = getTextMaxX fs $ fst <$> txts
-        rcMinYM = if null rects then Nothing else Just (minimum $ map (\(_, _, y, _, _, _) -> y) rects)
-        rcMaxYM = if null rects then Nothing else Just (maximum $ map (\(_, _, y, _, h, _) -> y + h) rects)
-        rcMinXM = if null rects then Nothing else Just (minimum $ map (\(_, x, _, _, _, _) -> x) rects)
-        rcMaxXM = if null rects then Nothing else Just (maximum $ map (\(_, x, _, w, _, _) -> x + w) rects)
+        rcMinYM = if null rects then Nothing else Just (minimum $ map (\(RPlace _ _ y _ _ _) -> y) rects)
+        rcMaxYM = if null rects then Nothing else Just (maximum $ map (\(RPlace _ _ y _ h _) -> y + h) rects)
+        rcMinXM = if null rects then Nothing else Just (minimum $ map (\(RPlace _ x _ _ _ _) -> x) rects)
+        rcMaxXM = if null rects then Nothing else Just (maximum $ map (\(RPlace _ x _ w _ _) -> x + w) rects)
         imgMinYM = if null imgs then Nothing else Just (minimum $ map (\(IPlace _ y _ _ _) -> y) imgs)
         imgMaxYM = if null imgs then Nothing else Just (maximum $ map (\(IPlace _ y r tE _) -> let (_, th) = getTextureSize $ ImageCfg $ tm ! tE
                                                                                          in round (fromIntegral th * r) + y) imgs)

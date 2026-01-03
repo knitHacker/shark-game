@@ -165,13 +165,13 @@
                     "showText": "Sea Grass",
                     "biomeDescription": "Shallow areas with sandy or muddy bottom covered with a carpet of sea grass swaying in the currents, filtering the light from above.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "longLine", "drumLine"],
-                    "sharksFound": [["nurse", 10, 10], ["lemon", 10, 10], ["tiger", 5, 5], ["blacktip", 35, 35], ["bonnethead", 25, 25], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5], ["bull", 5, 5]]
+                    "sharksFound": [["nurse", 10, 10], ["lemon", 10, 10], ["tiger", 10, 10], ["blacktip", 35, 35], ["bonnethead", 25, 25], ["great_hammerhead", 5, 5], ["bull", 5, 5]]
                 },
                 "continentalShelf": {
                     "showText": "Continental Shelf",
                     "biomeDescription": "Shallow area that quickly drops off into the deep ocean. This mixing of depths causes changes in water temperature and nutrient levels, attracting a variety of marine life.",
                     "allowedEquipment": ["fishingRod", "longLine", "scubaGear"],
-                    "sharksFound": [["sandbar", 40, 40], ["blacktip", 30, 30], ["bull", 20, 20], ["great_hammerhead", 5, 5], ["scalloped_hammerhead", 5, 5]]
+                    "sharksFound": [["sandbar", 40, 40], ["blacktip", 30, 30], ["bull", 20, 20], ["great_hammerhead", 10, 10]]
                 },
                 "estuary": {
                     "showText": "Estuary",
@@ -183,7 +183,7 @@
                     "showText": "Sand Flats",
                     "biomeDescription": "Expansive shallow areas with sandy bottoms, often exposed during low tide, an ideal habitat for burrowing marine life.",
                     "allowedEquipment": ["fishingRod", "snorkelGear", "longLine"],
-                    "sharksFound": [["bonnethead", 35, 40], ["blacktip", 30, 40], ["bull", 30, 15], ["nurse", 5, 5]]
+                    "sharksFound": [["bonnethead", 35, 40], ["blacktip", 30, 40], ["bull", 25, 10], ["nurse", 5, 5], ["great_hammerhead", 5, 5]]
                 }
             }
         },
@@ -239,11 +239,38 @@
         "nurse": {
             "sharkName": "Nurse Shark",
             "sharkImage": "nurse_shark",
-            "sharkFacts": [ {
-                "sharkFactTitle": "Shark Size",
-                "sharkFactInfo": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs.",
-                "sharkFactRevealDepends": ["nurse_size"]
-            } ]
+            "sharkFacts": [
+                {
+                    "sharkFactTitle": "Shark Size",
+                    "sharkFactInfo": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs.",
+                    "sharkFactRevealDepends": ["nurse_size"]
+                },
+                {
+                    "sharkFactTitle": "Shark Habitat",
+                    "sharkFactInfo": "Nurse sharks are a bottom-dwelling species commonly found in warm, shallow waters such as coral reefs, seagrass beds, and sandy flats.",
+                    "sharkFactRevealDepends": ["nurse_habitat"]
+                },
+                {
+                    "sharkFactTitle": "Shark Diet",
+                    "sharkFactInfo": "Nurse sharks are opportunistic feeders that primarily consume crustaceans, mollusks, and small fish. They can create suction in their mouths to pull in prey.",
+                    "sharkFactRevealDepends": ["nurse_diet"]
+                },
+                {
+                    "sharkFactTitle": "Shark Lifespan",
+                    "sharkFactInfo": "Nurse sharks reach sexual maturity around 25 years of age and can live up to 35 years in the wild.",
+                    "sharkFactRevealDepends": ["nurse_age"]
+                },
+                {
+                    "sharkFactTitle": "Shark Behavior",
+                    "sharkFactInfo": "Nurse sharks hide inbetween rocks and under ledges on the sea floor during the day and becoming more active at night.",
+                    "sharkFactRevealDepends": ["nurse_behavior_0"]
+                },
+                {
+                    "sharkFactTitle": "Shark Reproduction",
+                    "sharkFactInfo": "Nurse sharks are ovoviviparous, meaning the eggs hatch inside the female and she gives birth to live young. They have a gestation period of about 6 months and can give birth to 20-30 pups at a time.",
+                    "sharkFactRevealDepends": ["nurse_reproduction"]
+                }
+            ]
         },
         "lemon": {
             "sharkName": "Lemon Shark",
@@ -296,7 +323,7 @@
             "sharkFacts": []
         },
         "white": {
-            "sharkName": "Great White Shark",
+            "sharkName": "White Shark",
             "sharkImage": "bad_shark",
             "sharkFacts": []
         },
@@ -342,7 +369,7 @@
         },
         "bull": {
             "sharkName": "Bull Shark",
-            "sharkImage": "bad_shark",
+            "sharkImage": "bull_shark",
             "sharkFacts": []
         },
         "spinner": {

@@ -28,6 +28,7 @@ module Graphics.Types
     , AnimationInfo(..)
     , ImagePlacement(..)
     , AnimPlacement(..)
+    , RectPlacement(..)
     , AnimationAction(..)
     , updateView
     , mergeOverlayMenu
@@ -42,6 +43,7 @@ import Data.Int (Int64)
 
 import OutputHandles.Types
 import Data.IntMap (update)
+import SDL.Raw (Rect(Rect))
 
 data ImageInfo = ImageInfo
     { imageSizeX :: !Int
@@ -114,9 +116,10 @@ data AnimationData a = AnimationData
 data ScrollData = ScrollData
     { startX :: !Int
     , startY :: !Int
-    , vHeight :: !Int
+    , viewHeight :: !Int
     , scrollHeight :: !Int
     , barHeight :: !Int
+    , barStep :: !Double
     , scrollMaxOffset :: !Int
     } deriving (Show, Eq)
 
@@ -147,11 +150,20 @@ data AnimPlacement = APlace
     , animShow :: !Bool
     } deriving (Show, Eq)
 
+data RectPlacement = RPlace
+    { rectColor :: !Color
+    , rectPosX :: !Int
+    , rectPosY :: !Int
+    , rectWidth :: !Int
+    , rectHeight :: !Int
+    , rectDepth :: !Int
+    } deriving (Show, Eq)
+
 data View a = View
     { texts :: ![(TextDisplay, Int)]
     , imgs :: ![ImagePlacement]
     , animations :: ![AnimPlacement]
-    , rects :: ![(Color, Int, Int, Int, Int, Int)]
+    , rects :: ![RectPlacement]
     -- should this be a list? probably but don't have mouse position atm
     , viewScroll :: !(Maybe (ViewScroll a))
     } deriving (Show, Eq)

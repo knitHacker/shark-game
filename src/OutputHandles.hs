@@ -75,7 +75,7 @@ initOutputHandles textCfgs cfgs = do
     b <- Font.isMonospace font
     textList <- mapM (loadTexture r) $ M.toList $ getTextureFiles textCfgs
     let textures = M.fromList textList
-    print $ fst <$> M.toList textures
+    -- print $ fst <$> M.toList textures
     return $ OutputHandles window r textures font
     where
         gCfgs = settingCfgs cfgs

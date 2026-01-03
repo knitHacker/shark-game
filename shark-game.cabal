@@ -27,6 +27,7 @@ extra-source-files:
     assets/images/boat_default.png
     assets/images/boat_skiff.png
     assets/images/bonnethead_shark.png
+    assets/images/bull_shark.png
     assets/images/dock.png
     assets/images/empty_net_white.png
     assets/images/equipment_fishing_rod.png
@@ -36,6 +37,7 @@ extra-source-files:
     assets/images/institute.png
     assets/images/no_dolphin.png
     assets/images/nurse_shark.png
+    assets/images/sandbar_shark.png
     assets/images/shark_placeholder.png
     assets/images/skate_swimming_animation.png
     assets/images/tiger_shark.png
@@ -45,26 +47,30 @@ extra-source-files:
     assets/fonts/saxmono.ttf
 data-files:
     data/configs/game.json
-    data/configs/textures.json
     data/configs/shark_game.json
+    data/configs/textures.json
     assets/images/arrow.png
-    assets/images/nurse_shark.png
-    assets/images/blue_shark.png
-    assets/images/tiger_shark.png
-    assets/images/bonnethead_shark.png
     assets/images/blacktip_shark.png
-    assets/images/shark_placeholder.png
-    assets/images/empty_net_white.png
+    assets/images/blue_shark.png
     assets/images/boat_default.png
     assets/images/boat_skiff.png
-    assets/images/equipment_snorkel.png
+    assets/images/bonnethead_shark.png
+    assets/images/bull_shark.png
+    assets/images/dock.png
+    assets/images/empty_net_white.png
     assets/images/equipment_fishing_rod.png
-    assets/images/institute.png
-    assets/images/no_dolphin.png
-    assets/images/skate_swimming_animation.png
-    assets/images/wave_animation.png
+    assets/images/equipment_snorkel.png
     assets/images/flag_animation.png
     assets/images/flag_no_shadow.png
+    assets/images/institute.png
+    assets/images/no_dolphin.png
+    assets/images/nurse_shark.png
+    assets/images/sandbar_shark.png
+    assets/images/shark_placeholder.png
+    assets/images/skate_swimming_animation.png
+    assets/images/tiger_shark.png
+    assets/images/water.png
+    assets/images/wave_animation.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 

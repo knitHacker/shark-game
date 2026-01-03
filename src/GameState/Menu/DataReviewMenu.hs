@@ -61,9 +61,13 @@ topReviewSharksMenu gd mPrev cfgs gr = GameMenu (textView words) (Menu options N
         options = resizingScrollOpts gr 50 200 300 3 20 (OALOpts opts Nothing Nothing mc) (Just backOpt) [] cursorIdx
 
 sharkReviewMenu :: GameData -> DataEntryT SharkInfo -> GameConfigs -> Graphics -> GameMenu
-sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View ((,0) <$> (locWords ++ words')) [img] [] [] Nothing) (Menu (selOneOpts 500 650 3 20 [] (Just returnOpt) mc 0) Nothing)
+sharkReviewMenu gd sharkEntry cfgs gr = gm
     where
+        gm = GameMenu (View ((,0) <$> (locWords ++ words')) [img] [] [scrollRect] vs) menu
+        menu = Menu (selOneOpts optXStart optYStart 3 20 [] (Just returnOpt) mc 0) Nothing
         imgKey = getData sharkEntry sharkImage
+        optYStart = graphicsWindowHeight gr - 70
+        optXStart = graphicsWindowWidth gr - 200
         (img, _, _) = scalingRecenterImage gr 750 200 50 40 1.75 imgKey
         locsMap = getSeenLocations (sharkCfgs cfgs) gd sharkEntry
         sharkFinds = getFinds (sharkCfgs cfgs) gd sharkEntry
@@ -73,7 +77,7 @@ sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View ((,0) <$> (locWords ++ wo
         sightingText = T.append "Shark interactions: " $ T.pack $ show $ length sharkFinds
         equipInfoTypeToText Caught = "caught"
         equipInfoTypeToText Observed = "observed"
-        countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", equipInfoTypeToText i, " ", T.pack (show c)]) infoCnts
+        countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", equipInfoTypeToText i, ": ", T.pack (show c)]) infoCnts
         -- Format locations grouped by region
         (locWords, end) = foldl formatRegion ([], 200) $ M.toList locsMap
         formatRegion (displays, yPos) (region, sites) =
@@ -83,9 +87,22 @@ sharkReviewMenu gd sharkEntry cfgs gr = GameMenu (View ((,0) <$> (locWords ++ wo
             in (displays ++ [regionHeader] ++ siteDisplays, fromIntegral newEnd + 20)
         words = [ TextDisplay (getData sharkEntry sharkName) 50 50 5 White Nothing
                 , TextDisplay "Locations Seen:" 65 140 4 Gray Nothing
-                , TextDisplay sightingText 75 (fromIntegral end + 20) 3 White Nothing
+                , TextDisplay sightingText 75 (fromIntegral end) 2 White Nothing
                 ]
-        (_, words') = foldl (\(y, l) t -> (y + 75, l ++ [TextDisplay t 125 y 3 White Nothing])) (fromIntegral end + 75, words) countTxts
+        (yInteract, words') = foldl (\(y, l) t -> (y + 40, l ++ [TextDisplay t 130 y 2 White Nothing])) (fromIntegral end + 40, words) countTxts
+        researchText (words, sY) fact = (words ++ factWords, sY' + 50)
+            where
+                factTitle = sharkFactTitle fact
+                factInfo = sharkFactInfo fact
+                factWords = TextDisplay factTitle 100 (fromIntegral sY) 3 Yellow Nothing : infoWords
+                (infoWords, sY') = wrapText gr factInfo 150 (sY + 50) (scrollWidth - 50) 2 2 Black
+        researchWords = fst $ foldl researchText ([], fromIntegral yInteract + 20) (getData sharkEntry sharkFacts)
+        scrollXEnd = min (750 + 20) $ (graphicsWindowWidth gr `div` 2) + 50
+        scrollWidth = scrollXEnd - 100
+        scrollYEnd = optYStart - 20
+        scrollHeight = scrollYEnd - fromIntegral yInteract - 10
+        vs = mkScrollView gr researchWords [] [] 0 scrollYEnd 10
+        scrollRect = RPlace LightGray 90 (fromIntegral yInteract + 15) (scrollWidth + 30) scrollHeight 0
 
 topLabMenu :: GameData -> GameConfigs -> GameMenu
 topLabMenu gd cfgs = GameMenu (textView words) (Menu (selOneOpts 300 400 4 25 opts (Just backOpt) mc 0) Nothing)

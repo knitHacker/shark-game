@@ -139,9 +139,9 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
         progY = 650
         progH = 80
         progW = max 1000 $ percentWidth gr 0.8
-        backRect = (Gray, progX, progY, progW, progH, 1)
+        backRect = RPlace Gray progX progY progW progH 1
         p = floor (fromIntegral (allA - curA) / fromIntegral allA * 100)
-        progressRect = (Green, progX, progY, (progW `div` 100) * p, progH, 2)
+        progressRect = RPlace Green progX progY ((progW `div` 100) * p) progH 2
         words = [ TextDisplay "Trip Progress" 50 50 8 White Nothing
                 , TextDisplay "Looking for sharks..." 100 200 4 Blue Nothing
                 ]
@@ -192,5 +192,5 @@ tripResultsMenu gd tp cfgs gr = GameMenu (View ((,0) <$> words) [] [] [] scrollV
                                -- , TextDisplay (T.append "at " (monthToText (findMonth sf))) 200 (300 + (i * 100)) 3 White
                                ]
         sharkFindsTxt = concatMap findDisplays $ zip [0..] (sharkFinds tp)
-        scrollVM = mkScrollView gr sharkFindsTxt [] 0 500 5
+        scrollVM = mkScrollView gr sharkFindsTxt [] [] 0 500 10
         backOpt = MenuAction "Back to Research Center" $ Just (ResearchCenter gd')

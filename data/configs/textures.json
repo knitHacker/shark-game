@@ -40,6 +40,11 @@
             "sizeY": 200,
             "file": "assets/images/sandbar_shark.png"
         },
+        "bull_shark": {
+            "sizeX": 200,
+            "sizeY": 200,
+            "file": "assets/images/bull_shark.png"
+        },
         "bad_shark": {
             "sizeX": 200,
             "sizeY": 200,

@@ -60,7 +60,7 @@ mainMenu :: Maybe GameData -> Graphics -> GameView
 mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
     where
         v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5] [rect] Nothing
-        rect = (DarkBlue, 0, 0, graphicsWindowWidth gr, graphicsWindowHeight gr, 0)
+        rect = RPlace DarkBlue 0 0 (graphicsWindowWidth gr) (graphicsWindowHeight gr) 0
         midY = div (graphicsWindowHeight gr) 2
         xPos = midTextStart gr instTxt 3
         instTxt = "Press Enter to select"
@@ -164,7 +164,7 @@ introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (se
                ]
         rectStartX = midStartX gr 600
         rectStartY = 180
-        rects = [ (LightGray, rectStartX, rectStartY, 600, 300, 1)]
+        rects = [ RPlace LightGray rectStartX rectStartY 600 300 1]
         optX = div (graphicsWindowWidth gr) 2
         optY = graphicsWindowHeight gr - 100
 

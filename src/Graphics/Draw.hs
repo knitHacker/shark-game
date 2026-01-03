@@ -32,29 +32,30 @@ import Graphics.Menu
 --  - height of step when you scroll down
 --  - current offset (number of steps) down in the scroll
 addScrollRects :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender
-addScrollRects r d x y fullHeight scrollHeight barHeight offH
+addScrollRects r d x y viewHeight fullHeight barHeight offH
     -- No scroll bar if the area fits
-    | fullHeight < scrollHeight = r
+    | fullHeight < viewHeight = r
     | otherwise = addRectangle (addRectangle r d 1 rect) d 2 rect2
     where
         x' = fromIntegral (x - 40)
         w = 20
-        maxBarY = y + scrollHeight - barHeight
+        maxBarY = y + viewHeight - barHeight
         subStart = fromIntegral $ min (fromIntegral $ y + offH) maxBarY
-        rect = DRectangle DarkGray (fromIntegral x') (fromIntegral (y - 1)) w (fromIntegral (scrollHeight + 2))
+        rect = DRectangle DarkGray (fromIntegral x') (fromIntegral (y - 1)) w (fromIntegral (viewHeight + 2))
         rect2 = DRectangle Gray (fromIntegral x') subStart w (fromIntegral barHeight)
 
 
 -- Update a view that has a scroll bar
 updateGameViewScroll :: Graphics -> Int -> ViewScroll a -> ToRender
-updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart yStart viewHeight scrollHeight barHeight maxOff)) = r'''
+updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart yStart viewHeight scrollHeight barHeight barStep maxOff)) = r'''
     where
         fs = graphicsFontSize gr
         r = updateGameView gr d subView
         offH = step * off
+        bOffH = round $ barStep * fromIntegral off
         r' = moveRenderY r (-offH)
         r'' = clipYRender fs r' yStart maxY
-        r''' = addScrollRects r'' (d + 1) xStart yStart viewHeight scrollHeight barHeight offH
+        r''' = addScrollRects r'' (d + 1) xStart yStart viewHeight scrollHeight barHeight bOffH
 
 updateOverlayMenu :: Graphics -> Int -> OverlayMenu a -> ToRender
 updateOverlayMenu gr d (Overlay x y w h c m) = r'
@@ -69,7 +70,7 @@ updateGameView gr d (View words imgs ans rs scrollM) = r4
         r = foldl (\rend (td, tDepth) -> addText rend d tDepth td) renderEmpty words
         r' = foldl (\rend (t, iDepth) -> addTexture rend d iDepth t) r $ toDraw <$> imgs
         r'' = foldl (\rend (s, a, fd) -> if s then addAnimTexture rend d fd a else rend) r' $ animToDraw gr <$> ans
-        r3 = foldl (\rend (c, x, y, w, h, rD) -> addRectangle rend d rD (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r'' rs
+        r3 = foldl (\rend (RPlace c x y w h rD) -> addRectangle rend d rD (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r'' rs
         toDraw :: ImagePlacement -> (DrawTexture, Int)
         toDraw (IPlace x y s tE rectDepth) =
             let (w, h) = getTextureSize $ ImageCfg (graphicsStaticTextures gr ! tE)

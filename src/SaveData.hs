@@ -165,7 +165,7 @@ startNewGame cfgs = do
     let nameStr = "shark-" L.++ show (abs name) L.++ ".save"
     let dir = "data" </> "saves" </> nameStr
     path <- getLocalGamePath dir
-    putStrLn path
+    -- putStrLn path
     s <- save g
     let startBoat = startingBoat startCfg
         gEq = GameEquipment startBoat [startBoat] (startingEquipment startCfg)
@@ -205,7 +205,7 @@ loadFromFile fp = do
 
 saveToFile :: GameData -> IO ()
 saveToFile gd = do
-    putStrLn $ "saving file to: " L.++ fn
+    -- putStrLn $ "saving file to: " L.++ fn
     encodeFile fn gsd
     where
         (fn, gsd) = convertBack gd
