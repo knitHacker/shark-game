@@ -79,15 +79,15 @@ sharkReviewMenu gd sharkEntry cfgs gr = gm
         equipInfoTypeToText Observed = "observed"
         countTxts = M.mapWithKey (\i c -> T.concat ["Sharks ", equipInfoTypeToText i, ": ", T.pack (show c)]) infoCnts
         -- Format locations grouped by region
-        (locWords, end) = foldl formatRegion ([], 200) $ M.toList locsMap
+        (locWords, end) = foldl formatRegion ([], 150) $ M.toList locsMap
         formatRegion (displays, yPos) (region, sites) =
             let regionHeader = TextDisplay region 75 yPos 3 Blue Nothing
                 sitesText = T.intercalate ", " sites
                 (siteDisplays, newEnd) = wrapText gr sitesText 100 (fromIntegral yPos + 50) 525 3 2 Green
             in (displays ++ [regionHeader] ++ siteDisplays, fromIntegral newEnd + 20)
-        words = [ TextDisplay (getData sharkEntry sharkName) 50 50 5 White Nothing
-                , TextDisplay "Locations Seen:" 65 140 4 Gray Nothing
-                , TextDisplay sightingText 75 (fromIntegral end) 2 White Nothing
+        words = [ TextDisplay (getData sharkEntry sharkName) 20 20 5 White Nothing
+                , TextDisplay "Locations Seen:" 65 90 4 Gray Nothing
+                , TextDisplay sightingText 80 (fromIntegral end) 2 White Nothing
                 ]
         (yInteract, words') = foldl (\(y, l) t -> (y + 40, l ++ [TextDisplay t 130 y 2 White Nothing])) (fromIntegral end + 40, words) countTxts
         researchText (words, sY) fact = (words ++ factWords, sY' + 50)
@@ -96,10 +96,10 @@ sharkReviewMenu gd sharkEntry cfgs gr = gm
                 factInfo = sharkFactInfo fact
                 factWords = TextDisplay factTitle 100 (fromIntegral sY) 3 Yellow Nothing : infoWords
                 (infoWords, sY') = wrapText gr factInfo 150 (sY + 50) (scrollWidth - 50) 2 2 Black
-        researchWords = fst $ foldl researchText ([], fromIntegral yInteract + 20) (getData sharkEntry sharkFacts)
-        scrollXEnd = min (750 + 20) $ (graphicsWindowWidth gr `div` 2) + 50
+        researchWords = fst $ foldl researchText ([], fromIntegral yInteract + 20) (getFactsFound gd sharkEntry)
+        scrollXEnd = min (750 + 30) $ (graphicsWindowWidth gr `div` 2) + 70
         scrollWidth = scrollXEnd - 100
-        scrollYEnd = optYStart - 20
+        scrollYEnd = optYStart - 5
         scrollHeight = scrollYEnd - fromIntegral yInteract - 10
         vs = mkScrollView gr researchWords [] [] 0 scrollYEnd 10
         scrollRect = RPlace LightGray 90 (fromIntegral yInteract + 15) (scrollWidth + 30) scrollHeight 0

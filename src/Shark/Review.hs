@@ -8,6 +8,7 @@ module Shark.Review
     , getSeenLocations
     , canCompleteResearch
     , completeResearch
+    , getFactsFound
     ) where
 
 import qualified Data.Map.Strict as M
@@ -32,10 +33,17 @@ getFinds cfgs gd se =
 getSeenLocations :: PlayConfigs -> GameData -> DataEntryT SharkInfo -> M.Map T.Text [T.Text]
 getSeenLocations cfgs gd se = foldr addLocation M.empty $ L.nub $ findLocation <$> getFinds cfgs gd se
     where
-        addLocation lE acc = 
+        addLocation lE acc =
             let region = getData lE (regionShowText . locationRegion)
                 site = getData lE (showText . locationSite)
             in M.insertWith (++) region [site] acc
+
+getFactsFound :: GameData -> DataEntryT SharkInfo -> [SharkFact]
+getFactsFound gd sharkE = filter filterFacts allFacts
+    where
+        completed = gameDataResearchComplete gd
+        allFacts = getData sharkE sharkFacts
+        filterFacts fact = all (`M.member` completed) (sharkFactRevealDepends fact)
 
 getInfoCounts :: [SharkFind] -> M.Map EquipInfoType Int
 getInfoCounts = getInfoCounts' M.empty
