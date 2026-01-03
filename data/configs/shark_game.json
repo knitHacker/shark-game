@@ -722,7 +722,7 @@
         },
         "sandbar_characteristics": {
             "researchPaperName": "Sandbar Shark Physical Characteristics",
-            "researchDescription": "Sandbar sharks have a robust body with a high dorsal fin and a rounded snout. They are typically gray or brownish in color with a white underside.",
+            "researchDescription": "Sandbar sharks are brownish-gray with a large dorsal fin with long pectoral fins.",
             "researchGrant": 400,
             "researchReqs": {
                 "sandbar": [{ "dataType": "observed", "reqCount": 4}]
@@ -731,7 +731,7 @@
         },
         "sandbar_habitat": {
             "researchPaperName": "Sandbar Shark Habitat",
-            "researchDescription": "Sandbar sharks are commonly found in coastal waters and are known to inhabit sandy or muddy bottoms.",
+            "researchDescription": "Sandbar sharks are commonly found in coastal waters and are known to inhabit sandy or muddy bottoms. They rarely come to the surface, preferring to stay between in depths of 60-200ft.",
             "researchGrant": 600,
             "researchReqs": {
                 "sandbar": [{ "dataType": "caught", "reqCount": 6}]
@@ -740,16 +740,16 @@
         },
         "sandbar_size": {
             "researchPaperName": "Sandbar Shark Sizes",
-            "researchDescription": "Sandbar sharks are born at about 18-24 inches long and can grow up to 7ft, weighing up to 240lbs.",
+            "researchDescription": "Sandbar sharks are born at about 14-30 inches long and can grow to an average of 6ft, 110-150lbs.",
             "researchGrant": 500,
             "researchReqs": {
                 "sandbar": [{ "dataType": "caught", "reqCount": 5}]
             },
-            "researchDepends": []
+            "researchDepends": ["sandbar_characteristics"]
         },
         "sandbar_diet": {
             "researchPaperName": "Sandbar Shark Diet",
-            "researchDescription": "Sandbar sharks primarily feed on small fish, crustaceans, and mollusks found on the ocean floor.",
+            "researchDescription": "Sandbar sharks primarily feed other bottomdwellers like small fish, crustaceans, and mollusks.",
             "researchGrant": 900,
             "researchReqs": {
                 "sandbar": [{ "dataType": "observed", "reqCount": 10}, { "dataType": "caught", "reqCount": 5}]
@@ -758,16 +758,16 @@
         },
         "sandbar_age": {
             "researchPaperName": "Sandbar Shark Lifespan",
-            "researchDescription": "Sandbar sharks reach sexual maturity around 7-10 years of age and can live up to 20 years in the wild.",
+            "researchDescription": "Sandbar sharks reach sexual maturity around 8-16 years of age and can live up to 21-27 years with variation across populations around the world.",
             "researchGrant": 800,
             "researchReqs": {
                 "sandbar": [{ "dataType": "caught", "reqCount": 15}]
             },
-            "researchDepends": ["sandbar_diet"]
+            "researchDepends": ["sandbar_diet", "sandbar_size"]
         },
         "sandbar_reproduction": {
             "researchPaperName": "Sandbar Shark Reproduction",
-            "researchDescription": "Sandbar sharks are viviparous, meaning they give birth to live young. They have a gestation period of about 11-12 months and can have 4-12 pups.",
+            "researchDescription": "Sandbar sharks are yolk-sac viviparous. They have a gestation period of about 8-12 months and can have 1-14 pups.",
             "researchGrant": 1000,
             "researchReqs": {
                 "sandbar": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 10}]
@@ -776,7 +776,7 @@
         },
         "lemon_characteristics": {
             "researchPaperName": "Lemon Shark Physical Characteristics",
-            "researchDescription": "Lemon sharks have a robust body with a broad, flattened head and a yellow-brown coloration that helps them blend into sandy coastal environments.",
+            "researchDescription": "Lemon sharks can easily be identified by their equal sized dorsal fins on their back and a yellow brownish coloring.",
             "researchGrant": 400,
             "researchReqs": {
                 "lemon": [{ "dataType": "observed", "reqCount": 4}]
@@ -785,7 +785,7 @@
         },
         "lemon_size": {
             "researchPaperName": "Lemon Shark Sizes",
-            "researchDescription": "Lemon sharks are born at about 24-30 inches long and can grow up to 10ft, weighing up to 400lbs.",
+            "researchDescription": "Lemon sharks are born at about 25 inches long and can grow to an average of 8-10ft.",
             "researchGrant": 500,
             "researchReqs": {
                 "lemon": [{ "dataType": "caught", "reqCount": 5}]
@@ -794,16 +794,16 @@
         },
         "lemon_habitat": {
             "researchPaperName": "Lemon Shark Habitat",
-            "researchDescription": "Lemon sharks are commonly found in shallow coastal waters, particularly around coral reefs, mangroves, and sandy flats.",
+            "researchDescription": "Lemon sharks are commonly found in shallow coastal waters, particularly around coral reefs, mangroves, enclosed bays, sounds, and river mouths.",
             "researchGrant": 700,
             "researchReqs": {
-                "lemon": [{ "dataType": "observed", "reqCount": 8}]
+                "lemon": [{ "dataType": "observed", "reqCount": 5}]
             },
-            "researchDepends": []
+            "researchDepends": ["lemon_characteristics"]
         },
         "lemon_diet": {
             "researchPaperName": "Lemon Shark Diet",
-            "researchDescription": "Lemon sharks primarily feed on fish, crustaceans, and mollusks, using their strong jaws to crush the shells of their prey.",
+            "researchDescription": "Lemon sharks primarily feed on wildlife that lives on sandy or muddy bottoms. This mostly consists of bony fish, rays and crustaceans.",
             "researchGrant": 1000,
             "researchReqs": {
                 "lemon": [{ "dataType": "observed", "reqCount": 12}, { "dataType": "caught", "reqCount": 5}]
@@ -812,34 +812,34 @@
         },
         "lemon_age": {
             "researchPaperName": "Lemon Shark Lifespan",
-            "researchDescription": "Lemon sharks reach sexual maturity around 12-15 years of age and can live up to 25 years in the wild.",
-            "researchGrant": 800,
+            "researchDescription": "Lemon sharks reach sexual maturity around 12-13 years of age and can live up to 27 years but potentially longer with one individual estimated to be 37.",
+            "researchGrant": 1200,
             "researchReqs": {
-                "lemon": [{ "dataType": "caught", "reqCount": 15}]
+                "lemon": [{ "dataType": "caught", "reqCount": 15}, { "dataType": "observed", "reqCount": 10}]
             },
-            "researchDepends": ["lemon_diet"]
+            "researchDepends": ["lemon_size", "lemon_habitat"]
         },
         "lemon_behavior": {
             "researchPaperName": "Lemon Shark Social Behavior",
-            "researchDescription": "Lemon sharks are known to form social groups, especially during their juvenile stages.",
-            "researchGrant": 600,
+            "researchDescription": "Lemon sharks are known to form social groups, especially during their juvenile stages. These groups are segregated by size and sex and have been shown to have preferred individuals they associate with more frequently.",
+            "researchGrant": 2600,
             "researchReqs": {
-                "lemon": [{ "dataType": "caught", "reqCount": 5}]
+                "lemon": [{ "dataType": "observed", "reqCount": 30}]
             },
-            "researchDepends": []
+            "researchDepends": ["lemon_habitat", "lemon_age", "lemon_characteristics"]
         },
-        "lemon_reproduction_0": {
-            "researchPaperName": "Lemon Shark Nursery Areas",
-            "researchDescription": "Lemon sharks often use shallow coastal areas as nursery grounds for their young.",
+        "lemon_reproduction": {
+            "researchPaperName": "Lemon Shark Reproduction",
+            "researchDescription": "Lemon sharks are placentotrophic viviparous. They have a gestation period of about 10-12 months and can give birth to 4-17 pups at a time.",
             "researchGrant": 900,
             "researchReqs": {
                 "lemon": [{ "dataType": "caught", "reqCount": 10}]
             },
-            "researchDepends": ["lemon_behavior"]
+            "researchDepends": ["lemon_characteristics", "lemon_age"]
         },
         "great_hammerhead_characteristics": {
-            "researchPaperName": "Hammerhead Shark Senses",
-            "researchDescription": "Hammerhead sharks have a unique head shape that enhances their sensory capabilities, allowing them to better detect prey.",
+            "researchPaperName": "Great Hammerhead Shark Characteristics",
+            "researchDescription": "Great Hammerheads are the largest species of hammerhead with a square cephalofoil (head) and a very tall dorsal fin.",
             "researchGrant": 800,
             "researchReqs": {
                 "great_hammerhead": [{ "dataType": "observed", "reqCount": 4}],
@@ -849,7 +849,7 @@
         },
         "great_hammerhead_size": {
             "researchPaperName": "Hammerhead Shark Sizes",
-            "researchDescription": "Great hammerhead sharks can grow up to 20ft in length and weigh over 1000lbs, making them one of the largest hammerhead species.",
+            "researchDescription": "Great hammerhead sharks are born at around 20-30 inches and can grow up to 20ft in length.",
             "researchGrant": 600,
             "researchReqs": {
                 "great_hammerhead": [{ "dataType": "caught", "reqCount": 5}]
