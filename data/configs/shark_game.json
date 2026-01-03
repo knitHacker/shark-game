@@ -242,33 +242,33 @@
             "sharkFacts": [
                 {
                     "sharkFactTitle": "Shark Size",
-                    "sharkFactInfo": "Nurse sharks are only about 11 inches when they are born but can grow up to 10ft and 330lbs.",
+                    "sharkFactInfo": "Born around 11 inches, adults 7ft to 10ft.",
                     "sharkFactRevealDepends": ["nurse_size"]
                 },
                 {
                     "sharkFactTitle": "Shark Habitat",
-                    "sharkFactInfo": "Nurse sharks are a bottom-dwelling species commonly found in warm, shallow waters such as coral reefs, seagrass beds, and sandy flats.",
+                    "sharkFactInfo": "Bottom-dwelling found in warm, shallow waters such as coral reefs, seagrass beds, and sandy flats.",
                     "sharkFactRevealDepends": ["nurse_habitat"]
                 },
                 {
                     "sharkFactTitle": "Shark Diet",
-                    "sharkFactInfo": "Nurse sharks are opportunistic feeders that primarily consume crustaceans, mollusks, and small fish. They can create suction in their mouths to pull in prey.",
+                    "sharkFactInfo": "Opportunistic feeders that primarily consume crustaceans, mollusks, and small fish. They can create suction in their mouths to pull in prey.",
                     "sharkFactRevealDepends": ["nurse_diet"]
                 },
                 {
                     "sharkFactTitle": "Shark Lifespan",
-                    "sharkFactInfo": "Nurse sharks reach sexual maturity around 25 years of age and can live up to 35 years in the wild.",
+                    "sharkFactInfo": "Reach sexual maturity around 25 years of age and can live up to 35 years in the wild.",
                     "sharkFactRevealDepends": ["nurse_age"]
                 },
                 {
                     "sharkFactTitle": "Shark Behavior",
-                    "sharkFactInfo": "Nurse sharks hide inbetween rocks and under ledges on the sea floor during the day and becoming more active at night.",
+                    "sharkFactInfo": "During the day they hide inbetween rocks and under ledges on the sea floor and become more active at night.",
                     "sharkFactRevealDepends": ["nurse_behavior_0"]
                 },
                 {
                     "sharkFactTitle": "Shark Reproduction",
-                    "sharkFactInfo": "Nurse sharks are ovoviviparous, meaning the eggs hatch inside the female and she gives birth to live young. They have a gestation period of about 6 months and can give birth to 20-30 pups at a time.",
-                    "sharkFactRevealDepends": ["nurse_reproduction"]
+                    "sharkFactInfo": "Ovoviviparous (give live birth from eggs that hatch inside the female) - Gestation period of about 6 months and can give birth to 20-30 pups at a time.",
+                    "sharkFactRevealDepends": ["nurse_reproduction_0"]
                 }
             ]
         },
@@ -280,7 +280,43 @@
         "blue": {
             "sharkName": "Blue Shark",
             "sharkImage": "blue_shark",
-            "sharkFacts": []
+            "sharkFacts": [
+                {
+                    "sharkFactTitle": "Shark Physical Characteristics",
+                    "sharkFactInfo": "Large eyes, slender body with long pectoral fins, pointed snout, vibrant blue color on top with a white underside.",
+                    "sharkFactRevealDepends": ["blue_characteristic"]
+                },
+                {
+                    "sharkFactTitle": "Shark Habitat",
+                    "sharkFactInfo": "Open ocean sharks found in both temperate and tropical waters.",
+                    "sharkFactRevealDepends": ["blue_habitat"]
+                },
+                {
+                    "sharkFactTitle": "Shark Sizes",
+                    "sharkFactInfo": "Around 15-24 inches long at birth. Mature at around 6-7ft and can grow up to 10ft for males and 12ft for females.",
+                    "sharkFactRevealDepends": ["blue_size"]
+                },
+                {
+                    "sharkFactTitle": "Shark Diet",
+                    "sharkFactInfo": "Wide variety in diet including squid, fish, crustaceans, dead mammals, and sea birds.",
+                    "sharkFactRevealDepends": ["blue_diet"]
+                },
+                {
+                    "sharkFactTitle": "Shark Lifespan",
+                    "sharkFactInfo": "Reach sexual maturity around 5-6 years. Live 15-16 years on average.",
+                    "sharkFactRevealDepends": ["blue_age"]
+                },
+                {
+                    "sharkFactTitle": "Shark Reproduction",
+                    "sharkFactInfo": "Yolk-sac viviparous with a gestation period of about 9-12 months. Can give birth to 4-135 pups at a time.",
+                    "sharkFactRevealDepends": ["blue_reproduction"]
+                },
+                {
+                    "sharkFactTitle": "Shark Behavior",
+                    "sharkFactInfo": "Highly migratory, can swim in a straight line for hundreds of miles over multiple days, likely using Earth's magnetic field for navigation.",
+                    "sharkFactRevealDepends": ["blue_behavior"]
+                }
+            ]
         },
         "oceanicWhitetip": {
             "sharkName": "Oceanic Whitetip Shark",
@@ -416,7 +452,7 @@
     "research": {
         "blue_characteristic": {
             "researchPaperName": "Blue Shark Physical Characteristics",
-            "researchDescription": "Blue sharks have a slender body with long pectoral fins and a pointed snout. They are typically a vibrant blue color on top with a white underside.",
+            "researchDescription": "Blue sharks have large eyes, a slender body with long pectoral fins, and a pointed snout. They are typically a vibrant blue color on top with a white underside.",
             "researchGrant": 300,
             "researchReqs": {
                 "blue": [{ "dataType": "observed", "reqCount": 3}]
@@ -434,16 +470,16 @@
         },
         "blue_size": {
             "researchPaperName": "Blue Shark Sizes",
-            "researchDescription": "Blue sharks are born at about 20-24 inches long and can grow up to 10ft for males and 12ft for females, weighing up to 400lbs.",
+            "researchDescription": "Blue sharks are around 15-24 inches long at birth. They mature at around 6-7ft and can grow up to 10ft for males and 12ft for females but are more commonly found between 6-9ft in males and 7-10ft in females.",
             "researchGrant": 700,
             "researchReqs": {
-                "blue": [{ "dataType": "observed", "reqCount": 9}]
+                "blue": [{ "dataType": "caught", "reqCount": 9}]
             },
-            "researchDepends": []
+            "researchDepends": ["blue_characteristic"]
         },
         "blue_diet": {
             "researchPaperName": "Blue Shark Diet",
-            "researchDescription": "Blue sharks primarily feed on small fish and squid, using their sharp teeth to catch and consume their prey.",
+            "researchDescription": "Like many pelagic sharks, blue sharks have a wide variety in their diet. Squid seem to make up a large portion of their diet along with fish and crustaceans but they have also been known to eat on dead mammals and sea birds.",
             "researchGrant": 1000,
             "researchReqs": {
                 "blue": [{ "dataType": "observed", "reqCount": 12}, { "dataType": "caught", "reqCount": 5}]
@@ -452,16 +488,16 @@
         },
         "blue_age": {
             "researchPaperName": "Blue Shark Lifespan",
-            "researchDescription": "Blue sharks reach sexual maturity around 5-6 years of age and can live up to 20 years in the wild.",
+            "researchDescription": "Blue sharks reach sexual maturity around 5-6 years. They live 15-16 years on average.",
             "researchGrant": 800,
             "researchReqs": {
                 "blue": [{ "dataType": "caught", "reqCount": 15}]
             },
-            "researchDepends": ["blue_diet"]
+            "researchDepends": ["blue_size"]
         },
         "blue_reproduction": {
             "researchPaperName": "Blue Shark Reproduction",
-            "researchDescription": "Blue sharks are viviparous, meaning they give birth to live young. They have a gestation period of about 9-12 months and can give birth to 4-135 pups at a time.",
+            "researchDescription": "Blue sharks are yolk-sac viviparous with embryos receiving nutrition first from yolk-sacs and then directly from the mother through a placental connection. They have a gestation period of about 9-12 months and can give birth to 4-135 pups at a time.",
             "researchGrant": 1500,
             "researchReqs": {
                 "blue": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
@@ -470,7 +506,7 @@
         },
         "blue_behavior": {
             "researchPaperName": "Blue Shark Behavior",
-            "researchDescription": "Blue sharks are known for their long-distance migrations and social behavior, often forming groups called 'schools' during the day.",
+            "researchDescription": "Blue sharks are highly migratory and can swim in a straight line for hundreds of miles over multiple days. The best hypothesis on how they can keep their bearings during these long migrations is dependent on their ability to detect the Earth's magnetic field.",
             "researchGrant": 1200,
             "researchReqs": {
                 "blue": [{ "dataType": "observed", "reqCount": 25}]
@@ -556,7 +592,7 @@
             "researchReqs": {
                 "nurse": [{ "dataType": "observed", "reqCount": 25}]
             },
-            "researchDepends": ["nurse_behavior_0"]
+            "researchDepends": ["nurse_behavior_0", "nurse_size", "nurse_age"]
         },
         "nurse_behavior_2": {
             "researchPaperName": "Nurse Shark Unique Behaviors",
@@ -623,7 +659,7 @@
         },
         "blacktip_characteristics": {
             "researchPaperName": "Blacktip Shark Physical Characteristics",
-            "researchDescription": "Blacktip sharks are medium-sized sharks with a streamlined body, a pointed snout, and distinctive black tips on their fins.",
+            "researchDescription": "Blacktip sharks are medium-sized sharks that are dark gray to brown on the top and white on the bottom, and have distinctive black tips on most of their fins but not their anal fin.",
             "researchGrant": 700,
             "researchReqs": {
                 "blacktip": [{ "dataType": "observed", "reqCount": 7}]
@@ -632,7 +668,7 @@
         },
         "blacktip_size": {
             "researchPaperName": "Blacktip Shark Sizes",
-            "researchDescription": "Blacktip sharks are born at about 20-24 inches long and can grow up to 6-8ft, weighing up to 175lbs.",
+            "researchDescription": "Blacktip sharks are born at about 20-24 inches and will grow to 4-6ft with noticeable size differences in populations around the world.",
             "researchGrant": 500,
             "researchReqs": {
                 "blacktip": [{ "dataType": "caught", "reqCount": 5}]
@@ -641,7 +677,7 @@
         },
         "blacktip_habitat": {
             "researchPaperName": "Blacktip Shark Habitat",
-            "researchDescription": "Blacktip sharks are commonly found in coastal waters, particularly around coral reefs, mangroves, and sandy flats.",
+            "researchDescription": "Blacktip sharks are found along coastlines in tropical and subtropical areas. They can be found in shallow waters near river mouths, mangroves, estuaries, and coral reefs.",
             "researchGrant": 800,
             "researchReqs": {
                 "blacktip": [{ "dataType": "observed", "reqCount": 10}]
@@ -650,7 +686,7 @@
         },
         "blacktip_diet": {
             "researchPaperName": "Blacktip Shark Diet",
-            "researchDescription": "Blacktip sharks primarily feed on small fish, squid, and crustaceans, using their speed and agility to catch prey.",
+            "researchDescription": "Blacktip sharks primarily feed mainly on small schooling fishes but will eat other fish and some small sharks and rays.",
             "researchGrant": 1100,
             "researchReqs": {
                 "blacktip": [{ "dataType": "observed", "reqCount": 15}, { "dataType": "caught", "reqCount": 5}]
@@ -659,7 +695,7 @@
         },
         "blacktip_age": {
             "researchPaperName": "Blacktip Shark Lifespan",
-            "researchDescription": "Blacktip sharks reach sexual maturity around 4-5 years of age and can live up to 12-15 years in the wild.",
+            "researchDescription": "Blacktip sharks reach sexual maturity around 4-5 years of age and can live up to 12-15 years.",
             "researchGrant": 900,
             "researchReqs": {
                 "blacktip": [{ "dataType": "caught", "reqCount": 10}]
@@ -668,7 +704,7 @@
         },
         "blacktip_reproduction": {
             "researchPaperName": "Blacktip Shark Reproduction",
-            "researchDescription": "Blacktip sharks are viviparous, meaning they give live birth. They have a gestation period of about 10-12 months and can have 4-10 pups.",
+            "researchDescription": "Blacktip sharks are placental viviparous, a placental nourishes the young while they develop inside of the female. They have a gestation period of about 10-12 months and can have 4-10 pups.",
             "researchGrant": 1100,
             "researchReqs": {
                 "blacktip": [{ "dataType": "observed", "reqCount": 15}]
@@ -677,7 +713,7 @@
         },
         "blacktip_behavior": {
             "researchPaperName": "Blacktip Shark Behavior",
-            "researchDescription": "Blacktip sharks are known for their acrobatic leaps out of the water, especially when hunting schools of fish.",
+            "researchDescription": "Blacktip sharks are known for their spinning leaps into the air, especially when hunting schools of fish near the surface.",
             "researchGrant": 1300,
             "researchReqs": {
                 "blacktip": [{ "dataType": "observed", "reqCount": 20}]
