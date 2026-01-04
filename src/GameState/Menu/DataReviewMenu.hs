@@ -63,7 +63,7 @@ topReviewSharksMenu gd mPrev cfgs gr = GameMenu (textView words) (Menu options N
 sharkReviewMenu :: GameData -> DataEntryT SharkInfo -> GameConfigs -> Graphics -> GameMenu
 sharkReviewMenu gd sharkEntry cfgs gr = gm
     where
-        gm = GameMenu (View ((,0) <$> (locWords ++ words')) [img] [] [scrollRect] vs) menu
+        gm = GameMenu (View ((,0) <$> (locWords ++ words')) [img] [] [] vs) menu
         menu = Menu (selOneOpts optXStart optYStart 3 20 [] (Just returnOpt) mc 0) Nothing
         imgKey = getData sharkEntry sharkImage
         optYStart = graphicsWindowHeight gr - 70
@@ -95,14 +95,14 @@ sharkReviewMenu gd sharkEntry cfgs gr = gm
                 factTitle = sharkFactTitle fact
                 factInfo = sharkFactInfo fact
                 factWords = TextDisplay factTitle 100 (fromIntegral sY) 3 Yellow Nothing : infoWords
-                (infoWords, sY') = wrapText gr factInfo 150 (sY + 50) (scrollWidth - 50) 2 2 Black
+                (infoWords, sY') = wrapText gr factInfo 150 (sY + 50) (scrollWidth - 50) 2 2 White
         researchWords = fst $ foldl researchText ([], fromIntegral yInteract + 20) (getFactsFound gd sharkEntry)
-        scrollXEnd = min (750 + 30) $ (graphicsWindowWidth gr `div` 2) + 70
+        scrollXEnd = min (750 + 40) $ (graphicsWindowWidth gr `div` 2) + 90
         scrollWidth = scrollXEnd - 100
         scrollYEnd = optYStart - 5
         scrollHeight = scrollYEnd - fromIntegral yInteract - 10
         vs = mkScrollView gr researchWords [] [] 0 scrollYEnd 10
-        scrollRect = RPlace LightGray 90 (fromIntegral yInteract + 15) (scrollWidth + 30) scrollHeight 0
+        -- scrollRect = RPlace LightGray 90 (fromIntegral yInteract + 15) (scrollWidth + 30) scrollHeight 0
 
 topLabMenu :: GameData -> GameConfigs -> GameMenu
 topLabMenu gd cfgs = GameMenu (textView words) (Menu (selOneOpts 300 400 4 25 opts (Just backOpt) mc 0) Nothing)
