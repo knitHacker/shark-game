@@ -1,7 +1,7 @@
 {
     "gameMechanics": {
         "mechanicsStart": {
-            "startingFunds": 5000,
+            "startingFunds": 1000,
             "startingBoat": "skiff",
             "startingEquipment": ["fishingRod", "snorkelGear"],
             "startingRegion": "tropical_west_atlantic"
@@ -38,7 +38,7 @@
         "skiff": {
             "boatName": "Skiff",
             "boatDescription": "A small, lightweight boat suitable for calm waters.",
-            "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estuary", "sandFlats"],
+            "boatReachableBiomes": ["mangroves", "estuary", "sandFlats"],
             "boatEquipmentSlots": 1,
             "boatFuelCost": 5,
             "boatPrice": 100,
@@ -49,7 +49,7 @@
             "boatDescription": "A small boat for shallow waters.",
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "estuary", "sandFlats"],
             "boatEquipmentSlots": 1,
-            "boatFuelCost": 10,
+            "boatFuelCost": 100,
             "boatPrice": 500,
             "boatImage": "default_boat"
         },
@@ -58,8 +58,8 @@
             "boatDescription": "A medium-sized boat for various conditions.",
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "estuary", "sandFlats", "continentalShelf"],
             "boatEquipmentSlots": 2,
-            "boatFuelCost": 20,
-            "boatPrice": 2000,
+            "boatFuelCost": 250,
+            "boatPrice": 10000,
             "boatImage": "default_boat"
         },
         "largeBoat": {
@@ -67,8 +67,8 @@
             "boatDescription": "A large boat for deep waters.",
             "boatReachableBiomes": ["reef", "mangroves", "seaGrass", "openOcean", "kelpForest", "estuary", "sandFlats", "continentalShelf"],
             "boatEquipmentSlots": 4,
-            "boatFuelCost": 30,
-            "boatPrice": 30000,
+            "boatFuelCost": 500,
+            "boatPrice": 10000,
             "boatImage": "default_boat"
         }
     },
@@ -78,7 +78,7 @@
             "equipmentDescription": "An anchored bait attached to a float used to catch larger sharks.",
             "equipSize": 1,
             "equipTimeAdded": 1,
-            "equipPrice": 100,
+            "equipPrice": 700,
             "equipInfoType": "caught",
             "equipEffectiveness": 80,
             "equipImage": "empty_net_white"
@@ -88,7 +88,7 @@
             "equipmentDescription": "A long line with multiple baited hooks used to catch a variety of sharks.",
             "equipSize": 1,
             "equipTimeAdded": 1,
-            "equipPrice": 150,
+            "equipPrice": 500,
             "equipInfoType": "caught",
             "equipEffectiveness": 90,
             "equipImage": "empty_net_white"
@@ -118,7 +118,7 @@
             "equipmentDescription": "Scuba gear for observing sharks in deeper waters.",
             "equipSize": 2,
             "equipTimeAdded": 2,
-            "equipPrice": 100,
+            "equipPrice": 1000,
             "equipInfoType": "observed",
             "equipEffectiveness": 90,
             "equipImage": "scuba_gear"
@@ -128,7 +128,7 @@
             "equipmentDescription": "Baited Remote Underwater Video system for observing sharks without human presence.",
             "equipSize": 2,
             "equipTimeAdded": 1,
-            "equipPrice": 500,
+            "equipPrice": 2000,
             "equipInfoType": "observed",
             "equipEffectiveness": 80,
             "equipImage": "empty_net_white"

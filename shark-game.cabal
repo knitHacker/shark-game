@@ -163,6 +163,8 @@ executable shark-game-exe
     , time
     , vector
   default-language: Haskell2010
+  if os(windows)
+    ghc-options: -optl-mwindows
 
 test-suite shark-game-test
   type: exitcode-stdio-1.0

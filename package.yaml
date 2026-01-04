@@ -56,6 +56,10 @@ executables:
     - -rtsopts
     - -O2
     - -with-rtsopts=-N
+    when:
+    - condition: os(windows)
+      ghc-options:
+      - -optl-mwindows
     dependencies:
     - shark-game
 
