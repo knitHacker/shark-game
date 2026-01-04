@@ -18,11 +18,11 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
-    data/configs/game.json
-    data/configs/mechanics.json
-    data/configs/research.json
-    data/configs/shark_game.json
-    data/configs/textures.json
+    data/configs/game.yaml
+    data/configs/mechanics.yaml
+    data/configs/research.yaml
+    data/configs/shark_game.yaml
+    data/configs/textures.yaml
     assets/images/arrow.png
     assets/images/blacktip_shark.png
     assets/images/blue_shark.png
@@ -48,11 +48,11 @@ extra-source-files:
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 data-files:
-    data/configs/game.json
-    data/configs/mechanics.json
-    data/configs/research.json
-    data/configs/shark_game.json
-    data/configs/textures.json
+    data/configs/game.yaml
+    data/configs/mechanics.yaml
+    data/configs/research.yaml
+    data/configs/shark_game.yaml
+    data/configs/textures.yaml
     assets/images/arrow.png
     assets/images/blacktip_shark.png
     assets/images/blue_shark.png
@@ -140,6 +140,7 @@ library
     , text
     , time
     , vector
+    , yaml >=0.11.8.0
   default-language: Haskell2010
 
 executable shark-game-exe
@@ -166,6 +167,7 @@ executable shark-game-exe
     , text
     , time
     , vector
+    , yaml >=0.11.8.0
   default-language: Haskell2010
   if os(windows)
     ghc-options: -optl-mwindows
@@ -195,4 +197,5 @@ test-suite shark-game-test
     , text
     , time
     , vector
+    , yaml >=0.11.8.0
   default-language: Haskell2010

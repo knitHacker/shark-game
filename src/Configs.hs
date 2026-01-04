@@ -22,8 +22,9 @@ import Control.Monad ()
 import System.IO ()
 import Paths_shark_game ()
 import GHC.Generics ( Generic )
-import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
+import Data.Aeson ( FromJSON, ToJSON )
 import Data.Aeson.Types ( FromJSON, ToJSON )
+import Data.Yaml ( decodeFileEither, encodeFile, ParseException )
 import Data.Either ()
 import Data.Word (Word32)
 import qualified Data.Map.Strict as M
@@ -38,22 +39,22 @@ import Data.Graph (path)
 import SDL.Font (load)
 
 configFile :: FilePath
-configFile = "data/configs/game.json"
+configFile = "data/configs/game.yaml"
 
 texturesFile :: FilePath
-texturesFile = "data/configs/textures.json"
+texturesFile = "data/configs/textures.yaml"
 
 stateFile :: FilePath
-stateFile = "data/configs/state.json"
+stateFile = "data/configs/state.yaml"
 
 sharkFile :: FilePath
-sharkFile = "data/configs/shark_game.json"
+sharkFile = "data/configs/shark_game.yaml"
 
 researchFile :: FilePath
-researchFile = "data/configs/research.json"
+researchFile = "data/configs/research.yaml"
 
 mechanicsFile :: FilePath
-mechanicsFile = "data/configs/mechanics.json"
+mechanicsFile = "data/configs/mechanics.yaml"
 
 -- Wrapper types for individual config files
 data ResearchConfig = ResearchConfig 
@@ -168,11 +169,19 @@ data Configs = Configs
 checkConfigs :: Configs -> Bool
 checkConfigs cfgs = checkPlayConfigs (pCfgs cfgs)
 
+-- Helper to convert ParseException to String
+decodeYaml :: FromJSON a => FilePath -> IO (Either String a)
+decodeYaml path = do
+    result <- decodeFileEither path
+    return $ case result of
+        Left err -> Left (show err)
+        Right val -> Right val
+
 loadOrCreate :: (FromJSON a, ToJSON a, Default a) => FilePath -> IO (Either String a)
 loadOrCreate path = do
         exists <- doesFileExist path
         if exists
-            then eitherDecodeFileStrict path
+            then decodeYaml path
             else do
                 let dir = takeDirectory path
                 let newState = def
@@ -183,17 +192,17 @@ loadOrCreate path = do
 initConfigs :: IO (TextureCfg, GameConfigs)
 initConfigs = do
     gPath <- getGameFullPath configFile
-    configsE <- eitherDecodeFileStrict gPath
+    configsE <- decodeYaml gPath
     tPath <- getGameFullPath texturesFile
-    texturesE <- eitherDecodeFileStrict tPath
+    texturesE <- decodeYaml tPath
     sPath <- getLocalGamePath stateFile
     stateE <- loadOrCreate sPath
     pPath <- getGameFullPath sharkFile
     rPath <- getGameFullPath researchFile
     mPath <- getGameFullPath mechanicsFile
-    gamePlayE <- eitherDecodeFileStrict pPath :: IO (Either String GamePlayConfig)
-    researchE <- eitherDecodeFileStrict rPath :: IO (Either String ResearchConfig)
-    mechanicsE <- eitherDecodeFileStrict mPath :: IO (Either String GameMechanicsConfig)
+    gamePlayE <- decodeYaml pPath :: IO (Either String GamePlayConfig)
+    researchE <- decodeYaml rPath :: IO (Either String ResearchConfig)
+    mechanicsE <- decodeYaml mPath :: IO (Either String GameMechanicsConfig)
     let playConfigsE = buildPlayConfigs <$> gamePlayE <*> researchE <*> mechanicsE
     let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playConfigsE
     case cfgE of

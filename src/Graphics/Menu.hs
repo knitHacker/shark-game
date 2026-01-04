@@ -165,10 +165,7 @@ getBackOpt (BasicSOALOpts opts) = getBackOALOpts opts
 getBackOpt _ = Nothing
 
 getBackOALOpts :: OneActionListOptions a -> Maybe a
-getBackOALOpts (OALOpts opts backM _ _) =
-    case backM of
-        Just backOpt -> menuNextState backOpt
-        Nothing -> Nothing
+getBackOALOpts (OALOpts opts backM _ _) = maybe Nothing menuNextState backM
 
 getNextOpt :: BasicOption a -> Int -> Maybe a
 getNextOpt (BasicSOALOpts opts) pos = getNextOALOpts opts pos

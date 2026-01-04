@@ -1,0 +1,9 @@
+debug: true
+debugOutlineTexture: false
+debugHitboxes: false
+windowSizeX: 1280
+windowSizeY: 800
+fontSize: 16
+frameRate: 60
+fullScreen: false
+
