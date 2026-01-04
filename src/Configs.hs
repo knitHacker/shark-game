@@ -49,6 +49,37 @@ stateFile = "data/configs/state.json"
 sharkFile :: FilePath
 sharkFile = "data/configs/shark_game.json"
 
+researchFile :: FilePath
+researchFile = "data/configs/research.json"
+
+mechanicsFile :: FilePath
+mechanicsFile = "data/configs/mechanics.json"
+
+-- Wrapper types for individual config files
+data ResearchConfig = ResearchConfig 
+    { research :: M.Map T.Text ResearchData 
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON ResearchConfig
+instance ToJSON ResearchConfig
+
+data GameMechanicsConfig = GameMechanicsConfig
+    { gameMechanics :: GameMechanics
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON GameMechanicsConfig
+instance ToJSON GameMechanicsConfig
+
+data GamePlayConfig = GamePlayConfig
+    { boats :: M.Map T.Text Boat
+    , equipment :: M.Map T.Text GameEquipment
+    , regions :: M.Map T.Text SiteLocation
+    , sharks :: M.Map T.Text SharkInfo
+    } deriving (Generic, Show, Eq)
+
+instance FromJSON GamePlayConfig
+instance ToJSON GamePlayConfig
+
 
 type TextureFileMap = M.Map T.Text FilePath
 
@@ -132,10 +163,7 @@ data Configs = Configs
     , gameCfgs :: !SettingConfigs
     , sCfgs :: !StateConfigs
     , pCfgs :: !PlayConfigs
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON Configs
-instance ToJSON Configs
+    } deriving (Show, Eq)
 
 checkConfigs :: Configs -> Bool
 checkConfigs cfgs = checkPlayConfigs (pCfgs cfgs)
@@ -161,13 +189,28 @@ initConfigs = do
     sPath <- getLocalGamePath stateFile
     stateE <- loadOrCreate sPath
     pPath <- getGameFullPath sharkFile
-    playerE <- eitherDecodeFileStrict pPath
-    let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playerE
+    rPath <- getGameFullPath researchFile
+    mPath <- getGameFullPath mechanicsFile
+    gamePlayE <- eitherDecodeFileStrict pPath :: IO (Either String GamePlayConfig)
+    researchE <- eitherDecodeFileStrict rPath :: IO (Either String ResearchConfig)
+    mechanicsE <- eitherDecodeFileStrict mPath :: IO (Either String GameMechanicsConfig)
+    let playConfigsE = buildPlayConfigs <$> gamePlayE <*> researchE <*> mechanicsE
+    let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playConfigsE
     case cfgE of
         Left err -> error ("Faile to parse game configs: " ++ show err)
         Right configs -> if checkConfigs configs
                             then return (textureCfgs configs, toGameConfigs configs)
                             else error "Invalid game configs"
+  where
+    buildPlayConfigs :: GamePlayConfig -> ResearchConfig -> GameMechanicsConfig -> PlayConfigs
+    buildPlayConfigs (GamePlayConfig b e r s) (ResearchConfig res) (GameMechanicsConfig gm) = PlayConfigs
+        { boats = b
+        , equipment = e
+        , regions = r
+        , sharks = s
+        , research = res
+        , gameMechanics = gm
+        }
 
 
 toGameConfigs :: Configs -> GameConfigs

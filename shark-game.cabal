@@ -19,6 +19,8 @@ extra-source-files:
     README.md
     ChangeLog.md
     data/configs/game.json
+    data/configs/mechanics.json
+    data/configs/research.json
     data/configs/shark_game.json
     data/configs/textures.json
     assets/images/arrow.png
@@ -47,6 +49,8 @@ extra-source-files:
     assets/fonts/saxmono.ttf
 data-files:
     data/configs/game.json
+    data/configs/mechanics.json
+    data/configs/research.json
     data/configs/shark_game.json
     data/configs/textures.json
     assets/images/arrow.png

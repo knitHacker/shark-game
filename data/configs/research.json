@@ -1,0 +1,708 @@
+{
+    "research": {
+        "blue_characteristic": {
+            "researchPaperName": "Blue Shark Physical Characteristics",
+            "researchDescription": "Blue sharks have large eyes, a slender body with long pectoral fins, and a pointed snout. They are typically a vibrant blue color on top with a white underside.",
+            "researchGrant": 300,
+            "researchReqs": {
+                "blue": [{ "dataType": "observed", "reqCount": 3}]
+            },
+            "researchDepends": []
+        },
+        "blue_habitat": {
+            "researchPaperName": "Blue Shark Habitat",
+            "researchDescription": "Blue sharks are open ocean sharks that are found in both temperate and tropical waters.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "blue": [{ "dataType": "observed", "reqCount": 6}]
+            },
+            "researchDepends": []
+        },
+        "blue_size": {
+            "researchPaperName": "Blue Shark Sizes",
+            "researchDescription": "Blue sharks are around 15-24 inches long at birth. They mature at around 6-7ft and can grow up to 10ft for males and 12ft for females but are more commonly found between 6-9ft in males and 7-10ft in females.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "blue": [{ "dataType": "caught", "reqCount": 9}]
+            },
+            "researchDepends": ["blue_characteristic"]
+        },
+        "blue_diet": {
+            "researchPaperName": "Blue Shark Diet",
+            "researchDescription": "Like many pelagic sharks, blue sharks have a wide variety in their diet. Squid seem to make up a large portion of their diet along with fish and crustaceans but they have also been known to eat on dead mammals and sea birds.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "blue": [{ "dataType": "observed", "reqCount": 12}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["blue_characteristic", "blue_habitat", "blue_size"]
+        },
+        "blue_age": {
+            "researchPaperName": "Blue Shark Lifespan",
+            "researchDescription": "Blue sharks reach sexual maturity around 5-6 years. They live 15-16 years on average.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "blue": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["blue_size"]
+        },
+        "blue_reproduction": {
+            "researchPaperName": "Blue Shark Reproduction",
+            "researchDescription": "Blue sharks are yolk-sac viviparous with embryos receiving nutrition first from yolk-sacs and then directly from the mother through a placental connection. They have a gestation period of about 9-12 months and can give birth to 4-135 pups at a time.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "blue": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["blue_age"]
+        },
+        "blue_behavior": {
+            "researchPaperName": "Blue Shark Behavior",
+            "researchDescription": "Blue sharks are highly migratory and can swim in a straight line for hundreds of miles over multiple days. The best hypothesis on how they can keep their bearings during these long migrations is dependent on their ability to detect the Earth's magnetic field.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "blue": [{ "dataType": "observed", "reqCount": 25}]
+            },
+            "researchDepends": ["blue_habitat", "blue_characteristic", "blue_diet"]
+        },
+        "nurse_characteristics": {
+            "researchPaperName": "Nurse Shark Physical Characteristics",
+            "researchDescription": "Nurse sharks have a broad, rounded head with small eyes and barbels near their nostrils. Their dorsal fins are rounded, and they have a distinctive brownish color with extremely tough skin.",
+            "researchGrant": 300,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 3}]
+            },
+            "researchDepends": []
+        },
+        "nurse_size": {
+            "researchPaperName": "Nurse Shark Sizes",
+            "researchDescription": "Nurse sharks are only about 11 inches when they are born but can grow up to 9ft and 250lbs. They reach sexual maturity at about 7.5ft for females and 7ft for males.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "nurse_habitat": {
+            "researchPaperName": "Nurse Shark Habitat",
+            "researchDescription": "Nurse sharks are a bottom-dwelling species commonly found in warm, shallow waters such as coral reefs, seagrass beds, and sandy flats.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 5}]
+            },
+            "researchDepends": ["nurse_characteristics"]
+        },
+        "nurse_diet": {
+            "researchPaperName": "Nurse Shark Diet",
+            "researchDescription": "Nurse sharks are opportunistic feeders that primarily consume crustaceans, mollusks, and small fish. They can create suction in their mouths to pull in prey.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 8}, { "dataType": "caught", "reqCount": 8}]
+            },
+            "researchDepends": ["nurse_size", "nurse_habitat"]
+        },
+        "nurse_age": {
+            "researchPaperName": "Nurse Shark Lifespan",
+            "researchDescription": "Nurse sharks reach sexual maturity around 25 years of age and can live up to 35 years in the wild.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["nurse_diet"]
+        },
+        "nurse_behavior_0": {
+            "researchPaperName": "Nurse Shark Behavior",
+            "researchDescription": "Nurse sharks hide inbetween rocks and under ledges on the sea floor during the day and becoming more active at night.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 15}]
+            },
+            "researchDepends": ["nurse_habitat", "nurse_characteristics", "nurse_diet"]
+        },
+        "nurse_reproduction_0": {
+            "researchPaperName": "Nurse Shark Reproduction",
+            "researchDescription": "Nurse sharks are ovoviviparous, meaning the eggs hatch inside the female's body and the young are born live. They have a gestation period of about 6 months and can give birth to 20-30 pups at a time.",
+            "researchGrant": 2000,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["nurse_age", "nurse_behavior_0"]
+        },
+        "nurse_reproduction_1": {
+            "researchPaperName": "Nurse Shark Pregnancies",
+            "researchDescription": "Nurse sharks can take several weeks to produce eggs after mating. The embryos develop inside the mother and are nourished by a yolk sac until they are born over a few days with the egg casing also being expelled",
+            "researchGrant": 2500,
+            "researchReqs": {
+                "nurse": [{ "dataType": "caught", "reqCount": 30}, { "dataType": "observed", "reqCount": 30}]
+            },
+            "researchDepends": ["nurse_reproduction_0"]
+        },
+        "nurse_behavior_1": {
+            "researchPaperName": "Nurse Shark Social Behavior",
+            "researchDescription": "Nurse sharks are known to form groups, especially during the day when they rest together in crevices or under ledges. These groups are segregated by size and sex.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 25}]
+            },
+            "researchDepends": ["nurse_behavior_0", "nurse_size", "nurse_age"]
+        },
+        "nurse_behavior_2": {
+            "researchPaperName": "Nurse Shark Unique Behaviors",
+            "researchDescription": "Nurse sharks have flexible and muscular pectoral fins that allow them to maneuver in tight spaces and position their bodies in unusual ways to get food.",
+            "researchGrant": 1800,
+            "researchReqs": {
+                "nurse": [{ "dataType": "observed", "reqCount": 35}, { "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["nurse_behavior_1", "nurse_diet", "nurse_characteristics", "nurse_habitat"]
+        },
+        "tiger_characteristics": {
+            "researchPaperName": "Tiger Shark Characteristics",
+            "researchDescription": "Tiger sharks are known for their distinctive dark stripes on their bodies, which fade as they mature. They have a robust body and a blunt snout.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "tiger": [{ "dataType": "observed", "reqCount": 4}]
+            },
+            "researchDepends": []
+        },
+        "tiger_size": {
+            "researchPaperName": "Tiger Shark Sizes",
+            "researchDescription": "Tiger sharks are born at about 2.5-3ft long and can grow up to 11-15ft and weigh between 700-2000 lbs.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 8}]
+            },
+            "researchDepends": ["tiger_characteristics"]
+        },
+        "tiger_habitat": {
+            "researchPaperName": "Tiger Shark Habitat",
+            "researchDescription": "Tiger sharks are highly versatile and can be found in a variety of marine environments, from shallow coastal areas to deep oceanic waters.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "tiger": [{ "dataType": "observed", "reqCount": 8}]
+            },
+            "researchDepends": []
+        },
+        "tiger_diet": {
+            "researchPaperName": "Tiger Shark Diet",
+            "researchDescription": "Tiger sharks are apex predators with a diverse diet that includes fish, seals, birds, squid, and even other sharks. They are known for their ability to consume a wide range of prey.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 10}, { "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["tiger_size", "tiger_habitat"]
+        },
+        "tiger_age": {
+            "researchPaperName": "Tiger Shark Lifespan",
+            "researchDescription": "Tiger sharks reach sexual maturity around 4-13 years of age and can live up to 27-37 years.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["tiger_diet"]
+        },
+        "tiger_reproduction": {
+            "researchPaperName": "Tiger Shark Reproduction",
+            "researchDescription": "Tiger sharks are ovoviviparous, with females giving birth to live young after a gestation period of about 15-16 months. They can give birth to an average of 26-33 pups but have been known to have larger litters with up to 80.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "tiger": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["tiger_age", "tiger_habitat", "tiger_characteristics"]
+        },
+        "blacktip_characteristics": {
+            "researchPaperName": "Blacktip Shark Physical Characteristics",
+            "researchDescription": "Blacktip sharks are medium-sized sharks that are dark gray to brown on the top and white on the bottom, and have distinctive black tips on most of their fins but not their anal fin.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 3}]
+            },
+            "researchDepends": []
+        },
+        "blacktip_size": {
+            "researchPaperName": "Blacktip Shark Sizes",
+            "researchDescription": "Blacktip sharks are born at about 20-24 inches and will grow to 4-6ft with noticeable size differences in populations around the world.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["blacktip_characteristics"]
+        },
+        "blacktip_habitat": {
+            "researchPaperName": "Blacktip Shark Habitat",
+            "researchDescription": "Blacktip sharks are found along coastlines in tropical and subtropical areas. They can be found in shallow waters near river mouths, mangroves, estuaries, and coral reefs.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": []
+        },
+        "blacktip_diet": {
+            "researchPaperName": "Blacktip Shark Diet",
+            "researchDescription": "Blacktip sharks primarily feed mainly on small schooling fishes but will eat other fish and some small sharks and rays.",
+            "researchGrant": 1100,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 15}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["blacktip_size", "blacktip_habitat"]
+        },
+        "blacktip_age": {
+            "researchPaperName": "Blacktip Shark Lifespan",
+            "researchDescription": "Blacktip sharks reach sexual maturity around 4-5 years of age and can live up to 12-15 years.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["blacktip_diet"]
+        },
+        "blacktip_reproduction": {
+            "researchPaperName": "Blacktip Shark Reproduction",
+            "researchDescription": "Blacktip sharks are placental viviparous, a placental nourishes the young while they develop inside of the female. They have a gestation period of about 10-12 months and can have 4-10 pups.",
+            "researchGrant": 1100,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 15}]
+            },
+            "researchDepends": ["blacktip_age"]
+        },
+        "blacktip_behavior": {
+            "researchPaperName": "Blacktip Shark Behavior",
+            "researchDescription": "Blacktip sharks are known for their spinning leaps into the air, especially when hunting schools of fish near the surface.",
+            "researchGrant": 1300,
+            "researchReqs": {
+                "blacktip": [{ "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["blacktip_habitat", "blacktip_characteristics", "blacktip_diet"]
+        },
+        "sandbar_characteristics": {
+            "researchPaperName": "Sandbar Shark Physical Characteristics",
+            "researchDescription": "Sandbar sharks are brownish-gray with a large dorsal fin with long pectoral fins.",
+            "researchGrant": 400,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "observed", "reqCount": 4}]
+            },
+            "researchDepends": []
+        },
+        "sandbar_habitat": {
+            "researchPaperName": "Sandbar Shark Habitat",
+            "researchDescription": "Sandbar sharks are commonly found in coastal waters and are known to inhabit sandy or muddy bottoms. They rarely come to the surface, preferring to stay between in depths of 60-200ft.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "caught", "reqCount": 6}]
+            },
+            "researchDepends": []
+        },
+        "sandbar_size": {
+            "researchPaperName": "Sandbar Shark Sizes",
+            "researchDescription": "Sandbar sharks are born at about 14-30 inches long and can grow to an average of 6ft, 110-150lbs.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["sandbar_characteristics"]
+        },
+        "sandbar_diet": {
+            "researchPaperName": "Sandbar Shark Diet",
+            "researchDescription": "Sandbar sharks primarily feed other bottomdwellers like small fish, crustaceans, and mollusks.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "observed", "reqCount": 10}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["sandbar_size", "sandbar_habitat"]
+        },
+        "sandbar_age": {
+            "researchPaperName": "Sandbar Shark Lifespan",
+            "researchDescription": "Sandbar sharks reach sexual maturity around 8-16 years of age and can live up to 21-27 years with variation across populations around the world.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["sandbar_diet", "sandbar_size"]
+        },
+        "sandbar_reproduction": {
+            "researchPaperName": "Sandbar Shark Reproduction",
+            "researchDescription": "Sandbar sharks are yolk-sac viviparous. They have a gestation period of about 8-12 months and can have 1-14 pups.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "sandbar": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["sandbar_age"]
+        },
+        "lemon_characteristics": {
+            "researchPaperName": "Lemon Shark Physical Characteristics",
+            "researchDescription": "Lemon sharks can easily be identified by their equal sized dorsal fins on their back and a yellow brownish coloring.",
+            "researchGrant": 400,
+            "researchReqs": {
+                "lemon": [{ "dataType": "observed", "reqCount": 4}]
+            },
+            "researchDepends": []
+        },
+        "lemon_size": {
+            "researchPaperName": "Lemon Shark Sizes",
+            "researchDescription": "Lemon sharks are born at about 25 inches long and can grow to an average of 8-10ft.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "lemon": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["lemon_characteristics"]
+        },
+        "lemon_habitat": {
+            "researchPaperName": "Lemon Shark Habitat",
+            "researchDescription": "Lemon sharks are commonly found in shallow coastal waters, particularly around coral reefs, mangroves, enclosed bays, sounds, and river mouths.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "lemon": [{ "dataType": "observed", "reqCount": 5}]
+            },
+            "researchDepends": ["lemon_characteristics"]
+        },
+        "lemon_diet": {
+            "researchPaperName": "Lemon Shark Diet",
+            "researchDescription": "Lemon sharks primarily feed on wildlife that lives on sandy or muddy bottoms. This mostly consists of bony fish, rays and crustaceans.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "lemon": [{ "dataType": "observed", "reqCount": 12}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["lemon_size", "lemon_habitat"]
+        },
+        "lemon_age": {
+            "researchPaperName": "Lemon Shark Lifespan",
+            "researchDescription": "Lemon sharks reach sexual maturity around 12-13 years of age and can live up to 27 years but potentially longer with one individual estimated to be 37.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "lemon": [{ "dataType": "caught", "reqCount": 15}, { "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["lemon_size", "lemon_habitat"]
+        },
+        "lemon_behavior": {
+            "researchPaperName": "Lemon Shark Social Behavior",
+            "researchDescription": "Lemon sharks are known to form social groups, especially during their juvenile stages. These groups are segregated by size and sex and have been shown to have preferred individuals they associate with more frequently.",
+            "researchGrant": 2600,
+            "researchReqs": {
+                "lemon": [{ "dataType": "observed", "reqCount": 30}]
+            },
+            "researchDepends": ["lemon_habitat", "lemon_age", "lemon_characteristics"]
+        },
+        "lemon_reproduction": {
+            "researchPaperName": "Lemon Shark Reproduction",
+            "researchDescription": "Lemon sharks are placentotrophic viviparous. They have a gestation period of about 10-12 months and can give birth to 4-17 pups at a time.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "lemon": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["lemon_characteristics", "lemon_age"]
+        },
+        "great_hammerhead_characteristics": {
+            "researchPaperName": "Great Hammerhead Shark Characteristics",
+            "researchDescription": "Great Hammerheads are the largest species of hammerhead with a square cephalofoil (head) and a very tall dorsal fin.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "observed", "reqCount": 4}],
+                "scalloped_hammerhead": [{ "dataType": "observed", "reqCount": 4}]
+            },
+            "researchDepends": []
+        },
+        "great_hammerhead_size": {
+            "researchPaperName": "Hammerhead Shark Sizes",
+            "researchDescription": "Great hammerhead sharks are born at around 20-30 inches and can grow up to 20ft in length.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["great_hammerhead_characteristics"]
+        },
+        "great_hammerhead_habitat": {
+            "researchPaperName": "Hammerhead Shark Habitat",
+            "researchDescription": "Great hammerhead sharks are found near the equator in warm, tropical waters. They can be found in very shallow coastal areas but are also found far offshore in deeper waters.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "observed", "reqCount": 6}],
+                "scalloped_hammerhead": [{ "dataType": "observed", "reqCount": 6}]
+            },
+            "researchDepends": []
+        },
+        "great_hammerhead_diet": {
+            "researchPaperName": "Hammerhead Shark Diet",
+            "researchDescription": "Great hammerhead sharks primarily feed on a variety of invertebrates and bony fishes but tend to prefer stingrays and skates when available.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "observed", "reqCount": 10}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["great_hammerhead_size", "great_hammerhead_habitat"]
+        },
+        "great_hammerhead_age": {
+            "researchPaperName": "Hammerhead Shark Lifespan",
+            "researchDescription": "Great hammerhead sharks reach sexual maturity somewhere between 5-8 years old and can live up to 44 years.",
+            "researchGrant": 1100,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["great_hammerhead_diet", "great_hammerhead_size"]
+        },
+        "great_hammerhead_behavior_0": {
+            "researchPaperName": "Hammerhead Shark Hunting Strategies",
+            "researchDescription": "Hammerhead sharks use their wide-set heads to pin down stingrays and other prey on the ocean floor.",
+            "researchGrant": 1300,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "observed", "reqCount": 8}]
+            },
+            "researchDepends": ["great_hammerhead_characteristics", "great_hammerhead_habitat", "great_hammerhead_diet"]
+        },
+        "great_hammerhead_reproduction": {
+            "researchPaperName": "Hammerhead Shark Reproduction",
+            "researchDescription": "Great hammerhead sharks are aplacental viviparous, with females giving birth to live young after a gestation period of about 11 months. They can give birth to 6-40 pups at a time.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "great_hammerhead": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["great_hammerhead_age", "great_hammerhead_habitat", "great_hammerhead_characteristics"]
+        },
+        "bonnethead_characteristics": {
+            "researchPaperName": "Bonnethead Shark Physical Characteristics",
+            "researchDescription": "Bonnethead sharks are small hammerhead sharks with a distinctive shovel-shaped head. They have a grayish-brown coloration on top and a white underside. They are the only known species of shark with head shape sexual dimorphisms.",
+            "researchGrant": 300,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "observed", "reqCount": 3}]
+            },
+            "researchDepends": []
+        },
+        "bonnethead_size": {
+            "researchPaperName": "Bonnethead Shark Sizes",
+            "researchDescription": "Bonnethead sharks are born at about 12-14 inches long and can grow up to 3-4ft.",
+            "researchGrant": 400,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["bonnethead_characteristics"]
+        },
+        "bonnethead_age": {
+            "researchPaperName": "Bonnethead Shark Lifespan",
+            "researchDescription": "Bonnethead sharks reach sexual maturity around 2-3 years of age and to have an estimated life span of 16-18 years.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["bonnethead_size"]
+        },
+        "bonnethead_habitat": {
+            "researchPaperName": "Bonnethead Shark Habitat",
+            "researchDescription": "Bonnethead sharks are commonly found in shallow coastal waters, particularly around seagrass beds and sandy flats.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "observed", "reqCount": 6}]
+            },
+            "researchDepends": []
+        },
+        "bonnethead_diet_0": {
+            "researchPaperName": "Bonnethead Shark Diet",
+            "researchDescription": "Bonnethead sharks, like other hammerhead species, use their large head to find and feed on prey hiding on the sea floor. Their diet is mostly made up of crustaceans like crabs and shrimp along with mollusks and small fishes.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["bonnethead_habitat"]
+        },
+        "bonnethead_diet_1": {
+            "researchPaperName": "Bonnethead Shark Unique Diet",
+            "researchDescription": "Bonnethead sharks is one of a few sharks species found to be an omnivour, with seagrass making up a significant portion of their diet. Using carbon isotope labelled seagrass it was proven that they actually absorb nutrients from the seasgrass. They have also been found to have enzymes that can break down cellulose.",
+            "researchGrant": 2000,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "observed", "reqCount": 10}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["bonnethead_size", "bonnethead_habitat", "bonnethead_diet_0"]
+        },
+        "bonnethead_reproduction": {
+            "researchPaperName": "Bonnethead Shark Reproduction",
+            "researchDescription": "Bonnethead sharks are yolk-sac placental viviparous. They have the shortest gestation period of any shark at just 4-5 months.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "bonnethead": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["bonnethead_age", "bonnethead_size", "bonnethead_habitat"]
+        },
+        "white_characteristics": {
+            "researchPaperName": "White Shark Physical Characteristics",
+            "researchDescription": "Great white sharks are one of the largest species of sharks. They have a triangular dorsal fin and a symmetrical, crescent shaped caudal (tail) fin. They are gray on top with a hard change to white on their underside.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "white": [{ "dataType": "observed", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "white_size": {
+            "researchPaperName": "White Shark Sizes",
+            "researchDescription": "White sharks are born measuring around 4-5ft and can grow up to 20ft although unconfirmed reports might be even larger.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 7}]
+            },
+            "researchDepends": ["white_characteristics"]
+        },
+        "white_habitat": {
+            "researchPaperName": "White Shark Habitat",
+            "researchDescription": "White sharks are found cooler waters and are highly migratory and follow food availability throughout the year.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "white": [{ "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": []
+        },
+        "white_diet": {
+            "researchPaperName": "White Shark Diet",
+            "researchDescription": "White sharks diets change as they grow. Juveniles primarily feed on fish and small sharks while adults mainly prey on marine mammals such as seals, dolphins, and whales.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "white": [{ "dataType": "observed", "reqCount": 8}]
+            },
+            "researchDepends": ["white_habitat"]
+        },
+        "white_behavior": {
+            "researchPaperName": "White Shark Behavior",
+            "researchDescription": "In some parts of the world white sharks have been observed to breach completely out of the water when hunting seals. They will hunt seals in deep water and explode towards the surface, launching themselves and likely their prey into the air.",
+            "researchGrant": 1000,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 3}]
+            },
+            "researchDepends": ["white_characteristics", "white_diet"]
+        },
+        "white_migration": {
+            "researchPaperName": "White Shark Migration",
+            "researchDescription": "White sharks undertake long migrations, being able to reliably navigate across vast swaths of open ocean with no landmarks.",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "white": [{ "dataType": "observed", "reqCount": 15}]
+            },
+            "researchDepends": ["white_size"]
+        },
+        "white_biology": {
+            "researchPaperName": "White Shark Biology",
+            "researchDescription": "White sharks have a unique physiology that allows them to maintain a body temperature higher than the surrounding water allowing them to go into colder water than most species of sharks.",
+            "researchGrant": 2000,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 10}, { "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["white_diet", "white_migration", "white_behavior"]
+        },
+        "white_age": {
+            "researchPaperName": "White Shark Lifespan",
+            "researchDescription": "White sharks reach sexual maturity around 30 years of age and can live up to 70 years or more.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["white_biology"]
+        },
+        "white_reproduction": {
+            "researchPaperName": "White Shark Reproduction",
+            "researchDescription": "White sharks are aplacental viviparous with unborn embryos not just gaining nutrition from an yolk sac but also from unfertilized eggs but no placental connection is formed. They have litter sizes on average of 2-10 pups but have been seen to have as many as 17 pups.",
+            "researchGrant": 1800,
+            "researchReqs": {
+                "white": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 20}]
+            },
+            "researchDepends": ["white_age", "white_habitat", "white_characteristics", "white_biology"]
+        },
+        "bull_characteristics": {
+            "researchPaperName": "Bull Shark Physical Characteristics",
+            "researchDescription": "Bull sharks are large and stocky with a rounded snout and small eyes. Their coloration is gray on top with a white underbelly.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "bull_size": {
+            "researchPaperName": "Bull Shark Sizes",
+            "researchDescription": "Bull sharks are born at around 22-31 inches long. As adults on average they are found to be 11-12ft but can grow up to 14ft.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 8}]
+            },
+            "researchDepends": ["bull_characteristics"]
+        },
+        "bull_habitat_0": {
+            "researchPaperName": "Bull Shark Habitat",
+            "researchDescription": "Bull sharks are commonly found in shallow coastal waters, rivers, and estuaries but have been found offshore and in waters as deep as 540ft.",
+            "researchGrant": 800,
+            "researchReqs": {
+                "bull": [{ "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": []
+        },
+        "bull_diet": {
+            "researchPaperName": "Bull Shark Diet",
+            "researchDescription": "Bull sharks are opportunistic feeders that eat a variety of prey, including fish, dolphins, turtles, birds, and other sharks.",
+            "researchGrant": 1100,
+            "researchReqs": {
+                "bull": [{ "dataType": "observed", "reqCount": 15}, { "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["bull_size", "bull_habitat_0"]
+        },
+        "bull_age": {
+            "researchPaperName": "Bull Shark Lifespan",
+            "researchDescription": "Bull sharks reach sexual maturity around 10-18 years of age and can live up to 24-27 years but these ages vary depending on the population.",
+            "researchGrant": 900,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 15}]
+            },
+            "researchDepends": ["bull_diet"]
+        },
+        "bull_reproduction": {
+            "researchPaperName": "Bull Shark Reproduction",
+            "researchDescription": "Bull sharks are placental viviparous and has a gestation period of about 10-11 months. They give birth to 1-15 pups at a time in sheltered inland areas.",
+            "researchGrant": 1300,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 20}, { "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["bull_age", "bull_habitat_0", "bull_characteristics"]
+        },
+        "bull_habitat_1": {
+            "researchPaperName": "Bull Shark Unique Habitat",
+            "researchDescription": "Bull sharks can adjust to a large range of salinities, allowing them to swim into freshwater like rivers and lakes accessiable from the ocean. Young bull sharks spend a significant amount of their early life in freshwater, away from the many predators found in the ocean (including adult bull sharks).",
+            "researchGrant": 1500,
+            "researchReqs": {
+                "bull": [{ "dataType": "observed", "reqCount": 15}]
+            },
+            "researchDepends": ["bull_habitat_0", "bull_reproduction"]
+        },
+        "bull_behavior": {
+            "researchPaperName": "Bull Shark Behavior",
+            "researchDescription": "Bull sharks are known to hunt in murky waters with low visibility. Instead of eye sight, they use their sense of smell, electroreception, and their lateral line. The lateral line is a touch sense that can feel water movement from other animals.",
+            "researchGrant": 1200,
+            "researchReqs": {
+                "bull": [{ "dataType": "caught", "reqCount": 10}]
+            },
+            "researchDepends": ["bull_characteristics", "bull_habitat_1", "bull_diet"]
+        },
+        "oceanic_whitetip_characteristics": {
+            "researchPaperName": "Oceanic Whitetip Shark Physical Characteristics",
+            "researchDescription": "Oceanic whitetip have white tipped, rounded dorsal and pectoral fins, along with white markings on their pelvic and caudal (tail) fins. They have a brownish-gray coloration on top and a white underside.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "oceanic_whitetip": [{ "dataType": "observed", "reqCount": 5}]
+            },
+            "researchDepends": []
+        },
+        "oceanic_whitetip_size": {
+            "researchPaperName": "Oceanic Whitetip Shark Sizes",
+            "researchDescription": "Oceanic whitetip sharks are born at about 24-25 inches long and can grow up to 11ft.",
+            "researchGrant": 500,
+            "researchReqs": {
+                "oceanic_whitetip": [{ "dataType": "caught", "reqCount": 5}]
+            },
+            "researchDepends": ["oceanic_whitetip_characteristics"]
+        },
+        "oceanic_whitetip_habitat": {
+            "researchPaperName": "Oceanic Whitetip Shark Habitat",
+            "researchDescription": "Oceanic whitetip sharks are mostly found in the upper layers of the open ocean far from shore across the whole planet. This makes them one of the most wide spread species of shark.",
+            "researchGrant": 700,
+            "researchReqs": {
+                "oceanic_whitetip": [{ "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": []
+        },
+        "oceanic_whitetip_diet": {
+            "researchPaperName": "Oceanic Whitetip Shark Diet",
+            "researchDescription": "Oceanic whitetip sharks primarily feed on bony fish, cephalopods, and crustaceans. They are opportunistic feeders and will scavenge when the opportunity arises.",
+            "researchGrant": 600,
+            "researchReqs": {
+                "oceanic_whitetip": [{ "dataType": "observed", "reqCount": 10}]
+            },
+            "researchDepends": ["oceanic_whitetip_habitat"]
+        }
+    }
+}

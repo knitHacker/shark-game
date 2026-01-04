@@ -258,10 +258,7 @@ data PlayConfigs = PlayConfigs
     , sharks :: M.Map T.Text SharkInfo
     , research :: M.Map T.Text ResearchData
     , gameMechanics :: GameMechanics
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON PlayConfigs
-instance ToJSON PlayConfigs
+    } deriving (Show, Eq)
 
 data TripInfo = TripInfo
     { tripDestination :: DataEntry (T.Text, T.Text) FullLocation

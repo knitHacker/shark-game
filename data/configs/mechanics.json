@@ -1,0 +1,44 @@
+{
+    "gameMechanics": {
+        "mechanicsStart": {
+            "startingFunds": 1000,
+            "startingBoat": "skiff",
+            "startingEquipment": [
+                "fishingRod",
+                "snorkelGear"
+            ],
+            "startingRegion": "tropical_west_atlantic"
+        },
+        "mechanicsEncounter": {
+            "baseAttempts": 3,
+            "bonusAttemptChancePercent": 60,
+            "bonusMaxAttempts": 3
+        },
+        "mechanicsFundraising": {
+            "fundraisers": {
+                "collection_box": {
+                    "fundraiserName": "Collection Box",
+                    "fundraiserDescription": "Set up a collection box at a local business to collect donations from the community.",
+                    "fundraiserBaseAmount": 50,
+                    "fundraiserCost": 10,
+                    "fundraiserSuccessRate": 80,
+                    "fundraiserRecurring": true,
+                    "fundraisingSponsors": [
+                        "Billy's Bait Shop",
+                        "Clay's Kayak Rentals",
+                        "Beachside Cafe"
+                    ]
+                },
+                "gala_event": {
+                    "fundraiserName": "Gala Event",
+                    "fundraiserDescription": "Host a gala event to raise funds for your shark research foundation.",
+                    "fundraiserBaseAmount": 20000,
+                    "fundraiserCost": 10000,
+                    "fundraiserSuccessRate": 60,
+                    "fundraiserRecurring": false,
+                    "fundraisingSponsors": []
+                }
+            }
+        }
+    }
+}
