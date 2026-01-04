@@ -78,9 +78,9 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
         waveAnim4 = APlace 700 200 7.0 animKey 5 0 1 True
         waveAnim5 = APlace 1100 150 5.5 animKey 2 0 1 True
         waveMoveTO = TimeoutData 0 120 $ TimeoutAnimation $ startAnimation 15 nextFrame
-        newGame = MenuAction "New Game" $ Just $ IntroWelcome Nothing
-        continueGame cg = MenuAction "Continue" $ Just $ ResearchCenter cg
-        exitOpt = MenuAction "Exit" $ Just $ GameExitState gdM
+        newGame = MenuAction "New Game" Nothing $ Just $ IntroWelcome Nothing
+        continueGame cg = MenuAction "Continue" Nothing $ Just $ ResearchCenter cg
+        exitOpt = MenuAction "Exit" Nothing $ Just $ GameExitState gdM
         menuOpts =
             case gdM of
                 Nothing -> [newGame, exitOpt]
@@ -104,7 +104,7 @@ introWelcome gd gr = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (
                 , fst $ textMiddleX gr endText 600 2 Green
                 ]
         imgs = [IPlace 150 (yEnd + 20) 1.0 "no_dolphin" 1]
-        opts = [ MenuAction "Next" $ Just $ IntroMission gd
+        opts = [ MenuAction "Next" Nothing $ Just $ IntroMission gd
                ]
 
 introMission :: GameData -> Graphics -> GameMenu
@@ -121,7 +121,7 @@ introMission gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 o
         words = TextDisplay "Mission" 50 20 9 White Nothing
               : TextDisplay "Statement" 150 150 9 White Nothing
               : wrappedHowItWorks
-        opts = [ MenuAction "Next" $ Just $ IntroBoat gd
+        opts = [ MenuAction "Next" Nothing $ Just $ IntroBoat gd
                ]
         optX = div (graphicsWindowWidth gr) 2
         optY = graphicsWindowHeight gr - 100
@@ -139,7 +139,7 @@ introBoat gd cfg gr = GameMenu (View ((,0) <$> words) [img] [] [] Nothing) (Menu
         words = TextDisplay "A Kind" 40 20 8 White Nothing
               : TextDisplay "Neighbor" 100 130 9 White Nothing
               : wrappedBoat
-        opts = [ MenuAction "Next" $ Just $ IntroEquipment gd ]
+        opts = [ MenuAction "Next" Nothing $ Just $ IntroEquipment gd ]
         optX = div (graphicsWindowWidth gr) 2
         optY = graphicsWindowHeight gr - 100
 
@@ -158,7 +158,7 @@ introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (se
               : (TextDisplay "Catch" (fromIntegral rectStartX + 40) (fromIntegral rectStartY + 10) 3 Blue Nothing, 2)
               : (TextDisplay "Observe" (fromIntegral rectStartX + 340) (fromIntegral rectStartY + 10) 3 Blue Nothing, 2)
               : ((,0) <$> wrappedEquip)
-        opts = [ MenuAction "Next" $ Just $ IntroResearch gd ]
+        opts = [ MenuAction "Next" Nothing $ Just $ IntroResearch gd ]
         imgs = [ IPlace (rectStartX + 10) (rectStartY + 50) 4.0 (equipImage eqCatch) 2
                , IPlace (rectStartX + 345) (rectStartY + 50) 4.0 (equipImage eqObs) 2
                ]
@@ -182,7 +182,7 @@ introResearch gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 
         words = TextDisplay "Publishing" 30 20 9 White Nothing
               : TextDisplay "Your Findings" 80 150 8 White Nothing
               : wrappedResearch
-        opts = [ MenuAction "Next" $ Just $ IntroFunds gd ]
+        opts = [ MenuAction "Next" Nothing $ Just $ IntroFunds gd ]
         optX = div (graphicsWindowWidth gr) 2
         optY = graphicsWindowHeight gr - 100
 
@@ -203,7 +203,7 @@ introFunds gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opt
                 : TextDisplay grantText 300 (fromIntegral yEnd + 100) 4 White Nothing
                 : TextDisplay (showMoney startMoney) 500 600 3 Green Nothing
                 : wrappedWelcome
-        opts = [ MenuAction "Next" $ Just $ IntroEnd gd' ]
+        opts = [ MenuAction "Next" Nothing $ Just $ IntroEnd gd' ]
 
 introEnd :: GameData -> Graphics -> GameMenu
 introEnd gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
@@ -214,7 +214,7 @@ introEnd gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts 
         words = TextDisplay "Good Luck!" 100 50 12 White Nothing : wrappedEnd
         optX = div (graphicsWindowWidth gr) 2
         optY = graphicsWindowHeight gr - 100
-        opts = [ MenuAction "Begin Research" $ Just $ ResearchCenter gd ]
+        opts = [ MenuAction "Begin Research" Nothing $ Just $ ResearchCenter gd ]
 
 researchCenterMenu :: GameData -> Graphics -> GameView
 researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
@@ -236,7 +236,7 @@ researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
                 , TextDisplay "Center" 200 140 7 White Nothing
                 ]
         fundWords = oneLine gr fundTxts 630 100 2
-        opts = [ MenuAction "Plan Research Trip" $ Just $ TripDestinationSelect gd 0
-               , MenuAction "Review Data" $ Just $ DataReviewTop gd
-               , MenuAction "Lab Management" $ Just $ LabManagement gd
+        opts = [ MenuAction "Plan Research Trip" Nothing $ Just $ TripDestinationSelect gd 0
+               , MenuAction "Review Data" Nothing $ Just $ DataReviewTop gd
+               , MenuAction "Lab Management" Nothing $ Just $ LabManagement gd
                ]

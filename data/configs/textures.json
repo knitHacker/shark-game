@@ -17,32 +17,32 @@
         },
         "blue_shark": {
             "sizeX": 200,
-            "sizeY": 200,
+            "sizeY": 125,
             "file": "assets/images/blue_shark.png"
         },
         "tiger_shark": {
             "sizeX": 200,
-            "sizeY": 200,
+            "sizeY": 125,
             "file": "assets/images/tiger_shark.png"
         },
         "bonnethead_shark": {
             "sizeX": 200,
-            "sizeY": 200,
+            "sizeY": 125,
             "file": "assets/images/bonnethead_shark.png"
         },
         "blacktip_shark": {
             "sizeX": 200,
-            "sizeY": 200,
+            "sizeY": 125,
             "file": "assets/images/blacktip_shark.png"
         },
         "sandbar_shark": {
             "sizeX": 200,
-            "sizeY": 200,
+            "sizeY": 125,
             "file": "assets/images/sandbar_shark.png"
         },
         "bull_shark": {
             "sizeX": 200,
-            "sizeY": 200,
+            "sizeY": 125,
             "file": "assets/images/bull_shark.png"
         },
         "bad_shark": {

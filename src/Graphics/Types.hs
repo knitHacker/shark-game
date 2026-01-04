@@ -184,6 +184,7 @@ updateView (View t1 i1 a1 r1 vs1) (View t2 i2 a2 r2 vs2) =
 
 data MenuAction a = MenuAction
     { menuOptionText :: !T.Text
+    , menuImage :: !(Maybe ImagePlacement)
     , menuNextState :: !(Maybe a)
     } deriving (Show, Eq)
 

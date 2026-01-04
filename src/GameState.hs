@@ -270,9 +270,9 @@ pauseMenu gr gps gd = OverlayView False (textView words) (Overlay overlayX overl
         menuOpt = MenuData (SelOneListOpts $ OALOpts opts Nothing Nothing (CursorRect White)) (BlockDrawInfo (overlayX + 150) (overlayY + 300) 4 15) 0
         words = [ TextDisplay "Game Menu" (fromIntegral (overlayX + 50)) (fromIntegral (overlayY + 50)) 8 White Nothing
                 ]
-        opts = [ MenuAction "Continue" $ Just gps
-               , MenuAction "Main Menu" $ Just $ MainMenu $ Just gd
-               , MenuAction "Save & Exit" $ Just (GameExitState (Just gd))
+        opts = [ MenuAction "Continue" Nothing $ Just gps
+               , MenuAction "Main Menu" Nothing $ Just $ MainMenu $ Just gd
+               , MenuAction "Save & Exit" Nothing $ Just (GameExitState (Just gd))
                ]
 
 introWelcomeIO :: GameConfigs -> Graphics -> IO GameDrawInfo

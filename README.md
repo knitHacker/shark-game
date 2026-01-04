@@ -1,15 +1,20 @@
 # Shark Game
 
-An educational game where you play as a shark researcher exploring different marine habitats, discovering shark species, and publishing research findings.
+An educational game where you play as a shark researcher exploring different marine habitats, discovering shark species,
+and publishing research findings.
 
 ## Features
 
-- **Multiple Regions & Biomes**: Explore the Tropical West Atlantic and Pacific Ocean, visiting various habitats including reefs, mangroves, kelp forests, estuaries, and open ocean.
-- **Diverse Shark Species**: Encounter 30+ shark species, from nurse sharks to great whites, each with accurate biological information.
-- **Research Mechanics**: Collect data through observation (snorkeling, scuba, BRUV) or catch-and-release methods, then publish research papers to earn grants.
-- **Equipment Progression**: Start with basic fishing and snorkel gear, upgrade to advanced equipment like SCUBA gear, long lines, and underwater cameras.
-- **Boat Management**: Purchase different boats to access various biomes - from small boats for shallow waters to large vessels for deep ocean exploration.
-- **Educational Content**: Learn real facts about shark biology, behavior, diet, and conservation status through in-game research descriptions.
+- **Multiple Regions & Biomes**: Explore various habitats including reefs, mangroves, estuaries, and open ocean.
+- **Diverse Shark Species**: Encounter many shark species, from nurse sharks to great whites, each with accurate
+biological information.
+- **Research Mechanics**: Collect data through observation (snorkeling, scuba, BRUV) or catch-and-release methods,
+then publish research papers to earn grants.
+- **Equipment Progression**: Start with basic fishing and snorkel gear, upgrade to advanced equipment like SCUBA gear,
+long lines, and underwater cameras.
+- **Boat Management**: Purchase different boats to access various biomes - from small boats for shallow waters to
+large vessels for deep ocean exploration.
+- **Educational Content**: Learn real facts about shark biology, behavior, diet, and research methods.
 
 ## Building & Running
 
@@ -42,15 +47,24 @@ stack build
 stack run
 ```
 
+### Running from Release
+
+#### Windows
+Download zip file then extract the zip file. Execute exe file. This is a personal project without certifications so Windows
+will caution the user from running the executable. To run the executable select "more info" which will unlock a "run anyway" button. If a console (terminal) opens when running the game do not close or it will end the game.
+
 ## Game Mechanics
 
 ### Trips
-Plan research trips to different locations using your available equipment and boat. Each trip gives you multiple attempts to encounter sharks based on your equipment's effectiveness.
+Plan research trips to different locations using your available equipment and boat. Each trip gives you multiple attempts
+to encounter sharks based on your equipment's effectiveness.
 
 ### Research
-Publish research papers by collecting sufficient data on shark species. Each paper earns grant money to fund further expeditions and equipment upgrades.
+Publish research papers by collecting sufficient data on shark species. Each paper earns grant money to fund further
+expeditions and equipment upgrades. Learn real facts about different species of sharks including their habitat, feeding
+habits, and behaviors.
 
-### Fundraising
+### Fundraising (coming soon)
 Supplement your research budget through fundraising activities like collection boxes and gala events.
 
 ## Development
@@ -62,43 +76,18 @@ Built with:
 
 ## Beta Release TODO
 
-### Critical for Playability
-- [ ] **Tutorial/First-time player guidance** - Simple text explaining game flow on first launch
-- [ ] **Controls documentation** - In-game help screen showing keyboard/mouse controls
-- [ ] **Save/load confirmation messages** - Let players know when saves succeed/fail
-- [ ] **Goal indicators** - Show progress toward next research paper or equipment unlock
-- [ ] **Feedback on actions** - Success/failure messages for trips, purchases, fundraising
-
-### Art Assets
-- [ ] Fill in entry page art
-- [ ] Fill in research institute art
-- [ ] Fill in equipment images
-- [ ] Fill in shark species images
-- [ ] Add music/sound effects
-
-### Polish
-- [ ] Come up with game name
-- [ ] **Credits screen** - Cite educational sources (important for academic use!)
-- [ ] **Settings menu** - Volume controls (if adding music), fullscreen toggle
-- [ ] **Research dependency visualization** - Help players see what unlocks what
-- [ ] **End-game content** - What happens when all research is complete? Congratulations screen?
-
 ### Game Design
 - [ ] **Game balancing** - Adjust costs, grant amounts, encounter rates
 - [ ] **Check accuracy of facts** - Verify all educational content for academic use
-- [ ] **Difficulty curve** - Does the Pacific region unlock later? Should some equipment be gated by research progress?
 - [ ] **Fail states** - Can you run out of money? Should fundraising be unlimited?
 - [ ] **Replayability** - Random events? Different starting regions?
-
-### Pre-release Testing
-- [ ] **Playtest with someone unfamiliar** - Watch them play without helping
-- [ ] **Bug pass** - Test all menu transitions, edge cases (buying with no money, etc.)
-- [ ] **Typo check** - Proofread all text since it's educational
+- [ ] **Load other save files** - Allow user to load more than just the last saved game
+- [ ] **Help menu** - Show how controls work and suggest next steps / how play works
 
 ## Future Feature Ideas
 - [ ] Finish fundraiser feature
 - [ ] Mini-games during trip
-- [ ] Trip to fish market / docks for
+- [ ] Trip to fish market / docks for dead samples
 - [ ] Different tag type deployments
 - [ ] Triggered events
     - [ ] Fundraised money coming in over time
@@ -111,6 +100,10 @@ Built with:
 - [ ] Lab / evaluation step between collecting shark information and publishing
 - [ ] Lab live specimens for experiments?
 - [ ] Transition from menu game to 2.5D sim?
+- [ ] Animation of sharks
+- [ ] Native controller support
+- [ ] Change keybindings
+- [ ] Glossary / general shark facts
 
 ## License
 

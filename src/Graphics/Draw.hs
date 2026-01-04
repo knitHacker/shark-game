@@ -126,14 +126,16 @@ getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
 
 -- Draw the menu options for menus that you only select one option at a time
 updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
-updateSelOneListOptions gr@(Graphics _ _ (fw, fh) _ _) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM _ curs) = r'
+updateSelOneListOptions gr@(Graphics _ _ (fw, fh) _ _) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM _ curs) = r''
     where
         allOpts = case backOptM of
                     Nothing -> ma
                     Just backOpt -> ma ++ [backOpt]
         r = if pos >= 0 && pos < length allOpts then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
-        r' = foldl (\rend td -> addText rend d 2 td) r $ updateMenuListOptions opts s h oX oY
-        opts = (\mo -> (menuOptionText mo, if isJust $ menuNextState mo then Blue else Gray)) <$> allOpts
+        r' = foldl (\rend td -> addText rend d 2 td) r txts
+        r'' = foldl (\rend t -> addTexture rend d 2 t) r' imgs
+        (txts, imgs) = updateMenuListOptions gr opts s h oX oY
+        opts = (\mo -> (menuOptionText mo, if isJust $ menuNextState mo then Blue else Gray, menuImage mo)) <$> allOpts
         yPos = y + (h * pos)
         yPos' = fromIntegral yPos
         oX = fromIntegral x
@@ -192,12 +194,20 @@ updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' 
                 hRect = getTextRectangle hlC x yPos tlen tHI s sp
 
 -- Update which items are selected in a multi-select list
-updateMenuListOptions :: [(T.Text, Color)] -> Int -> Int -> CInt -> CInt -> [TextDisplay]
-updateMenuListOptions opts s h x = updateMenuListOptions' opts
+updateMenuListOptions :: Graphics -> [(T.Text, Color, Maybe ImagePlacement)] -> Int -> Int -> CInt -> CInt -> ([TextDisplay], [DrawTexture])
+updateMenuListOptions gr opts s h x = updateMenuListOptions' opts
     where
-        updateMenuListOptions' [] _ = []
-        updateMenuListOptions' ((optText, col):tl) y = dis : updateMenuListOptions' tl newY
+        toTexture (IPlace ix iy is it _) y = DTexture it (fromIntegral ix + x) (fromIntegral iy + y)
+            (floor (fromIntegral w * is)) (floor (fromIntegral h * is)) Nothing
             where
+                (w, h) = getTextureSize $ ImageCfg (graphicsStaticTextures gr ! it)
+        updateMenuListOptions' [] _ = ([], [])
+        updateMenuListOptions' ((optText, col, imgM):tl) y =
+            case imgM of
+                Nothing -> (dis: txts, imgs)
+                Just ip -> (dis: txts, toTexture ip y : imgs)
+            where
+                (txts, imgs) = updateMenuListOptions' tl newY
                 newY = y + fromIntegral h
                 dis = TextDisplay optText x y s col Nothing
 
