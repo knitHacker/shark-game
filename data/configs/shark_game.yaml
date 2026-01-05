@@ -36,7 +36,7 @@ boats:
     - continentalShelf
     boatEquipmentSlots: 2
     boatFuelCost: 250
-    boatPrice: 10000
+    boatPrice: 2000
     boatImage: default_boat
   largeBoat:
     boatName: Large Boat
@@ -57,8 +57,7 @@ boats:
 equipment:
   drumLine:
     equipText: Drum Line
-    equipmentDescription: An anchored bait attached to a float used to catch larger
-      sharks.
+    equipmentDescription: An anchored bait attached to a float used to catch larger sharks.
     equipSize: 1
     equipTimeAdded: 1
     equipPrice: 700
@@ -67,8 +66,7 @@ equipment:
     equipImage: empty_net_white
   longLine:
     equipText: Long Line
-    equipmentDescription: A long line with multiple baited hooks used to catch a variety
-      of sharks.
+    equipmentDescription: A long line with multiple baited hooks used to catch a variety of sharks.
     equipSize: 1
     equipTimeAdded: 1
     equipPrice: 500
@@ -139,6 +137,7 @@ regions:
         - fishingRod
         - drumLine
         - longLine
+        - bruv
         sharksFound:
         - [lemon, 40, 45]
         - [nurse, 50, 50]
@@ -169,6 +168,7 @@ regions:
         - snorkelGear
         - longLine
         - drumLine
+        - bruv
         sharksFound:
         - [nurse, 10, 10]
         - [lemon, 10, 10]
@@ -186,6 +186,7 @@ regions:
         - fishingRod
         - longLine
         - scubaGear
+        - bruv
         sharksFound:
         - [sandbar, 40, 40]
         - [blacktip, 30, 30]
@@ -199,6 +200,7 @@ regions:
         allowedEquipment:
         - fishingRod
         - snorkelGear
+        - bruv
         sharksFound:
         - [nurse, 10, 10]
         - [bull, 30, 30]
@@ -213,6 +215,7 @@ regions:
         - fishingRod
         - snorkelGear
         - longLine
+        - bruv
         sharksFound:
         - [bonnethead, 35, 40]
         - [blacktip, 30, 40]
