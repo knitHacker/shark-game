@@ -57,12 +57,7 @@ mechanicsFile :: FilePath
 mechanicsFile = "data/configs/mechanics.yaml"
 
 -- Wrapper types for individual config files
-data ResearchConfig = ResearchConfig 
-    { research :: M.Map T.Text ResearchData 
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON ResearchConfig
-instance ToJSON ResearchConfig
+type ResearchConfig = M.Map T.Text ResearchData
 
 data GameMechanicsConfig = GameMechanicsConfig
     { gameMechanics :: GameMechanics
@@ -212,7 +207,7 @@ initConfigs = do
                             else error "Invalid game configs"
   where
     buildPlayConfigs :: GamePlayConfig -> ResearchConfig -> GameMechanicsConfig -> PlayConfigs
-    buildPlayConfigs (GamePlayConfig b e r s) (ResearchConfig res) (GameMechanicsConfig gm) = PlayConfigs
+    buildPlayConfigs (GamePlayConfig b e r s) res (GameMechanicsConfig gm) = PlayConfigs
         { boats = b
         , equipment = e
         , regions = r

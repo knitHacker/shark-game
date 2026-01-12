@@ -18,6 +18,7 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
+    data/configs/events.yaml
     data/configs/game.yaml
     data/configs/mechanics.yaml
     data/configs/research.yaml
@@ -48,6 +49,7 @@ extra-source-files:
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 data-files:
+    data/configs/events.yaml
     data/configs/game.yaml
     data/configs/mechanics.yaml
     data/configs/research.yaml

@@ -39,7 +39,7 @@ data EquipInfoType = Caught | Observed
     deriving (Generic, Show, Eq, Ord)
 
 instance FromJSON EquipInfoType where
-    parseJSON = \v -> do
+    parseJSON v = do
         s <- parseJSON v
         case (s :: T.Text) of
             "caught" -> return Caught
@@ -56,7 +56,7 @@ data SharkEncounterRate = SharkEncounterRate
     } deriving (Generic, Show, Eq)
 
 instance FromJSON SharkEncounterRate where
-    parseJSON = \_ -> fail "SharkEncounterRate should not be parsed directly"
+    parseJSON _ = fail "SharkEncounterRate should not be parsed directly"
 
 instance ToJSON SharkEncounterRate where
     toJSON (SharkEncounterRate caught observed) = toJSON [caught, observed]
@@ -162,7 +162,7 @@ data GameLocation = GameLoc
     } deriving (Generic, Show, Eq)
 
 instance FromJSON GameLocation where
-    parseJSON = \v -> do
+    parseJSON v = do
         obj <- parseJSON v
         showTxt <- obj .: "showText"
         desc <- obj .: "biomeDescription"
