@@ -8,6 +8,7 @@ module GameState.Types
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
+    , TransitionBehavior(..)
     , mergeGameViews
     , mergeGameDrawInfo
     ) where
@@ -23,6 +24,9 @@ import SaveData
 import Shark.Types
 import Util
 import Data.IntMap.Merge.Lazy (merge)
+
+data TransitionBehavior = AllowTransitions | BlockTransitions
+    deriving (Eq, Show)
 
 data GameState = GameState
     { gameGraphics :: !Graphics

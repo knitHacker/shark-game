@@ -35,6 +35,19 @@ import qualified Data.Text as T
 
 import Util
 
+-- data ResearchInfo = SizeResearch | ReproductionResearch ...
+
+data ResearchDiscovery = HabitatDiscovery | SizeDiscovery | AgeDiscovery | ReproductionDiscovery | DietDiscovery | UniqueDiscovery
+    deriving (Generic, Show, Eq, Ord)
+
+data LockedData a = Discovered a | Undetermined | Undiscovered [ResearchDiscovery] a
+
+data AgeSize = YOY | SubAdult | Adult
+
+data SexStatus = Male | Female (LockedData PregnancyStatus) | UnknownSex
+
+data PregnancyStatus = Pregnant | NotPregnant
+
 data EquipInfoType = Caught | Observed
     deriving (Generic, Show, Eq, Ord)
 
