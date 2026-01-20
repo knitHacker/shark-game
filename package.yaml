@@ -49,9 +49,39 @@ library:
   source-dirs: src
 
 executables:
-  shark-game-exe:
+  shark-game:
     main:                Main.hs
     source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -O2
+    - -with-rtsopts=-N
+    when:
+    - condition: os(windows)
+      ghc-options:
+      - -optl-mwindows
+    dependencies:
+    - shark-game
+
+  preview:
+    main:                Main.hs
+    source-dirs:         tools/preview
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -O2
+    - -with-rtsopts=-N
+    when:
+    - condition: os(windows)
+      ghc-options:
+      - -optl-mwindows
+    dependencies:
+    - shark-game
+
+  generate-save:
+    main:                Main.hs
+    source-dirs:         tools/generate-save
     ghc-options:
     - -threaded
     - -rtsopts

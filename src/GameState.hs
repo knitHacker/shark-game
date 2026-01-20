@@ -38,6 +38,26 @@ initGameState tm cfgs outs inputs = do
     return $ GameState graph gps gv Nothing
 
 
+updateGameStateWith :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => TransitionBehavior -> m GameState
+updateGameStateWith transitionType = do
+    cfgs <- readConfigs
+    inputs <- readInputState
+    gs <- readGameState
+    outs <- getOutputs
+    let gr' = updateGraphics (gameGraphics gs) cfgs inputs
+        gsM = updateGameView gr' inputs $ gameView gs
+    case (windowResized inputs, gsM) of
+        (Just resize, _) ->
+            let gv = reDrawState (gameLastState gs) cfgs inputs gr'
+            in return $ GameState gr' (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
+        (Nothing, Nothing) -> return gs
+        (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
+        (_, Just (Right gps)) -> do
+            (lgps, gv) <- liftIO $ moveToNextState gps cfgs inputs gr'
+            return $ GameState gr' lgps gv Nothing
+
+
+
 updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
 updateGameState = do
     cfgs <- readConfigs

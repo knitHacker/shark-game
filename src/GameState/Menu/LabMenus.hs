@@ -165,7 +165,7 @@ fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Jus
 chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
 chooseActiveBoatMenu gd cfgs = GameMenu (textView words) (Menu (md pos) Nothing)
     where
-        md = scrollOpts 250 550 4 8 (OALOpts opts Nothing Nothing mc) (Just cancelOpt) [] 4
+        md = scrollOpts 250 520 3 6 (OALOpts opts Nothing Nothing mc) (Just cancelOpt) [] 3
         cancelOpt = MenuAction "Back" Nothing $ Just $ FleetManagement gd
         mc = CursorRect White
         bts = boats $ sharkCfgs cfgs
@@ -173,11 +173,11 @@ chooseActiveBoatMenu gd cfgs = GameMenu (textView words) (Menu (md pos) Nothing)
         available = L.sortOn (\(_, cfg) -> boatEquipmentSlots cfg) $ M.assocs $ M.filterWithKey (\k _ -> k `elem` owned) bts
         pos = fromMaybe 0 $ L.findIndex (\(b, _) -> b == gameActiveBoat (gameDataEquipment gd)) available
         boatsOpts = (\(b, bCfg) -> (b, T.concat [boatName bCfg, " - ", T.pack (show (boatEquipmentSlots bCfg)), " slots"])) <$> available
-        words = [ TextDisplay "Choose" 20 20 8 White Nothing
-                , TextDisplay "Active Boat" 80 150 8 White Nothing
-                , TextDisplay "Current Boat:" 200 275 5 LightGray Nothing
-                , TextDisplay (boatName $ bts ! gameActiveBoat (gameDataEquipment gd)) 350 360 4 Green Nothing
-                , TextDisplay "Owned Boats" 400 450 4 LightGray Nothing
+        words = [ TextDisplay "Choose" 20 20 6 White Nothing
+                , TextDisplay "Active Boat" 80 120 8 White Nothing
+                , TextDisplay "Current Boat:" 200 240 4 LightGray Nothing
+                , TextDisplay (boatName $ bts ! gameActiveBoat (gameDataEquipment gd)) 460 240 4 Green Nothing
+                , TextDisplay "Owned Boats" 400 420 4 LightGray Nothing
                 ]
         gd' ab = gd { gameDataEquipment = (gameDataEquipment gd) { gameActiveBoat = ab } }
         opts = (\(b, txt) -> MenuAction txt Nothing $ Just $ ChooseBoat (gd' b)) <$> boatsOpts
