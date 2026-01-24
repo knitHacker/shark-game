@@ -201,7 +201,7 @@ executable preview
   if os(windows)
     ghc-options: -optl-mwindows
 
-executable shark-game-exe
+executable shark-game
   main-is: Main.hs
   other-modules:
       Paths_shark_game
