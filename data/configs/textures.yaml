@@ -71,6 +71,18 @@ textureImages:
     sizeX: 200
     sizeY: 200
     file: assets/images/no_dolphin.png
+  map_tropical_west_atlantic:
+    sizeX: 1920
+    sizeY: 1080
+    file: assets/images/tropical_west_atlantic_map.png
+  map_tropical_west_atlantic_trip:
+    sizeX: 1920
+    sizeY: 1080
+    file: assets/images/tropical_west_atlantic_map_labeled_trip.png
+  map_tropical_west_atlantic_land:
+    sizeX: 1920
+    sizeY: 1080
+    file: assets/images/tropical_west_atlantic_map_labeled_land.png
 textureAnimations:
   skate:
     sizeX: 100
