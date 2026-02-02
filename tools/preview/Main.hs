@@ -1,44 +1,64 @@
 module Main where
 
 import Control.Monad (unless)
+import Control.Monad.IO.Class (MonadIO)
 import System.Environment (getArgs)
 
 import Configs
 import Env
+import Env.Types
 import GameState
 import GameState.Types
+import GameState.Draw
 import Graphics
-import Graphics.Types
 import InputState
 import OutputHandles
+import OutputHandles.Types
 import SaveData
-import SaveData.Generate
+
+import Generate
 
 main :: IO ()
 main = do
     args <- getArgs
-    let targetState = case args of
-            (s:_) -> read s
-            []    -> ResearchCenter
-
-    (outs, cfgs) <- initConfigs
-    gr <- initGraphics cfgs outs
+    (tm, cfgs) <- initConfigs
+    outs <- initOutputHandles tm cfgs
+    gr <- initGraphics tm outs
+    inputs <- initInputState
     gd <- defaultGameData cfgs
-    let (lgps, gv) = initializeState targetState cfgs gr gd
-        gs = GameState gr lgps gv Nothing
 
-    previewLoop outs cfgs gs
+    let targetState = parseTargetState args gd
+        gv = reDrawState targetState cfgs inputs gr
+        gs = GameState gr targetState gv Nothing
+        appEnv = AppEnvData cfgs outs inputs gs
 
-previewLoop :: OutputHandles -> GameConfigs -> GameState -> IO ()
-previewLoop outs cfgs gs = do
-    is <- pollInputs outs
-    unless (isQuit is) $ do
-        let env = Env cfgs gs is outs
-        gs' <- runEnv env updatePreviewGameState
-        drawGameState outs cfgs gs'
-        previewLoop outs cfgs gs'
+    previewLoop appEnv
 
-updatePreviewGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m)
-                       => m GameState
-updatePreviewGameState = updateGameStateWith BlockTransitions
+parseTargetState :: [String] -> GameData -> GamePlayState
+parseTargetState [] gd = ResearchCenter gd
+parseTargetState (s:_) gd = case s of
+    "MainMenu"            -> MainMenu (Just gd)
+    "ResearchCenter"      -> ResearchCenter gd
+    "DataReviewTop"       -> DataReviewTop gd
+    "SharkReviewTop"      -> SharkReviewTop gd Nothing
+    "ResearchReviewTop"   -> ResearchReviewTop gd
+    "LabManagement"       -> LabManagement gd
+    "FundraiserTop"       -> FundraiserTop gd
+    "FleetManagement"     -> FleetManagement gd
+    "EquipmentManagement" -> EquipmentManagement gd
+    "ViewDonors"          -> ViewDonors gd
+    _                     -> ResearchCenter gd
 
+previewLoop :: AppEnvData -> IO ()
+previewLoop appEnv = do
+    inputs <- runAppEnv appEnv (updateInput 16)  -- ~60fps
+    unless (inputQuit inputs) $ do
+        let appEnv' = appEnv { appEnvDataInputState = inputs }
+        gs' <- runAppEnv appEnv' updateGameStatePreview
+        draws <- runAppEnv appEnv' { appEnvDataGameState = gs' } updateWindow
+        runAppEnv appEnv' { appEnvDataGameState = gs' } (executeDraw draws)
+        previewLoop appEnv' { appEnvDataGameState = gs' }
+
+-- Add to GameState.hs and export
+updateGameStatePreview :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
+updateGameStatePreview = updateGameStateWith BlockTransitions

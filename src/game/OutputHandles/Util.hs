@@ -20,9 +20,7 @@ import qualified SDL
 import OutputHandles.Types
 import OutputHandles.Text
 
-
 import Debug.Trace
-import Data.Aeson.Encoding (word)
 
 mkRect :: a -> a -> a -> a-> SDL.Rectangle a
 mkRect x y w h = SDL.Rectangle o z
