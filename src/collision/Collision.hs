@@ -1,5 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
-module GameState.Collision
+module Collision
     ( CollisionMap(..)
     , singleton
     , fromList

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module GameState.Collision.BoundBox
+module Collision.BoundBox
     ( BoundBox(..)
     , bb
     , RPX(..)
@@ -19,8 +19,8 @@ module GameState.Collision.BoundBox
     ) where
 
 
-import Data.Aeson
-import Data.Aeson.Types
+-- import Data.Aeson
+-- import Data.Aeson.Types
 
 data RPX =
     LeftOf
@@ -58,22 +58,22 @@ data BoundBox = BB
     , yEnd :: Int
     } deriving (Show, Eq, Ord)
 
-instance FromJSON BoundBox where
-    parseJSON (Object o) = do
-        x1 <- o .: "x1"
-        y1 <- o .: "y1"
-        x2 <- o .: "x2"
-        y2 <- o .: "y2"
-        return $ bb x1 y1 x2 y2
-    parseJSON invalid = prependFailure "parsing BoundBox failed, "
-            (typeMismatch "Object" invalid)
+--instance FromJSON BoundBox where
+--    parseJSON (Object o) = do
+--        x1 <- o .: "x1"
+--        y1 <- o .: "y1"
+--        x2 <- o .: "x2"
+--        y2 <- o .: "y2"
+--        return $ bb x1 y1 x2 y2
+--    parseJSON invalid = prependFailure "parsing BoundBox failed, "
+--            (typeMismatch "Object" invalid)
 
-instance ToJSON BoundBox where
-    toJSON (BB x1 y1 x2 y2) = object [ "x1" .= x1
-                                     , "y1" .= y1
-                                     , "x2" .= x2
-                                     , "y2" .= y2
-                                     ]
+-- instance ToJSON BoundBox where
+--    toJSON (BB x1 y1 x2 y2) = object [ "x1" .= x1
+--                                     , "y1" .= y1
+--                                     , "x2" .= x2
+--                                     , "y2" .= y2
+--                                     ]
 
 bb :: Int -> Int -> Int -> Int -> BoundBox
 bb x1 y1 x2 y2 = BB xS yS xE yE

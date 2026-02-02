@@ -1,5 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
-module GameState.Collision.RTree
+module Collision.RTree
     (RTree
     , empty
     , singleton
@@ -12,8 +12,14 @@ module GameState.Collision.RTree
     , delete
     ) where
 
-import GameState.Collision.BoundBox
-    ( BoundBox, union, area, contains, intersect, relationship )
+import Collision.BoundBox
+    ( BoundBox
+    , union
+    , area
+    , contains
+    , intersect
+    , relationship
+    )
 import Prelude hiding (lookup)
 import Data.Maybe ( isJust )
 import Data.List (sortOn)

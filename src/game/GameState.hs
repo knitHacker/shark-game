@@ -4,6 +4,8 @@
 module GameState
     ( initGameState
     , updateGameState
+    , updateGameStateWith
+    , reDrawState
     ) where
 
 import Control.Monad ()

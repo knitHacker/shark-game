@@ -1,17 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Env
-import Configs
-import OutputHandles
-import Game
-
-import Control.Monad
-import Foreign.C.Types
-import SDL.Vect
-import qualified SDL
-import Data.Time.Clock.System
 import System.Exit (exitSuccess)
+
+import Env (initAppEnvData)
+import Configs (initConfigs)
+import OutputHandles (initOutputHandles)
+import Game (runGame)
 
 
 main :: IO ()
@@ -19,6 +13,4 @@ main = do
     (tm, configs) <- initConfigs
     outs <- initOutputHandles tm configs
     appEnvData <- initAppEnvData tm configs outs
-    time <- getSystemTime
     runGame appEnvData
-    exitSuccess

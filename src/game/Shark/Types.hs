@@ -13,7 +13,8 @@ module Shark.Types
     , TripInfo(..)
     , ResearchReq(..)
     , ResearchData(..)
-    , Boat(..)    , checkPlayConfigs
+    , Boat(..)
+    , checkPlayConfigs
     , StartMechanics(..)
     , EncounterMechanics(..)
     , Fundraisers(..)
