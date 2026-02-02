@@ -16,8 +16,11 @@ import GameState.Menu.GameMenus
 import GameState.Menu.TripMenus
 import GameState.Menu.DataReviewMenu
 import GameState.Menu.LabMenus
-import SaveData
+import GameData.Types (GameData(..), StateConfig(..))
+import GameData.Load (loadFromFile, loadStateConfig)
+import GameData.Save (saveToFile, saveStateConfig, startNewGame)
 import Configs
+import Capabilities (ConfigsRead(..), GameStateRead(..), InputRead(..), OutputRead(..), FileIO(..), StateIO(..), RandomGen(..))
 import Graphics
 import Graphics.Types
 import Graphics.Menu
@@ -33,14 +36,14 @@ import Control.Monad.IO.Class ( MonadIO(..) )
 import Debug.Trace
 import Data.Maybe (catMaybes)
 
-initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> InputState -> IO GameState
+initGameState :: (MonadIO m, StateIO m, FileIO m) => TextureCfg -> GameConfigs -> OutputHandles -> InputState -> m GameState
 initGameState tm cfgs outs inputs = do
-    graph <- initGraphics tm outs
+    graph <- liftIO $ initGraphics tm outs
     (gps, gv) <- mainMenuView cfgs outs graph inputs
     return $ GameState graph gps gv Nothing
 
 
-updateGameStateWith :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => TransitionBehavior -> m GameState
+updateGameStateWith :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m, FileIO m, StateIO m) => TransitionBehavior -> m GameState
 updateGameStateWith transitionType = do
     cfgs <- readConfigs
     inputs <- readInputState
@@ -55,12 +58,12 @@ updateGameStateWith transitionType = do
         (Nothing, Nothing) -> return gs
         (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
         (_, Just (Right gps)) -> do
-            (lgps, gv) <- liftIO $ moveToNextState gps cfgs inputs gr'
+            (lgps, gv) <- moveToNextState gps cfgs inputs gr'
             return $ GameState gr' lgps gv Nothing
 
 
 
-updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
+updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m, FileIO m, StateIO m) => m GameState
 updateGameState = do
     cfgs <- readConfigs
     inputs <- readInputState
@@ -75,7 +78,7 @@ updateGameState = do
         (Nothing, Nothing) -> return gs
         (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
         (_, Just (Right gps)) -> do
-            (lgps, gv) <- liftIO $ moveToNextState gps cfgs inputs gr'
+            (lgps, gv) <- moveToNextState gps cfgs inputs gr'
             return $ GameState gr' lgps gv Nothing
 
 
@@ -209,21 +212,23 @@ reDrawState gps cfgs inputs gr =
 
 
 
-moveToNextState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> IO (GamePlayState, GameDrawInfo)
+moveToNextState :: (MonadIO m, FileIO m, StateIO m) => GamePlayState -> GameConfigs -> InputState -> Graphics -> m (GamePlayState, GameDrawInfo)
 moveToNextState gps cfgs inputs gr =
     case gps of
         GameExitState (Just gd) -> do
-            saveGame gd cfgs
+            _ <- saveGame gd
             return (GameExitState Nothing, GameExiting)
         GameExitState Nothing -> return (gps, GameExiting)
         MainMenu gdM -> do
             case gdM of
-                Just gd -> saveGame gd cfgs
+                Just gd -> do
+                    _ <- saveGame gd
+                    return ()
                 Nothing -> return ()
             return (gps, GameViewInfo $ mainMenu gdM gr)
         IntroWelcome (Just gd) -> return (gps, menuWithPause gd $ introWelcome gd gr)
         IntroWelcome Nothing -> do
-            nGame <- startNewGame cfgs
+            nGame <- liftIO $ startNewGame cfgs
             return (IntroWelcome (Just nGame), menuWithPause nGame $ introWelcome nGame gr)
         IntroMission gd -> return (gps, menuWithPause gd $ introMission gd gr)
         IntroBoat gd -> return (gps, menuWithPause gd $ introBoat gd cfgs gr)
@@ -260,24 +265,31 @@ moveToNextState gps cfgs inputs gr =
         menuWithPause = gameMenuPause gr gps
 
 
-saveGame :: GameData -> GameConfigs -> IO ()
-saveGame gd cfgs = do
-    saveToFile gd
-    updateStateConfigs sc
-    where
-        sc = (stateCfgs cfgs) { lastSaveM = Just (gameDataSaveFile gd) }
+saveGame :: (FileIO m, StateIO m) => GameData -> m (Either T.Text ())
+saveGame gd = do
+    result <- saveGameFile gd
+    case result of
+        Left err -> return $ Left err
+        Right () -> do
+            stateE <- loadState
+            let currentState = either (const (StateConfig { lastSaveFile = Nothing })) id stateE
+                updatedState = currentState { lastSaveFile = Just (gameDataSaveFile gd) }
+            saveState updatedState
 
-mainMenuView :: GameConfigs -> OutputHandles -> Graphics -> InputState -> IO (GamePlayState, GameDrawInfo)
+mainMenuView :: (MonadIO m, StateIO m, FileIO m) => GameConfigs -> OutputHandles -> Graphics -> InputState -> m (GamePlayState, GameDrawInfo)
 mainMenuView cfgs outs gr inputs = do
-    gdM <- case lastSaveM (stateCfgs cfgs) of
-                Nothing -> return Nothing
-                Just sf -> do
-                    gdE <- loadFromFile sf
-                    case gdE of
-                        Left err -> do
-                            putStrLn $ T.unpack err
-                            return Nothing
-                        Right gd -> return $ Just gd
+    stateE <- loadState
+    gdM <- case stateE of
+        Left err -> return Nothing
+        Right state -> case lastSaveFile state of
+            Nothing -> return Nothing
+            Just sf -> do
+                gdE <- loadGameFile sf
+                case gdE of
+                    Left err -> do
+                        liftIO $ putStrLn $ T.unpack err
+                        return Nothing
+                    Right gd -> return $ Just gd
     return (MainMenu gdM, GameViewInfo $ mainMenu gdM gr)
 
 
@@ -297,7 +309,7 @@ pauseMenu gr gps gd = OverlayView False (textView words) (Overlay overlayX overl
                , MenuAction "Save & Exit" Nothing $ Just (GameExitState (Just gd))
                ]
 
-introWelcomeIO :: GameConfigs -> Graphics -> IO GameDrawInfo
+introWelcomeIO :: MonadIO m => GameConfigs -> Graphics -> m GameDrawInfo
 introWelcomeIO cfgs gr = do
-    nGame <- startNewGame cfgs
+    nGame <- liftIO $ startNewGame cfgs
     return $ gameMenu $ introWelcome nGame gr

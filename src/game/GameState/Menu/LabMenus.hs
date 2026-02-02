@@ -17,8 +17,7 @@ import GameState.Types
 import OutputHandles.Types
 import OutputHandles.Util
 
-import SaveData
-import GameState.Types
+import GameData.Types (GameData(..), GameDataEquipment(..))
 import Shark.Trip
 import Graphics.Types
 import Graphics.TextUtil

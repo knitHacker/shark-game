@@ -5,16 +5,13 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module Configs
-    ( ConfigsRead(..)
-    , GameConfigs(..)
-    , StateConfigs(..)
+    ( GameConfigs(..)
     , SettingConfigs(..)
     , ImageTexture(..)
     , AnimationTexture(..)
     , TextureFileMap
     , TextureCfg(..)
     , initConfigs
-    , updateStateConfigs
     , getTextureFiles
     ) where
 
@@ -124,7 +121,6 @@ instance ToJSON PositionCfg
 
 data GameConfigs = GameConfigs
     { settingCfgs :: SettingConfigs
-    , stateCfgs :: StateConfigs
     , sharkCfgs :: PlayConfigs
     } deriving (Show, Eq)
 
@@ -143,21 +139,10 @@ data SettingConfigs = SettingConfigs
 instance FromJSON SettingConfigs
 instance ToJSON SettingConfigs
 
-data StateConfigs = StateConfigs
-    { lastSaveM :: Maybe String
-    } deriving (Generic, Show, Eq)
-
-instance FromJSON StateConfigs
-instance ToJSON StateConfigs
-
-instance Default StateConfigs where
-    def :: StateConfigs
-    def = StateConfigs Nothing
 
 data Configs = Configs
     { textureCfgs :: !TextureCfg
     , gameCfgs :: !SettingConfigs
-    , sCfgs :: !StateConfigs
     , pCfgs :: !PlayConfigs
     } deriving (Show, Eq)
 
@@ -190,8 +175,6 @@ initConfigs = do
     configsE <- decodeYaml gPath
     tPath <- getGameFullPath texturesFile
     texturesE <- decodeYaml tPath
-    sPath <- getLocalGamePath stateFile
-    stateE <- loadOrCreate sPath
     pPath <- getGameFullPath sharkFile
     rPath <- getGameFullPath researchFile
     mPath <- getGameFullPath mechanicsFile
@@ -199,7 +182,7 @@ initConfigs = do
     researchE <- decodeYaml rPath :: IO (Either String ResearchConfig)
     mechanicsE <- decodeYaml mPath :: IO (Either String GameMechanicsConfig)
     let playConfigsE = buildPlayConfigs <$> gamePlayE <*> researchE <*> mechanicsE
-    let cfgE = Right Configs <*> texturesE <*> configsE <*> stateE <*> playConfigsE
+    let cfgE = Right Configs <*> texturesE <*> configsE <*> playConfigsE
     case cfgE of
         Left err -> error ("Faile to parse game configs: " ++ show err)
         Right configs -> if checkConfigs configs
@@ -218,22 +201,4 @@ initConfigs = do
 
 
 toGameConfigs :: Configs -> GameConfigs
-toGameConfigs (Configs _ g s p) = GameConfigs g s p
-
-updateStateConfigs :: StateConfigs -> IO ()
-updateStateConfigs sc = do
-    sPath <- getLocalGamePath stateFile
-    encodeFile sPath sc
-
-class Monad m => ConfigsRead m where
-    readConfigs :: m GameConfigs
-
-    readFrameRate :: m Word32
-    readFrameRate = do
-        cfgs <- readConfigs
-        return $ frameRate $ settingCfgs cfgs
-
-    debugMode :: m Bool
-    debugMode = do
-        cfgs <- readConfigs
-        return $ debug $ settingCfgs cfgs
+toGameConfigs (Configs _ g p) = GameConfigs g p

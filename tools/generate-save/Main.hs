@@ -3,7 +3,6 @@ module Main where
 import System.Environment (getArgs)
 
 import Configs
-import SaveData
 import Generate
 
 main :: IO ()

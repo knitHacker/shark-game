@@ -18,7 +18,8 @@ import qualified Data.List as L
 
 import Shark.Types
 import Shark.Util
-import SaveData
+import GameData.Types (GameData(..), GameSharkData(..), SharkIndex, ResearchCompleteInfo(..))
+import GameData.Util (getShark)
 import Util
 
 getFinds :: PlayConfigs -> GameData -> DataEntryT SharkInfo -> [SharkFind]

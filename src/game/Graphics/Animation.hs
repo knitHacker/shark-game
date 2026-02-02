@@ -6,7 +6,6 @@ module Graphics.Animation
     ) where
 
 import Graphics.Types
-import InputState
 import Data.IntMap (update)
 import Data.Map.Strict ((!))
 

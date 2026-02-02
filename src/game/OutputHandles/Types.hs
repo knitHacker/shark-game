@@ -3,7 +3,6 @@
 
 module OutputHandles.Types
     ( OutputHandles(..)
-    , OutputRead(..)
     , Draw(..)
     , Color(..)
     , Draws
@@ -155,5 +154,3 @@ data OutputHandles = OutputHandles
     , font :: Font.Font
     }
 
-class Monad m => OutputRead m where
-    getOutputs :: m OutputHandles

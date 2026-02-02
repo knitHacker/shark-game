@@ -4,7 +4,6 @@ module InputState
     ( InputState(..)
     , KeyboardInputs(..)
     , MouseInputs(..)
-    , InputRead(..)
     , Direction(..)
     , inputRepeating
     , initInputState
@@ -29,55 +28,20 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Int (Int64, Int16)
 import Data.Time.Clock.System
     ( SystemTime(..), getSystemTime )
+import Capabilities (InputRead(..), TimeRead(..))
+import InputState.Types
 
 import Data.Word (Word32)
 
 import Debug.Trace
 
-data Direction
-    = DUp
-    | DDown
-    | DLeft
-    | DRight
-    deriving (Show, Eq)
-
-data KeyPress
-    = EnterPress
-    | EscapePress
-    | BackPress
-    | IPress
-    | SpacePress
-    deriving (Show, Eq)
-
-
-data InputState = InputState
-    { keyInputs :: !(Maybe KeyboardInputs)
-    , mouseInputs :: !(Maybe MouseInputs)
-    , windowResized :: !(Maybe (Int, Int))
-    , timestamp :: !Int64
-    }
-
-data MouseInputs = MouseInputs
-    { scrollAmt :: !Int
-    }
-
-data KeyboardInputs = Keyboard
-    { inputStateQuit :: !Bool
-    , inputStateDirection :: !(Maybe Direction)
-    , inputControl :: !(Maybe KeyPress)
-    , inputRepeat :: !Bool
-    } deriving (Show, Eq)
-
-initInputState :: IO InputState
+initInputState :: (MonadIO m, TimeRead m) => m InputState
 initInputState = do
-    time <- liftIO getSystemTime
+    time <- getCurrentTime
     let ts = systemSeconds time
         tn = systemNanoseconds time
         tsInt = ts * 1000 + fromIntegral (div tn 1000000)
     return $ InputState Nothing Nothing Nothing tsInt
-
-class Monad m => InputRead m where
-    readInputState :: m InputState
 
 escapePressed :: InputState -> Bool
 escapePressed (InputState (Just (Keyboard _ _ (Just EscapePress) _)) _ _ _) = True
@@ -136,10 +100,10 @@ inputQuit :: InputState -> Bool
 inputQuit (InputState (Just key) _ _ _) = inputStateQuit key
 inputQuit _ = False
 
-updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputState
+updateInput :: (InputRead m, TimeRead m, MonadIO m) => Word32 -> m InputState
 updateInput to = do
     input <- readInputState
-    time <- liftIO getSystemTime
+    time <- getCurrentTime
     event <- SDL.waitEventTimeout (fromIntegral to)
     let ts = systemSeconds time
         tn = systemNanoseconds time

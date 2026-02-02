@@ -8,7 +8,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.List as L
 
-import SaveData
+import GameData.Types (GameData(..), GameDataEquipment(..))
 import Shark.Types
 
 buyEquipment :: GameData -> T.Text -> Int -> GameData

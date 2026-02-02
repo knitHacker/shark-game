@@ -27,6 +27,7 @@ import Configs
 import OutputHandles.Types
 import OutputHandles.Draw
 import Env.Files            (getGameFullPath)
+import Capabilities (OutputRead(..), ConfigsRead(..))
 
 
 import Debug.Trace

@@ -10,7 +10,9 @@ module GameState.Menu.TripMenus
     , tripResultsMenu
     ) where
 
-import SaveData
+import GameData.Types (GameData(..), GameDataEquipment(..))
+import GameData.Util (addShark)
+import GameData.Random (getRandomRange)
 import Configs
 import GameState.Types
 import OutputHandles.Types

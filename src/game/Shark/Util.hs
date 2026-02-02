@@ -7,7 +7,8 @@ module Shark.Util
     ) where
 
 import Shark.Types
-import SaveData
+import GameData.Types (GameData, GameSharkData(..), SharkIndex)
+import GameData.Util (getShark)
 import Util
 
 mkSharkFinds :: PlayConfigs -> [GameSharkData] -> [SharkFind]

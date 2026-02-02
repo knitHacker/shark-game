@@ -25,6 +25,7 @@ import Data.Map.Strict ((!))
 import Configs
 import OutputHandles.Types
 import OutputHandles.Util
+import Capabilities (OutputRead(..), ConfigsRead(..))
 
 
 fillRectangle :: (MonadIO m) => SDL.Renderer -> SDL.Rectangle CInt -> m ()

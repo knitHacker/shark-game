@@ -10,7 +10,8 @@ module Shark.Trip
     , monthToText
     ) where
 
-import SaveData
+import GameData.Types (GameData(..))
+import GameData.Random (getRandomPercent, getRandomPercentS)
 import Configs
 import Shark.Types
 import Util

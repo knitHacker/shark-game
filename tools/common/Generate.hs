@@ -20,7 +20,9 @@ import Data.Word (Word32)
 import System.Random.MWC as R
 import Data.Vector.Unboxed (fromList)
 
-import SaveData
+import GameData.Types (GameData(..), GameSharkData(..), GameDataEquipment(..))
+import GameData.Util (addShark)
+import GameData.Random (getRandomElem)
 import Configs
 import Shark.Types
 

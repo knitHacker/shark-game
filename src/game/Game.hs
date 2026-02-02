@@ -11,8 +11,8 @@ import InputState
 import GameState
 import GameState.Draw
 import GameState.Types
-import SaveData
 import Configs
+import Capabilities (ConfigsRead(..), OutputRead(..))
 
 import qualified SDL
 import Control.Monad.IO.Class ()

@@ -4,7 +4,6 @@ module GameState.Types
     , GamePlayState(..)
     , GameState(..)
     , GameDrawInfo(..)
-    , GameStateRead(..)
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
@@ -20,7 +19,7 @@ import Data.Maybe (isJust)
 
 import OutputHandles.Types
 import Graphics.Types
-import SaveData
+import GameData.Types (GameData)
 import Shark.Types
 import Util
 import Data.IntMap.Merge.Lazy (merge)
@@ -116,5 +115,3 @@ data GamePlayState =
 
 
 -- Class for reading game state from the top level monad
-class Monad m => GameStateRead m where
-    readGameState :: m GameState

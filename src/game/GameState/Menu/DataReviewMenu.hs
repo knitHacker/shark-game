@@ -26,7 +26,7 @@ import Configs
 import Shark.Types
 import Shark.Review
 import GameState.Types
-import SaveData
+import GameData.Types (GameData(..))
 import Graphics.Types
 import Graphics.Menu
 import Graphics.TextUtil

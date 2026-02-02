@@ -12,6 +12,7 @@ import Data.Map.Strict ((!))
 import qualified Data.Text as T
 
 import Configs
+import Capabilities (ConfigsRead(..), GameStateRead(..))
 import GameState
 import GameState.Types
 import OutputHandles.Types

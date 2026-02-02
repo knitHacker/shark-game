@@ -5,6 +5,7 @@ import Control.Monad.IO.Class (MonadIO)
 import System.Environment (getArgs)
 
 import Configs
+import Capabilities (ConfigsRead(..), GameStateRead(..), InputRead(..), OutputRead(..), FileIO(..), StateIO(..))
 import Env
 import Env.Types
 import GameState
@@ -14,9 +15,8 @@ import Graphics
 import InputState
 import OutputHandles
 import OutputHandles.Types
-import SaveData
-
 import Generate
+import GameData.Types (GameData)
 
 main :: IO ()
 main = do
@@ -60,5 +60,5 @@ previewLoop appEnv = do
         previewLoop appEnv' { appEnvDataGameState = gs' }
 
 -- Add to GameState.hs and export
-updateGameStatePreview :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
+updateGameStatePreview :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m, FileIO m, StateIO m) => m GameState
 updateGameStatePreview = updateGameStateWith BlockTransitions

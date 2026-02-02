@@ -17,7 +17,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import Configs
-import SaveData
+import GameData.Types (GameData(..), GameDataEquipment(..))
 import Shark.Trip
 import Shark.Types
 
