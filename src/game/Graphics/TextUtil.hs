@@ -21,7 +21,7 @@ module Graphics.TextUtil
 import qualified Data.Text as T
 
 import Graphics.Types
-import OutputHandles.Types
+import Draw.Types
 import Data.Text (Text)
 
 percentWidth :: Graphics -> Double -> Int

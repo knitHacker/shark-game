@@ -7,7 +7,8 @@ module Graphics.ImageUtil
 
 import qualified Data.Map.Strict as M
 
-import OutputHandles.Types
+import Draw.Types
+import Handles.Types
 
 import Graphics.Types
 

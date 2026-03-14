@@ -41,7 +41,9 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import Data.Int (Int64)
 
-import OutputHandles.Types
+import Handles.Types
+
+import Draw.Types
 import Data.IntMap (update)
 import SDL.Raw (Rect(Rect))
 

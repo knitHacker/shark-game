@@ -20,8 +20,8 @@ import qualified Data.List as L
 import qualified Data.Text as T
 
 import Util
-import OutputHandles.Types
-import OutputHandles.Util
+import Draw.Types
+import Draw.Util
 import Configs
 import Shark.Types
 import Shark.Review

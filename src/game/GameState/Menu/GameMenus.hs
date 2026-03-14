@@ -21,12 +21,8 @@ import GameData.Types (GameData(..), GameDataEquipment(..))
 import Shark.Trip
 import Shark.Types
 
-import OutputHandles.Types
-    ( Color(..)
-    , OutputHandles(textures)
-    , TextDisplay(TextDisplay)
-    )
-import OutputHandles.Util
+import Draw.Types
+import Draw.Util
 
 import GameState.Types
 import Graphics.Types

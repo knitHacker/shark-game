@@ -1,4 +1,4 @@
-module OutputHandles.Images
+module Draw.Images
     ( addRectangle
     , addTexture
     , addAnimTexture
@@ -12,7 +12,7 @@ module OutputHandles.Images
     , getImageMaxX
     ) where
 
-import OutputHandles.Types
+import Draw.Types
 
 getRectMinY :: [DrawRectangle] -> Int
 getRectMinY rects = minimum $ map (fromIntegral . rectPosY) rects

@@ -32,8 +32,8 @@ frameTime :: Word32 -> Word32
 frameTime fps = div 1000 (fps + 1)
 
 -- Game loop that enforces a frame rate throttling
-runGame :: AppEnvData -> IO ()
-runGame appEnvData = do
+runGame :: AppEnv -> GameConfig -> IO ()
+runGame appEnv gCfg = do
     input <- runAppEnv appEnvData stepGame
     applyInputs input appEnvData
 

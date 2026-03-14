@@ -28,16 +28,15 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Int (Int64, Int16)
 import Data.Time.Clock.System
     ( SystemTime(..), getSystemTime )
-import Capabilities (InputRead(..), TimeRead(..))
 import InputState.Types
 
 import Data.Word (Word32)
 
 import Debug.Trace
 
-initInputState :: (MonadIO m, TimeRead m) => m InputState
+initInputState :: IO InputState
 initInputState = do
-    time <- getCurrentTime
+    time <- getSystemTime
     let ts = systemSeconds time
         tn = systemNanoseconds time
         tsInt = ts * 1000 + fromIntegral (div tn 1000000)
@@ -100,10 +99,9 @@ inputQuit :: InputState -> Bool
 inputQuit (InputState (Just key) _ _ _) = inputStateQuit key
 inputQuit _ = False
 
-updateInput :: (InputRead m, TimeRead m, MonadIO m) => Word32 -> m InputState
-updateInput to = do
-    input <- readInputState
-    time <- getCurrentTime
+updateInput :: InputState -> Word32 -> IO InputState
+updateInput input to = do
+    time <- getSystemTime
     event <- SDL.waitEventTimeout (fromIntegral to)
     let ts = systemSeconds time
         tn = systemNanoseconds time

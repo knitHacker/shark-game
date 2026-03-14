@@ -15,7 +15,7 @@ import GameData.Util (addShark)
 import GameData.Random (getRandomRange)
 import Configs
 import GameState.Types
-import OutputHandles.Types
+import Draw.Types
 import InputState
 import Util
 import Shark.Types

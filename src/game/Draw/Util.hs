@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module OutputHandles.Util
+module Draw.Util
     ( renderEmpty
     , getRenderMinY
     , getRenderMaxY
@@ -17,8 +17,10 @@ import qualified Data.Map.Strict as M
 
 import qualified SDL
 
-import OutputHandles.Types
-import OutputHandles.Text
+import Draw.Types
+import Draw.Text
+
+import Handles.Types
 
 import Debug.Trace
 

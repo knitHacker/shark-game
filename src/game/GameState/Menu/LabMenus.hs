@@ -14,8 +14,8 @@ module GameState.Menu.LabMenus
     ) where
 
 import GameState.Types
-import OutputHandles.Types
-import OutputHandles.Util
+import Draw.Types
+import Draw.Util
 
 import GameData.Types (GameData(..), GameDataEquipment(..))
 import Shark.Trip
@@ -25,6 +25,7 @@ import Graphics.Menu
 import Graphics.Animation
 import Configs
 import InputState
+import Handles.Types
 
 import Shark.Types
 import Shark.Store

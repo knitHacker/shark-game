@@ -11,7 +11,7 @@ module GameState
 import Control.Monad ()
 import InputState
 import GameState.Types
-import OutputHandles.Types
+import Draw.Types
 import GameState.Menu.GameMenus
 import GameState.Menu.TripMenus
 import GameState.Menu.DataReviewMenu
@@ -20,7 +20,6 @@ import GameData.Types (GameData(..), StateConfig(..))
 import GameData.Load (loadFromFile, loadStateConfig)
 import GameData.Save (saveToFile, saveStateConfig, startNewGame)
 import Configs
-import Capabilities (ConfigsRead(..), GameStateRead(..), InputRead(..), OutputRead(..), FileIO(..), StateIO(..), RandomGen(..))
 import Graphics
 import Graphics.Types
 import Graphics.Menu
@@ -276,7 +275,7 @@ saveGame gd = do
                 updatedState = currentState { lastSaveFile = Just (gameDataSaveFile gd) }
             saveState updatedState
 
-mainMenuView :: (MonadIO m, StateIO m, FileIO m) => GameConfigs -> OutputHandles -> Graphics -> InputState -> m (GamePlayState, GameDrawInfo)
+mainMenuView :: GameConfigs -> Graphics -> InputState -> m (GamePlayState, GameDrawInfo)
 mainMenuView cfgs outs gr inputs = do
     stateE <- loadState
     gdM <- case stateE of

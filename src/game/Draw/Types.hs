@@ -1,19 +1,15 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE InstanceSigs #-}
 
-module OutputHandles.Types
-    ( OutputHandles(..)
-    , Draw(..)
+module Draw.Types
+    ( Draw(..)
     , Color(..)
     , Draws
     , ToRender
     , TextDisplay(..)
-    , TextureMap
     , DrawRectangle(..)
     , DrawTexture(..)
     , DrawAnimFrame(..)
-    , FontSize
-    , Image
     , lengthDraws
     , renderDebugs
     , renderDraws
@@ -25,15 +21,12 @@ module OutputHandles.Types
 import Foreign.C.Types ( CInt )
 import qualified SDL
 import qualified SDL.Font as Font
-import Control.Monad ()
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import SDL.Font (height)
 
 import Debug.Trace
 
-type FontSize = (Double, Double)
+import Handles.Types
 
 -- first number is layer number
 -- second number is priority
@@ -42,8 +35,6 @@ type FontSize = (Double, Double)
 type Position = (Int, Int, Int, Int)
 
 type Draws = M.Map Position Draw
-
-type Image = T.Text
 
 data ToRender = ToRender
     { nextId :: !Int
@@ -143,14 +134,3 @@ data TextDisplay = TextDisplay
     , wordsColor :: !Color
     , wordsMask :: !(Maybe (SDL.Rectangle CInt))
     } deriving (Show, Eq)
-
-type TextureMap = M.Map Image SDL.Texture
-
-data OutputHandles = OutputHandles
-    { window :: SDL.Window
-    , renderer :: SDL.Renderer
-    , textures :: TextureMap
-    -- Probably want this to be a map eventually because you want more than one font
-    , font :: Font.Font
-    }
-

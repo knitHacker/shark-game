@@ -26,12 +26,14 @@ import qualified Data.Text as T
 import Data.Map.Strict ((!))
 import Data.Maybe (isJust, catMaybes)
 
-import OutputHandles.Types
-import OutputHandles.Text
+import Draw.Types
+import Draw.Text
 import Graphics.Types
 import Graphics.Animation
 import InputState
 import Data.IntMap (update)
+
+import Handles.Types
 
 import Debug.Trace
 

@@ -1,4 +1,4 @@
-module OutputHandles.Text
+module Draw.Text
     ( heightTextDisplay
     , widthTextDisplay
     , addText
@@ -10,7 +10,8 @@ module OutputHandles.Text
 
 import qualified Data.Text as T
 
-import OutputHandles.Types
+import Draw.Types
+import Handles.Types
 
 
 heightTextDisplay :: FontSize -> TextDisplay -> Double

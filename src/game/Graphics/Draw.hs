@@ -13,10 +13,11 @@ import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
 import Data.Maybe (isJust)
 
-import OutputHandles.Types
-import OutputHandles.Images
-import OutputHandles.Text
-import OutputHandles.Util
+import Handles.Types
+import Draw.Types
+import Draw.Images
+import Draw.Text
+import Draw.Util
 import Graphics.Types
 import Graphics.Menu
 

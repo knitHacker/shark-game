@@ -17,7 +17,7 @@ import Data.Int ( Int64 )
 import qualified Data.Text as T
 import Data.Maybe (isJust)
 
-import OutputHandles.Types
+import Draw.Types
 import Graphics.Types
 import GameData.Types (GameData)
 import Shark.Types

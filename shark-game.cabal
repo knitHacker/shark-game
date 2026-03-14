@@ -110,8 +110,12 @@ library shark-game-collision
 
 library shark-game-core
   exposed-modules:
-      Capabilities
       Configs
+      Draw
+      Draw.Images
+      Draw.Text
+      Draw.Types
+      Draw.Util
       Env
       Env.Files
       Env.Types
@@ -136,14 +140,11 @@ library shark-game-core
       Graphics.Menu
       Graphics.TextUtil
       Graphics.Types
+      Handles
+      Handles.Types
       InputState
       InputState.Types
-      OutputHandles
-      OutputHandles.Draw
-      OutputHandles.Images
-      OutputHandles.Text
-      OutputHandles.Types
-      OutputHandles.Util
+      IOApi
       Shark.Review
       Shark.Store
       Shark.Trip

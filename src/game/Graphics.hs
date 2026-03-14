@@ -8,14 +8,16 @@ import qualified Data.Map.Strict as M
 
 import Graphics.Types
 import Graphics.Menu
-import OutputHandles.Types
-import OutputHandles
+import Draw.Types
 import Configs
 import InputState
 
+import Handles.Types
+import Handles
+
 -- Assumes monospaced font
 
-initGraphics :: TextureCfg -> OutputHandles -> IO Graphics
+initGraphics :: TextureCfg -> Handles -> IO Graphics
 initGraphics tm outs = do
     fontSize <- getFontSize outs
     (width, height) <- getWindowSize outs

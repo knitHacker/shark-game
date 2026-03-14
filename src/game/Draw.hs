@@ -1,12 +1,11 @@
 {-# LANGUAGE Strict #-}
-module OutputHandles.Draw
+module Draw
     ( mkRect
     , fillRectangle
     , mkPoint
     , setColor
     , drawLine
     , drawAll
-    , initWindow
     , scale
     , unscale
     ) where
@@ -23,9 +22,9 @@ import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
 
 import Configs
-import OutputHandles.Types
-import OutputHandles.Util
-import Capabilities (OutputRead(..), ConfigsRead(..))
+import Handles.Types
+import Draw.Util
+import Draw.Types
 
 
 fillRectangle :: (MonadIO m) => SDL.Renderer -> SDL.Rectangle CInt -> m ()
@@ -57,24 +56,8 @@ setColor :: (MonadIO m) => SDL.Renderer -> Color -> m ()
 setColor r c = SDL.rendererDrawColor r $= color c
 
 
-initWindow :: (MonadIO m) => SDL.Renderer -> m ()
-initWindow r = do
-    setColor r Black
-    SDL.clear r
-    SDL.present r
-
-
-drawAll :: (MonadIO m, OutputRead m, ConfigsRead m) => ToRender -> m ()
-drawAll drawings = do
-    topCfgs <- readConfigs
-    outs <- getOutputs
-    let cfgs = settingCfgs topCfgs
-        drawOutline = debugOutlineTexture cfgs
-        drawDbgs = debugHitboxes cfgs
-        debugs = renderDebugs drawings
-        r = renderer outs
-        drawings' = renderDraws drawings
-        --debugs' = scaleDebugs ratX ratY <$> debugs
+drawAll :: Handles -> GameConfigs -> ToRender -> IO ()
+drawAll outs topCfgs drawings = do
     SDL.clear r
     setColor r Red
     mapM_ (draw (textures outs) (font outs) drawOutline r) drawings'
@@ -82,6 +65,14 @@ drawAll drawings = do
     when drawDbgs $ mapM_ (drawDebug r) debugs
     setColor r Black
     SDL.present r
+    where
+        cfgs = settingCfgs topCfgs
+        drawOutline = debugOutlineTexture cfgs
+        drawDbgs = debugHitboxes cfgs
+        debugs = renderDebugs drawings
+        r = renderer outs
+        drawings' = renderDraws drawings
+        --debugs' = scaleDebugs ratX ratY <$> debugs
 
 drawDebug :: MonadIO m => SDL.Renderer -> (Int, Int, Int, Int) -> m ()
 drawDebug r (x, y, w, h) = do
