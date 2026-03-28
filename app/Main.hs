@@ -10,7 +10,10 @@ import Game (runGame)
 
 main :: IO ()
 main = do
-    (tm, configs) <- initConfigs
-    outs <- initOutputHandles tm configs
-    appEnvData <- initAppEnvData tm configs outs
-    runGame appEnvData
+    confE <- initConfigs
+    case confE of
+        Left err -> "Can't load"
+        Right (tm, configs) -> do
+            outs <- initOutputHandles tm configs
+            appEnvData <- initAppEnvData tm configs outs
+            runGame appEnvData
