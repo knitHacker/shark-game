@@ -18,6 +18,7 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
+    data/configs/events.yaml
     data/configs/game.yaml
     data/configs/mechanics.yaml
     data/configs/research.yaml
@@ -43,11 +44,16 @@ extra-source-files:
     assets/images/shark_placeholder.png
     assets/images/skate_swimming_animation.png
     assets/images/tiger_shark.png
+    assets/images/tropical_west_atlantic_map.png
+    assets/images/tropical_west_atlantic_map_labeled.png
+    assets/images/tropical_west_atlantic_map_labeled_land.png
+    assets/images/tropical_west_atlantic_map_labeled_trip.png
     assets/images/water.png
     assets/images/wave_animation.png
     assets/fonts/InsightSansSSi.ttf
     assets/fonts/saxmono.ttf
 data-files:
+    data/configs/events.yaml
     data/configs/game.yaml
     data/configs/mechanics.yaml
     data/configs/research.yaml
@@ -73,6 +79,10 @@ data-files:
     assets/images/shark_placeholder.png
     assets/images/skate_swimming_animation.png
     assets/images/tiger_shark.png
+    assets/images/tropical_west_atlantic_map.png
+    assets/images/tropical_west_atlantic_map_labeled.png
+    assets/images/tropical_west_atlantic_map_labeled_land.png
+    assets/images/tropical_west_atlantic_map_labeled_trip.png
     assets/images/water.png
     assets/images/wave_animation.png
     assets/fonts/InsightSansSSi.ttf
@@ -175,6 +185,22 @@ library shark-game-tools
     , vector
   default-language: Haskell2010
 
+executable a-shark-game
+  main-is: Main.hs
+  other-modules:
+      Paths_shark_game
+  autogen-modules:
+      Paths_shark_game
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , shark-game-core
+  default-language: Haskell2010
+  if os(windows)
+    ghc-options: -optl-mwindows
+
 executable generate-save
   main-is: Main.hs
   other-modules:
@@ -205,22 +231,6 @@ executable preview
       base >=4.7 && <5
     , shark-game-core
     , shark-game-tools
-  default-language: Haskell2010
-  if os(windows)
-    ghc-options: -optl-mwindows
-
-executable shark-game
-  main-is: Main.hs
-  other-modules:
-      Paths_shark_game
-  autogen-modules:
-      Paths_shark_game
-  hs-source-dirs:
-      app
-  ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
-  build-depends:
-      base >=4.7 && <5
-    , shark-game-core
   default-language: Haskell2010
   if os(windows)
     ghc-options: -optl-mwindows

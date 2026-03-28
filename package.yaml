@@ -65,7 +65,7 @@ internal-libraries:
     - mwc-random
 
 executables:
-  shark-game:
+  a-shark-game:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
