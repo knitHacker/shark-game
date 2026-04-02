@@ -40,6 +40,11 @@ import Util
 
 import Debug.Trace
 
+data MainMenu = MainMenu (Maybe GameData)
+
+instance GamePlayState MainMenu where
+    getUpdate 
+
 updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
 updateWave gr fr (i, wave)
     | newX < graphicsWindowWidth gr = wave { animPosX = newX, animShow = show, animFrame = nextFrame }

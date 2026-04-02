@@ -19,7 +19,3 @@ Future eqipment
 - BRUV (baitred remove underwater video)
 - deep sea submarine
 - deep sea trolling
-
-Shark facts to add
-
-Bonnethead Sharks - Eats and consumes seagrass so only known omnivore shark (maybe whale shark eating algea / kelp?)

@@ -20,6 +20,7 @@ module SaveData
     , saveToFile
     , addShark
     , getShark
+    , getSaveDir
     ) where
 
 import System.IO ()
@@ -157,14 +158,17 @@ data GameSaveData = GameSaveData
 instance FromJSON GameSaveData
 instance ToJSON GameSaveData
 
+getSaveDir :: IO FilePath
+getSaveDir = getLocalGamePath $ "data" </> "saves"
+
 startNewGame :: GameConfigs -> IO GameData
 startNewGame cfgs = do
     let startCfg = mechanicsStart $ gameMechanics $ sharkCfgs cfgs
     g <- createSystemRandom
     name <- uniform g :: IO Int
     let nameStr = "shark-" L.++ show (abs name) L.++ ".save"
-    let dir = "data" </> "saves" </> nameStr
-    path <- getLocalGamePath dir
+    dir <- getSaveDir
+    let path = dir </> nameStr
     -- putStrLn path
     s <- save g
     let startBoat = startingBoat startCfg
@@ -221,6 +225,7 @@ addShark gd gsd = gd { gameDataSharkIndex = i + 1
 getShark :: GameData -> SharkIndex -> GameSharkData
 getShark gd i = gameDataSharks gd M.! i
 
-class Monad m => SaveData m where
-    saveData :: m ()
-    loadData :: m GameData
+class Monad m => GameDataStorage m where
+    saveData :: GameData -> m ()
+    loadData :: FilePath -> m GameData
+    getSaveFiles :: m [FilePath]

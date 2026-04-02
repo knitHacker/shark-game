@@ -1,14 +1,15 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 module GameState.Types
     ( BlockDrawInfo(..)
     , CursorType(..)
-    , GamePlayState(..)
+    , AnyGamePlayState(..)
     , GameState(..)
     , GameDrawInfo(..)
     , GameStateRead(..)
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
-    , TransitionBehavior(..)
     , mergeGameViews
     , mergeGameDrawInfo
     ) where
@@ -25,12 +26,9 @@ import Shark.Types
 import Util
 import Data.IntMap.Merge.Lazy (merge)
 
-data TransitionBehavior = AllowTransitions | BlockTransitions
-    deriving (Eq, Show)
 
 data GameState = GameState
-    { gameGraphics :: !Graphics
-    , gameLastState :: !GamePlayState
+    { gameLastState :: !GamePlayState
     , gameView :: !GameDrawInfo
     , gameLastDraw :: !(Maybe ToRender)
     }
@@ -76,6 +74,37 @@ mergeGameViews gvInputUpdates gvNewDraw = GameView
         (_, m2M) -> m2M
     }
 
+class GamePlayState a where
+    -- doesn't make changes to state, just tells what step needs to be done in next step function
+    transition :: a -> GameView
+    getUpdate :: a -> GameConfigs -> InputState -> Graphics -> Update
+    --transition :: a -> Step -> 
+    --redraw :: a -> GameConfigs -> InputState -> Graphics -> GameDrawInfo
+    --nextState :: a -> GameConfigs -> InputState -> Graphics -> IO (GamePlayState a, GameDrawInfo)
+
+data AnyGamePlayState = forall a. GamePlayState a => AnyGamePlayState
+    { gameState :: a
+    , canPause :: Bool
+    }
+
+-- probably will need more data honestly
+data Step = NoChange | Animation | InputUpdate | Transition AnyGamePlayState
+
+-- what needs to be done in the external monad like IO actions
+data Update = SaveFile GameData Step | LoadFile (GameData -> Step) | SaveList ([FilePath] -> Step) | Exit
+
+
+-- Class for reading game state from the top level monad
+-- similar to the Defect Process "think" and "update" steps
+-- the update should contain any action needed with side effects or would be dependent on the AppEnv monad
+class Monad m => GameStateStep m where
+    -- Evaluates what the next update needs to happen
+    getUpdate :: m (Update)
+    -- Applies the update for next game state
+    nextStep :: Step -> m GameState
+
+
+{-
 data GamePlayState =
       MainMenu (Maybe GameData)
     | PauseMenu GameData GamePlayState
@@ -113,8 +142,5 @@ data GamePlayState =
     | ViewDonors GameData
     | NewFundraiser GameData
     deriving (Eq, Show)
+-}
 
-
--- Class for reading game state from the top level monad
-class Monad m => GameStateRead m where
-    readGameState :: m GameState
