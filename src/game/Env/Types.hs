@@ -11,12 +11,16 @@ import Configs
 import OutputHandles.Types
 import InputState
 import GameState.Types
+import Graphics (GraphicsRead(..))
 import Graphics.Types
+import SaveData
 
+import qualified Data.Text as T
 import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad
-import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import System.Directory
+import System.FilePath (takeExtension)
 
 
 data AppEnvData = AppEnvData
@@ -62,9 +66,36 @@ instance GameDataStorage AppEnv where
     saveData gd = liftIO $ saveToFile gd
 
     loadData :: FilePath -> AppEnv (Either T.Text GameData)
-    loadData fp =liftIO $ loadFromFile fp
+    loadData fp = liftIO $ loadFromFile fp
 
     getSaveFiles :: AppEnv [FilePath]
     getSaveFiles = do
         localPath <- liftIO $ getSaveDir
-        contents <- listDirectory localPath
+        contents <- liftIO $ listDirectory localPath
+        return $ filter (\f -> takeExtension f == ".save") contents
+
+instance GameStateStep AppEnv where
+    executeThink :: AnyGamePlayState -> AppEnv Step
+    executeThink agps@(AnyGamePlayState s _) = do
+        cfgs <- readConfigs
+        case think s cfgs of
+            PureStep step          -> return step
+            GenerateNewGame f      -> do
+                gd <- liftIO $ startNewGame cfgs
+                return $ f gd
+            SaveFile gd step       -> do
+                liftIO $ saveToFile gd
+                return step
+            LoadFile fp f          -> do
+                result <- liftIO $ loadFromFile fp
+                return $ f result
+            SaveList f             -> do
+                fps <- getSaveFiles
+                return $ f fps
+
+    resolveStep :: AnyGamePlayState -> Step -> AppEnv (Maybe AnyGamePlayState)
+    resolveStep _     Exit           = return Nothing
+    resolveStep state NoChange       = return $ Just state
+    resolveStep _     (Transition next) = do
+        step <- executeThink next
+        resolveStep next step

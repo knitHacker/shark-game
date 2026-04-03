@@ -117,6 +117,7 @@ library shark-game-core
       Game
       GameState
       GameState.Draw
+      GameState.Helpers
       GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
       GameState.Menu.LabMenus

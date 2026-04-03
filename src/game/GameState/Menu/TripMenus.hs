@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
+
+-- TODO: port to GamePlayState typeclass (step 3)
 
 module GameState.Menu.TripMenus
     ( mapMenu
@@ -10,189 +11,30 @@ module GameState.Menu.TripMenus
     , tripResultsMenu
     ) where
 
-import SaveData
+import qualified Data.Text as T
+
 import Configs
+import SaveData
 import GameState.Types
-import OutputHandles.Types
+import Graphics.Types
 import InputState
-import Util
 import Shark.Types
 import Shark.Trip
-import Shark.Util
-
-import Data.Map ((!))
-import qualified Data.Map.Strict as M
-import qualified Data.Text as T
-import Data.Maybe (isJust, fromJust)
-
-import Graphics.Types
-import Graphics.Menu
-import Graphics.TextUtil
-import Graphics.ImageUtil
-import Graphics.Animation
-
-import Debug.Trace
 
 mapMenu :: GameData -> Int -> Graphics -> GameConfigs -> GameMenu
-mapMenu gd chsn gr cfgs = GameMenu (textView words) (Menu options Nothing)
-    where
-        region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
-        myBoat = gameActiveBoat $ gameDataEquipment gd
-        boatInfo = boats (sharkCfgs cfgs) ! myBoat
-        options = resizingScrollOpts gr 50 140 300 3 8 (OALOpts opts Nothing (Just update) mc) (Just rtOpt) [] chsn
-        allLocs = M.assocs (getData region siteLocations)
-        locs = (\(idx, (loc, lCfg)) -> (idx, (loc, showText lCfg, lCfg))) <$> zip [0..] allLocs
-        mc = CursorRect White
-        selectedLocCfg = if chsn >= 0 && chsn < length allLocs then snd (allLocs !! chsn) else snd (head allLocs)
-        descText = biomeDescription selectedLocCfg
-        (wrappedDesc, _) = wrapText gr descText 800 300 400 10 2 White
-        words = [ TextDisplay "Select Trip" 40 40 7 White Nothing
-                , TextDisplay "Destination" 80 160 8 White Nothing
-                ] ++ wrappedDesc
-        opts = mkOptEntry <$> locs
-        rtOpt = MenuAction "Return to Lab" Nothing $ Just $ ResearchCenter gd
-        mkOptEntry (idx, (loc, txt, _)) = MenuAction txt Nothing $ if loc `elem` boatReachableBiomes boatInfo then Just (TripEquipmentSelect gd (idx, loc) [] 0) else Nothing
-        update = TripDestinationSelect gd
-
--- assuming I add ability to have more than one boat, need to select boat in new menu
--- this is done in fleet management currently
+mapMenu _ _ _ _ = error "TODO: mapMenu not yet ported to typeclass"
 
 equipmentPickMenu :: GameData -> (Int, T.Text) -> [T.Text] -> Int -> GameConfigs -> GameMenu
-equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
-    where
-        region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
-        myEquip = gameDataEquipment gd
-        boatInfo = boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
-        slots = boatEquipmentSlots boatInfo
-        allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
-        eq = equipment $ sharkCfgs cfgs
-        aEs = filter (`elem` allowedEq) $ gameOwnedEquipment myEquip
-        lupE et =
-            let eqEntry = eq M.! et
-                eqSize = equipSize eqEntry
-            in (et, eqSize, T.concat [equipText eqEntry, " - ", T.pack (show eqSize), " slots"])
-        aEs' = lupE <$> aEs
-        usedSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
-        openSlots = slots - usedSlots
-        slotTxt = T.concat ["Equipment Loaded: ", T.pack (show usedSlots), " slots"]
-        words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
-                , TextDisplay "Equipment" 150 175 10 White Nothing
-                , TextDisplay (T.concat ["Max Slots: ", T.pack (show slots), " slots"]) 200 350 3 Green Nothing
-                , TextDisplay slotTxt 200 400 3 Green Nothing
-                ]
-        opts' = (\(k, s, t) -> SelectOption t k (k `elem` chsn) True $ s > openSlots) <$> aEs'
-        update = TripEquipmentSelect gd (idx, loc)
-        act = if null chsn  || usedSlots > slots then Nothing else Just $ \ls -> TripReview gd (idx, loc) ls
-        back = TripDestinationSelect gd idx
-
+equipmentPickMenu _ _ _ _ _ = error "TODO: equipmentPickMenu not yet ported to typeclass"
 
 reviewTripMenu :: GameData -> (Int, T.Text) -> [T.Text] -> GameConfigs -> GameMenu
-reviewTripMenu gd (idx, loc) eqs cfgs = GameMenu (textView words) (Menu (selOneOpts 400 600 3 5 opts (Just backOpt) (CursorRect White) 0) Nothing)
-    where
-        region = gameCurrentRegion gd
-        boat = gameActiveBoat $ gameDataEquipment gd
-        boatInfo = boats (sharkCfgs cfgs) ! boat
-        trip = tripInfo (sharkCfgs cfgs) region loc boat eqs
-        funds = gameDataFunds gd
-        tc = tripCost trip
-        enoughFunds = funds >= tc
-        (fundTxt:tripTxt:afterTxt:_) = splitJustSpacing [ ("Current Funds: ", showMoney funds)
-                                                        , ("Trip Cost: ", showMoney tc)
-                                                        , ("After Trip: ", showMoney (funds - tc))
-                                                        ]
-        tripLenTxt = T.append (T.append "Trip Length: " (T.pack (show (tripLength trip)))) " month(s)"
-        words = [ TextDisplay "Review Trip" 50 20 8 White Nothing
-                , TextDisplay "Details" 150 125 10 White Nothing
-                , TextDisplay (T.append "Boat: " (boatName boatInfo)) 300 275 3 White Nothing
-                , TextDisplay (T.append "Fuel Cost: $" (T.pack (show (boatFuelCost boatInfo)))) 300 325 3 White Nothing
-                -- , TextDisplay tripLenTxt 250 375 3 White Nothing
-                , TextDisplay fundTxt 250 425 3 Green Nothing
-                , TextDisplay tripTxt 250 475 3 Red Nothing
-                , TextDisplay afterTxt 250 525 3 (if enoughFunds then Green else Red) Nothing
-                ]
-        gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
-        (gd'', atmpts) = initTripProgress gd' (gameCurrentRegion gd) loc boat eqs cfgs
-        progress = TripProgress
-        opts = [ MenuAction "Start Trip" Nothing (if enoughFunds then Just (TripProgress gd'' atmpts) else Nothing)
-               , MenuAction "Back to equipment" Nothing $ Just (TripEquipmentSelect gd (idx, loc) eqs 0)
-               ]
-        backOpt = MenuAction "Abort Trip" Nothing $ Just (ResearchCenter gd)
+reviewTripMenu _ _ _ _ = error "TODO: reviewTripMenu not yet ported to typeclass"
 
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> Graphics -> GameView
-tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
-    case tripTries tp of
-        [] -> GameView (v []) Nothing [TimeoutData ts 0 $ TimeoutNext $ TripResults gd tp] Nothing
-        (ta@(TripAttempt mn h):tl) ->
-            let (gd', sfM) = exec ta
-                (gd'', randomDelay) = getRandomRange gd' 800 4000
-                tp' = newTrip gd'' sfM tl
-                lastText = T.concat ["Using ", getData h equipText]
-                nextTimeout = TimeoutData ts (fromIntegral randomDelay) $ TimeoutNext $ SharkFound gd'' sfM tp'
-            in GameView (v [TextDisplay lastText 150 280 3 Green Nothing]) Nothing [nextTimeout, animTO] Nothing
-    where
-        curA = length $ tripTries tp
-        allA = tripTotalTries tp
-        v w = View ((,0) <$> (words ++ w)) [] [rayAnim] [backRect, progressRect] Nothing
-        animTO = TimeoutData ts 150 $ TimeoutAnimation $ startTextAnim gr
-        rayAnim = centerAnimation gr 350 5.0 "skate"
-        progX = midStartX gr progW
-        progY = 650
-        progH = 80
-        progW = max 1000 $ percentWidth gr 0.8
-        backRect = RPlace Gray progX progY progW progH 1
-        p = floor (fromIntegral (allA - curA) / fromIntegral allA * 100)
-        progressRect = RPlace Green progX progY ((progW `div` 100) * p) progH 2
-        words = [ TextDisplay "Trip Progress" 50 50 8 White Nothing
-                , TextDisplay "Looking for sharks..." 100 200 4 Blue Nothing
-                ]
-        newTrip gd'' sfM tl = case sfM of
-                            Nothing -> tp { tripTries = tl }
-                            Just sf -> tp { tripTries = tl, sharkFinds = sharkFinds tp ++ [sf]}
-        exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
+tripProgressMenu _ _ _ _ _ = error "TODO: tripProgressMenu not yet ported to typeclass"
 
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Graphics -> GameMenu
-sharkFoundMenu gd sfM tp cfgs gr = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts menuOptX (imgEnd + 50) 3 4 opts Nothing (CursorRect White) 0) Nothing)
-    where
-        menuOptX = graphicsWindowWidth gr - 400
-        typeText sf = T.append (T.append "You " infoTypeText) " a "
-            where
-                infoTypeText = case getData (findEquipment sf) equipInfoType of
-                    Caught -> "caught"
-                    Observed -> "observed"
-        sharkText sf = getData (findSpecies sf) sharkName
-        sharkImgKey sf = getData (findSpecies sf) sharkImage
-        makeImg yStart = centerScalingImage gr yStart 100 200 1.6
-        (words, imgs, imgEnd) = case sfM of
-                    Nothing ->
-                        let (netImage, xStart, yEnd, _) = makeImg 360 "empty_net"
-                        in ([ TextDisplay "No Shark" 50 20 10 White Nothing
-                           , TextDisplay "Found" 150 150 8 White Nothing
-                           , TextDisplay "Better luck next time!" 200 280 4 White Nothing
-                           ], [netImage], yEnd)
-                    Just sf ->
-                        let (sharkImg, xStart, yEnd, scale) = makeImg 275 $ sharkImgKey sf
-                        in ([ TextDisplay (typeText sf) 60 20 8 White Nothing
-                            , TextDisplay (sharkText sf) 200 150 5 Blue Nothing
-                            ], [sharkImg], yEnd)
-        nextState = if null (tripTries tp) then TripResults gd tp else TripProgress gd tp
-        opts = [ MenuAction "Continue Trip" Nothing $ Just nextState ]
+sharkFoundMenu _ _ _ _ _ = error "TODO: sharkFoundMenu not yet ported to typeclass"
 
 tripResultsMenu :: GameData -> TripState -> GameConfigs -> Graphics -> GameMenu
-tripResultsMenu gd tp cfgs gr = GameMenu (View ((,0) <$> words) [] [] [] scrollVM) (Menu (selOneOpts (width `div` 2) (height - 100) 3 4 [] (Just backOpt) (CursorRect White) 0) Nothing)
-    where
-        width = graphicsWindowWidth gr
-        height = graphicsWindowHeight gr
-        sfMap = gameDataFoundSharks gd
-        gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
-        words = [TextDisplay "Trip Complete!" 50 50 8 White Nothing]
-        findText sf = T.concat ["- ", getData (findSpecies sf) sharkName, " ", infoTypeText]
-            where
-                infoTypeText = case getData (findEquipment sf) equipInfoType of
-                    Caught -> "caught"
-                    Observed -> "observed"
-        findDisplays (i, sf) = [ TextDisplay (findText sf) 130 (250 + (i * 75)) 3 White Nothing
-                               -- , TextDisplay (T.append "at " (monthToText (findMonth sf))) 200 (300 + (i * 100)) 3 White
-                               ]
-        sharkFindsTxt = concatMap findDisplays $ zip [0..] (sharkFinds tp)
-        scrollVM = mkScrollView gr sharkFindsTxt [] [] 0 (height - 120) 10
-        backOpt = MenuAction "Back to Research Center" Nothing $ Just (ResearchCenter gd')
+tripResultsMenu _ _ _ _ = error "TODO: tripResultsMenu not yet ported to typeclass"

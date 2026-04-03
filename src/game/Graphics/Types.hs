@@ -329,6 +329,3 @@ data MenuPopup a = MenuPopup
 
 data CursorType = CursorPointer Image | CursorRect Color
                 deriving (Show, Eq)
-
-class Monad m => GraphicsRead m where
-    readGraphics :: m Graphics

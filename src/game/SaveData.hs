@@ -21,6 +21,7 @@ module SaveData
     , addShark
     , getShark
     , getSaveDir
+    , GameDataStorage(..)
     ) where
 
 import System.IO ()
@@ -227,5 +228,5 @@ getShark gd i = gameDataSharks gd M.! i
 
 class Monad m => GameDataStorage m where
     saveData :: GameData -> m ()
-    loadData :: FilePath -> m GameData
+    loadData :: FilePath -> m (Either T.Text GameData)
     getSaveFiles :: m [FilePath]

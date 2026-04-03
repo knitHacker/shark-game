@@ -2,6 +2,7 @@
 module Graphics
     ( initGraphics
     , updateGraphics
+    , GraphicsRead(..)
     ) where
 
 import qualified Data.Map.Strict as M
@@ -12,6 +13,9 @@ import OutputHandles.Types
 import OutputHandles
 import Configs
 import InputState
+
+class Monad m => GraphicsRead m where
+    readGraphics :: m Graphics
 
 -- Assumes monospaced font
 

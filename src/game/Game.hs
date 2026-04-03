@@ -10,22 +10,10 @@ import Env.Types
 import InputState
 import GameState
 import GameState.Draw
-import GameState.Types
-import SaveData
+import Graphics
 import Configs
 
-import qualified SDL
-import Control.Monad.IO.Class ()
-import Control.Monad.Reader ( MonadReader(ask) )
-import Data.Time.Clock.System
-    ( SystemTime(systemSeconds, systemNanoseconds)
-    , getSystemTime
-    )
 import Data.Word ( Word32 )
-import Control.Concurrent
-import Control.Arrow
-
-import Debug.Trace
 
 -- Time for a frame
 frameTime :: Word32 -> Word32
@@ -40,19 +28,24 @@ runGame appEnvData = do
 
 applyInputs :: InputState -> AppEnvData -> IO ()
 applyInputs input appEnvData = do
-    gameState' <- runAppEnv appEnvData updateGameState
+    mGameState <- runAppEnv appEnvData updateGameState
     let stop = inputQuit input
-        appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
-
-    case (gameView gameState', stop) of
-        (GameExiting, _) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        (_, True) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        _ -> do
+    case (mGameState, stop) of
+        (Nothing, _) -> cleanup
+        (_, True)    -> cleanup
+        (Just gs, _) -> do
+            cfgs <- runAppEnv appEnvData readConfigs
+            let gr' = updateGraphics (appEnvDataGraphics appEnvData) cfgs input
+                appEnvData' = appEnvData
+                    { appEnvDataInputState = input
+                    , appEnvDataGameState  = gs
+                    , appEnvDataGraphics   = gr'
+                    }
             runGame appEnvData'
+  where
+    cleanup = do
+        outputs <- runAppEnv appEnvData getOutputs
+        cleanupOutputHandles outputs
 
 stepGame :: AppEnv InputState
 stepGame = do

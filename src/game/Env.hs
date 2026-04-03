@@ -16,6 +16,7 @@ import InputState ( initInputState )
 import GameState ( initGameState )
 import Graphics ( initGraphics )
 import SaveData ( loadFromFile )
+import qualified Data.Text as T
 
 import Control.Monad.Reader     (runReaderT)
 
@@ -30,10 +31,10 @@ initAppEnvData tm cfgs outs = do
             gdE <- loadFromFile sf
             case gdE of
                 Left err -> do
-                    putStrLn err
+                    putStrLn $ T.unpack err
                     return Nothing
                 Right gd -> return $ Just gd
-    return $ AppEnvData cfgs outs gr inputs $ initGameState gdM gr
+    return $ AppEnvData cfgs outs gr inputs $ initGameState gdM
 
 
 runAppEnv :: AppEnvData -> AppEnv a -> IO a
