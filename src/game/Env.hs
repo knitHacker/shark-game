@@ -21,20 +21,8 @@ import qualified Data.Text as T
 import Control.Monad.Reader     (runReaderT)
 
 
-initAppEnvData :: TextureCfg -> GameConfigs -> OutputHandles -> IO AppEnvData
-initAppEnvData tm cfgs outs = do
-    gr <- initGraphics tm outs
-    inputs <- initInputState
-    gdM <- case lastSaveM (stateCfgs cfgs) of
-        Nothing -> return Nothing
-        Just sf -> do
-            gdE <- loadFromFile sf
-            case gdE of
-                Left err -> do
-                    putStrLn $ T.unpack err
-                    return Nothing
-                Right gd -> return $ Just gd
-    return $ AppEnvData cfgs outs gr inputs $ initGameState gdM
+initAppEnvData :: GameConfigs -> OutputHandles -> Graphics -> InputState -> GameState -> AppEnvData
+initAppEnvData = AppEnvData
 
 
 runAppEnv :: AppEnvData -> AppEnv a -> IO a

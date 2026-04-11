@@ -4,6 +4,7 @@ module GameState.Types
     ( AnyGamePlayState(..)
     , GameState(..)
     , GameStateRead(..)
+    , GameStateInit(..)
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
@@ -11,6 +12,7 @@ module GameState.Types
     , GameStateStep(..)
     , Step(..)
     , Update(..)
+    , anyThink
     , anyDraw
     , anyAnimate
     , anyHandleInput
@@ -26,22 +28,11 @@ import Configs
 import InputState
 
 
--- ---------------------------------------------------------------------------
--- Core game state.
--- No view stored here — draw is called on demand by the render layer.
--- Each state value carries its own display state (cursor position, anim frames, scroll offset).
-
 data GameState = GameState
     { gameCurrentState :: !AnyGamePlayState
-    , gameCurrentView :: !GameView
     , gameLastDraw     :: !(Maybe ToRender)
     }
 
-
--- ---------------------------------------------------------------------------
--- View types
--- GameView is the return type of draw — a snapshot of what to render right now.
--- It is never stored between frames.
 
 data GameView = GameView
     { viewLayer   :: View AnyGamePlayState
@@ -65,54 +56,40 @@ data GameMenu = GameMenu
 -- ---------------------------------------------------------------------------
 -- Step and Update: the think/update split
 
--- | What to do after executing an Update's IO
+-- | Result after executeAction; consumed by stepGame
 data Step
-    = Animate
-    | HandleInput
-    | AnimateAndHandleInput
-    | UseCache -- no change
-    | Resize
-    | Transition AnyGamePlayState
+    = UseCache                        -- no state change, preserve gameLastDraw
+    | UpdateTo AnyGamePlayState       -- state updated in place, needs re-render
+    | TransitionTo AnyGamePlayState   -- transition to a new state, needs re-render
 
--- | IO action a state needs when first entered
+-- | Capability request produced by think; consumed by executeAction
+-- Exit is handled by the loop before executeAction
 data Update
-    = JustStep Step
+    = PureStep Step
+    | Exit
     | GenerateNewGame (GameData -> Step)
-    | SaveFile GameData Step -- should probably deal with making sure saving actually happened but ignore for now
+    | SaveFile GameData Step
     | LoadFile FilePath (Either T.Text GameData -> Step)
     | SaveList ([FilePath] -> Step)
 
 
 -- ---------------------------------------------------------------------------
 -- GamePlayState typeclass
---
--- Each old sum-type constructor becomes a data type with an instance here.
--- animate and handleInput return an updated `a` so the state owns all
--- mutable display state (cursor position, animation frames, scroll offset).
--- draw is then a pure function of the state — no merging needed.
---
--- States with no animation or generic-only input can rely on the defaults.
--- States needing custom behaviour (e.g. TripProgress, animated backgrounds)
--- override animate / handleInput and can import helpers from GameState.Helpers.
 
 class GamePlayState a where
-    -- | Called once on state entry; describes any IO needed before first draw
-    think :: a -> GameConfigs -> Update
+    -- | Called every frame; describes any IO needed and how to advance state
+    think :: a -> GameConfigs -> InputState -> Graphics -> Update
 
     -- | Pure render; called after think resolves and on every window resize
-    -- i don't think i need this since it shouldn't be dependent on the class since it has a common resulting render type
---    draw :: a -> Graphics -> GameConfigs -> GameView
+    draw :: a -> Graphics -> GameConfigs -> GameView
+    draw _ _ _ = GameView (View [] [] [] [] Nothing) Nothing Nothing
 
-    -- | Per-frame animation step; returns updated state.
-    -- Default: state returned unchanged (no animation).
+    -- | Per-frame animation step; returns updated state
     animate :: a -> Graphics -> InputState -> a
     animate s _ _ = s
 
-    -- | Per-frame input handling; returns updated state or transition.
-    -- Left = updated state (cursor moved, scroll, etc.)
-    -- Right = transition to a new state
-    -- Default: state returned unchanged (no input handling).
-    handleInput :: a -> InputState -> a
+    -- | Per-frame input handling; Left = updated state, Right = transition
+    handleInput :: a -> InputState -> Either a AnyGamePlayState
     handleInput s _ = Left s
 
     {-# MINIMAL think #-}
@@ -126,16 +103,15 @@ data AnyGamePlayState = forall a. GamePlayState a => AnyGamePlayState
     , canPause  :: Bool
     }
 
--- Dispatch class methods through the existential
+anyThink :: AnyGamePlayState -> GameConfigs -> InputState -> Graphics -> Update
+anyThink (AnyGamePlayState s _) cfgs inputs gr = think s cfgs inputs gr
 
 anyDraw :: AnyGamePlayState -> Graphics -> GameConfigs -> GameView
 anyDraw (AnyGamePlayState s _) gr cfgs = draw s gr cfgs
 
--- Returns a new AnyGamePlayState with the updated inner state
 anyAnimate :: AnyGamePlayState -> Graphics -> InputState -> AnyGamePlayState
 anyAnimate (AnyGamePlayState s p) gr inputs = AnyGamePlayState (animate s gr inputs) p
 
--- Left = updated state (cursor moved, scroll, etc.); Right = transition out
 anyHandleInput :: AnyGamePlayState -> InputState -> Either AnyGamePlayState AnyGamePlayState
 anyHandleInput (AnyGamePlayState s p) inputs =
     case handleInput s inputs of
@@ -147,17 +123,28 @@ anyHandleInput (AnyGamePlayState s p) inputs =
 -- GameStateStep: controls think/update execution
 -- Separate instances: AppEnv (real IO) vs PreviewEnv (skip transitions)
 
-class (Monad m, ConfigsRead m, GraphicsRead m) => GameStateStep m where
-    -- | Execute the IO described by Update; return resulting Step
-    executeThink :: AnyGamePlayState -> m Step
+class (Monad m, ConfigsRead m, GraphicsRead m, InputRead m) => GameStateStep m where
+    -- | Dispatch think; reads input/graphics/configs from the monad
+    getUpdate :: GameState -> m Update
 
-    -- | Apply a Step; recurses through Transitions until stable
-    -- Nothing = Exit
-    resolveStep :: AnyGamePlayState -> Step -> m (Maybe AnyGamePlayState)
+    -- | Execute the IO described by Update; return resulting Step
+    executeAction :: Update -> m Step
+
+    -- | Apply a Step to produce the next GameState
+    -- Nothing = use cached render (no state change)
+    -- Just gs = new state to render
+    stepGame :: GameState -> Step -> m (Maybe GameState)
 
 
 -- ---------------------------------------------------------------------------
--- Reader class
+-- GameStateInit
+
+class Monad m => GameStateInit m where
+    loadInitialState :: m GameState
+
+
+-- ---------------------------------------------------------------------------
+-- Reader class (kept for compatibility)
 
 class Monad m => GameStateRead m where
     readGameState :: m GameState
