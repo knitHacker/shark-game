@@ -155,5 +155,10 @@ data OutputHandles = OutputHandles
     , font :: Font.Font
     }
 
-class Monad m => OutputRead m where
-    getOutputs :: m OutputHandles
+class Monad m => RendererActions m where
+    getFontSize :: m FontSize
+    getWindowSize :: m (Int, Int)
+    -- TODO: probably want something like "loadTexture" but for now doing that in initialization for output handles
+    cleanupRenderer :: m ()
+
+    executeDraw :: ToRender -> m ()

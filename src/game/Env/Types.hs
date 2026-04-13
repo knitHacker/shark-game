@@ -28,7 +28,6 @@ data AppEnvData = AppEnvData
     , appEnvDataOutputHandles :: !OutputHandles
     , appEnvDataGraphics :: !Graphics
     , appEnvDataInputState :: !InputState
-    , appEnvDataGameState :: !GameState
     }
 
 

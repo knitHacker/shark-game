@@ -27,9 +27,16 @@ import SaveData
 import Configs
 import InputState
 
+-- Note: Okay only thing that is a little muddled is the GameState. There is confusion between a state transition
+-- and state value. This might be a problem partially because gameView holds 2 things, state like cursor position
+-- but also text / color / position. Ideally I would like to split them but you want them together when making
+-- the render itself and the structure of the type depends on what is in the view.
+
+-- Okay need to get this top level refactor going so I guess keep as close to what I had before.
 
 data GameState = GameState
     { gameCurrentState :: !AnyGamePlayState
+    , gameView :: !GameView
     , gameLastDraw     :: !(Maybe ToRender)
     }
 
@@ -123,28 +130,15 @@ anyHandleInput (AnyGamePlayState s p) inputs =
 -- GameStateStep: controls think/update execution
 -- Separate instances: AppEnv (real IO) vs PreviewEnv (skip transitions)
 
-class (Monad m, ConfigsRead m, GraphicsRead m, InputRead m) => GameStateStep m where
+class Monad m => GameStateStep m where
     -- | Dispatch think; reads input/graphics/configs from the monad
     getUpdate :: GameState -> m Update
 
     -- | Execute the IO described by Update; return resulting Step
-    executeAction :: Update -> m Step
+    executeAction :: Update -> m (Maybe Step)
 
     -- | Apply a Step to produce the next GameState
     -- Nothing = use cached render (no state change)
     -- Just gs = new state to render
     stepGame :: GameState -> Step -> m (Maybe GameState)
 
-
--- ---------------------------------------------------------------------------
--- GameStateInit
-
-class Monad m => GameStateInit m where
-    loadInitialState :: m GameState
-
-
--- ---------------------------------------------------------------------------
--- Reader class (kept for compatibility)
-
-class Monad m => GameStateRead m where
-    readGameState :: m GameState

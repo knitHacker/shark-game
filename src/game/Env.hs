@@ -21,7 +21,7 @@ import qualified Data.Text as T
 import Control.Monad.Reader     (runReaderT)
 
 
-initAppEnvData :: GameConfigs -> OutputHandles -> Graphics -> InputState -> GameState -> AppEnvData
+initAppEnvData :: GameConfigs -> OutputHandles -> Graphics -> InputState -> AppEnvData
 initAppEnvData = AppEnvData
 
 

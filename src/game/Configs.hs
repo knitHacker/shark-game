@@ -227,13 +227,9 @@ updateStateConfigs sc = do
 
 class Monad m => ConfigsRead m where
     readConfigs :: m GameConfigs
+    -- todo: might want a way to reload configs from wherever the AppEnv got them from
+    --refreshConfigs :: m ()
 
-    readFrameRate :: m Word32
-    readFrameRate = do
-        cfgs <- readConfigs
-        return $ frameRate $ settingCfgs cfgs
 
-    debugMode :: m Bool
-    debugMode = do
-        cfgs <- readConfigs
-        return $ debug $ settingCfgs cfgs
+applyConfigs :: ConfigsRead m => (GameConfigs -> a) -> (a -> b) -> m b
+applyConfigs sel f = fmap (f . sel) readConfigs

@@ -31,10 +31,12 @@ import Env.Files            (getGameFullPath)
 
 import Debug.Trace
 
+-- Todo: add this to game Config instead of hard coded
 fontFile :: FilePath
 fontFile = "assets/fonts/saxmono.ttf"
 --fontFile = "assets/fonts/InsightSansSSi.ttf"
 
+-- Default settings for renderer
 rendererConfig :: SDL.RendererConfig
 rendererConfig = SDL.RendererConfig
   { SDL.rendererType = SDL.AcceleratedRenderer
@@ -43,12 +45,11 @@ rendererConfig = SDL.RendererConfig
 
 -- Get the font size
 -- Only works because the font is monospaced
-getFontSize :: OutputHandles -> IO FontSize
+getFontSize :: MonadIO m => OutputHandles -> m FontSize
 getFontSize outs =
     do
-        size <-Font.size (font outs) " "
-        let size' = (fromIntegral (fst size), fromIntegral (snd size))
-        return size'
+        size <- liftIO $ Font.size (font outs) " "
+        return (fromIntegral (fst size), fromIntegral (snd size))
 
 getWindowSize :: OutputHandles -> IO (Int, Int)
 getWindowSize outs = do

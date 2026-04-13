@@ -6,6 +6,7 @@ module InputState
     , MouseInputs(..)
     , InputRead(..)
     , Direction(..)
+    , InputResult(..)
     , inputRepeating
     , initInputState
     , updateInput
@@ -50,20 +51,28 @@ data KeyPress
     deriving (Show, Eq)
 
 
+-- Besides the input state that needs to retained there is one off info like if we should just quit
+    -- or if we resized the window.
+data InputResult = InputResult
+    { newInputs :: InputState
+    , windowResized :: Maybe (Int, Int)
+    , inputQuit :: Bool
+    }
+
+-- This is input info that will be needed during the update
 data InputState = InputState
     { keyInputs :: !(Maybe KeyboardInputs)
     , mouseInputs :: !(Maybe MouseInputs)
-    , windowResized :: !(Maybe (Int, Int))
     , timestamp :: !Int64
     }
 
+-- todo: eventually might want mouse position / clicks
 data MouseInputs = MouseInputs
     { scrollAmt :: !Int
     }
 
 data KeyboardInputs = Keyboard
-    { inputStateQuit :: !Bool
-    , inputStateDirection :: !(Maybe Direction)
+    { inputStateDirection :: !(Maybe Direction)
     , inputControl :: !(Maybe KeyPress)
     , inputRepeat :: !Bool
     } deriving (Show, Eq)
@@ -74,10 +83,17 @@ initInputState = do
     let ts = systemSeconds time
         tn = systemNanoseconds time
         tsInt = ts * 1000 + fromIntegral (div tn 1000000)
-    return $ InputState Nothing Nothing Nothing tsInt
+    return $ InputState Nothing Nothing tsInt
 
 class Monad m => InputRead m where
     readInputState :: m InputState
+    -- should i pass in the timeout or make it ConfigsRead m => m? probably this is more flexible
+    pollInputUpdates :: Word32 -> m InputResult
+    -- umm might need to change the class because this isn't just reading but if i do this i don't have to touch appEnvData
+        -- unless pollInputDate should update it internally be default?
+    updateInputState :: InputState -> m ()
+
+
 
 escapePressed :: InputState -> Bool
 escapePressed (InputState (Just (Keyboard _ _ (Just EscapePress) _)) _ _ _) = True
@@ -132,18 +148,20 @@ inputDirection :: InputState -> Maybe Direction
 inputDirection (InputState (Just key) _ _ _) = inputStateDirection key
 inputDirection _ = Nothing
 
-inputQuit :: InputState -> Bool
-inputQuit (InputState (Just key) _ _ _) = inputStateQuit key
-inputQuit _ = False
+getTime :: MonadIO m => m Int64
+getTime = do
+    time <- liftIO getSystemTime
+    let ts = systemSeconds time
+        tn = systemNanoSeconds tim
+        return $ ts * 1000 + fromIntegral (div tn 1000000)
 
+-- helper function for default behavior
+-- Polls SDL with the given timeout in miliseconds
 updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputState
 updateInput to = do
     input <- readInputState
-    time <- liftIO getSystemTime
     event <- SDL.waitEventTimeout (fromIntegral to)
-    let ts = systemSeconds time
-        tn = systemNanoseconds time
-        tsInt = ts * 1000 + fromIntegral (div tn 1000000)
+    tsInt <- getTime
     case event of
         (Just event) -> do
             return $ payloadToIntent event tsInt
