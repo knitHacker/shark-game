@@ -152,8 +152,8 @@ getTime :: MonadIO m => m Int64
 getTime = do
     time <- liftIO getSystemTime
     let ts = systemSeconds time
-        tn = systemNanoSeconds tim
-        return $ ts * 1000 + fromIntegral (div tn 1000000)
+        tn = systemNanoSeconds time
+    return $ ts * 1000 + fromIntegral (div tn 1000000)
 
 -- helper function for default behavior
 -- Polls SDL with the given timeout in miliseconds
@@ -163,8 +163,7 @@ updateInput to = do
     event <- SDL.waitEventTimeout (fromIntegral to)
     tsInt <- getTime
     case event of
-        (Just event) -> do
-            return $ payloadToIntent event tsInt
+        (Just event) -> return $ payloadToIntent event tsInt
         _ -> return $ updateRepeat input tsInt
 
 

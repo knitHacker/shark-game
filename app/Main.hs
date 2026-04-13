@@ -8,9 +8,6 @@ import OutputHandles (initOutputHandles)
 import Game (runGame)
 
 
-mkInitialState :: IO GameState
-mkInitialState = do
-
 mkInitialState :: GameConfigs -> OutputHandles -> Graphics -> InputState -> IO GameState
 mkInitialState cfgs outs gr inputs = do
     gdM <- case lastSaveM (stateCfgs cfgs) of
@@ -34,4 +31,4 @@ main = do
     inputs <- initInputs
     let env = initAppEnvData configs outs gr inputs
     gs <- mkInitialState configs outs gr inputs
-    runGame env gs
+    runAppEnv env $ runGame gs
