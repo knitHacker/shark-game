@@ -63,10 +63,9 @@ initWindow r = do
     SDL.present r
 
 
-drawAll :: (MonadIO m, OutputRead m, ConfigsRead m) => ToRender -> m ()
-drawAll drawings = do
+drawAll :: (MonadIO m, ConfigsRead m) => OutputHandles -> ToRender -> m ()
+drawAll outs drawings = do
     topCfgs <- readConfigs
-    outs <- getOutputs
     let cfgs = settingCfgs topCfgs
         drawOutline = debugOutlineTexture cfgs
         drawDbgs = debugHitboxes cfgs

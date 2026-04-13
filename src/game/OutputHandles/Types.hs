@@ -3,7 +3,6 @@
 
 module OutputHandles.Types
     ( OutputHandles(..)
-    , OutputRead(..)
     , Draw(..)
     , Color(..)
     , Draws

@@ -9,14 +9,16 @@ module Env.Types
 
 import Configs
 import OutputHandles.Types
+import OutputHandles
 import InputState
+import Data.Word (Word32)
 import GameState.Types
-import Graphics (GraphicsRead(..))
+import Graphics.Types (GraphicsRead(..))
 import Graphics.Types
 import SaveData
 
 import qualified Data.Text as T
-import Control.Monad.Reader (MonadReader, ReaderT, asks)
+import Control.Monad.State.Strict (StateT, MonadState, gets, modify)
 import Control.Monad
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import System.Directory
@@ -31,34 +33,43 @@ data AppEnvData = AppEnvData
     }
 
 
-newtype AppEnv a = AppEnv (ReaderT AppEnvData IO a)
+newtype AppEnv a = AppEnv (StateT AppEnvData IO a)
     deriving newtype
         ( Functor
         , Applicative
         , Monad
-        , MonadReader AppEnvData
+        , MonadState AppEnvData
         , MonadIO
         )
 
-instance OutputRead AppEnv where
-    getOutputs :: AppEnv OutputHandles
-    getOutputs = asks appEnvDataOutputHandles
 
 instance GraphicsRead AppEnv where
     readGraphics :: AppEnv Graphics
-    readGraphics = asks appEnvDataGraphics
+    readGraphics = gets appEnvDataGraphics
+
+    resizeGraphics :: (Int, Int) -> AppEnv ()
+    resizeGraphics (w, h) = modify $ \d ->
+        let gr = appEnvDataGraphics d
+        in d { appEnvDataGraphics = gr { graphicsWindowWidth = w, graphicsWindowHeight = h } }
 
 instance InputRead AppEnv where
     readInputState :: AppEnv InputState
-    readInputState = asks appEnvDataInputState
+    readInputState = gets appEnvDataInputState
+
+    -- also stores the new InputState back into AppEnvData
+    pollInputState :: Word32 -> AppEnv InputResult
+    pollInputState timeout = do
+        res <- updateInput timeout
+        updateInputState (newInputs res)
+        return res
+
+    updateInputState :: InputState -> AppEnv ()
+    updateInputState inputs = modify $ \d -> d { appEnvDataInputState = inputs }
 
 instance ConfigsRead AppEnv where
     readConfigs :: AppEnv GameConfigs
-    readConfigs = asks appEnvDataConfigs
+    readConfigs = gets appEnvDataConfigs
 
-instance GameStateRead AppEnv where
-    readGameState :: AppEnv GameState
-    readGameState = asks appEnvDataGameState
 
 instance GameDataStorage AppEnv where
     saveData :: GameData -> AppEnv ()
@@ -73,28 +84,53 @@ instance GameDataStorage AppEnv where
         contents <- liftIO $ listDirectory localPath
         return $ filter (\f -> takeExtension f == ".save") contents
 
-instance GameStateStep AppEnv where
-    executeThink :: AnyGamePlayState -> AppEnv Step
-    executeThink agps@(AnyGamePlayState s _) = do
-        cfgs <- readConfigs
-        case think s cfgs of
-            PureStep step          -> return step
-            GenerateNewGame f      -> do
-                gd <- liftIO $ startNewGame cfgs
-                return $ f gd
-            SaveFile gd step       -> do
-                liftIO $ saveToFile gd
-                return step
-            LoadFile fp f          -> do
-                result <- liftIO $ loadFromFile fp
-                return $ f result
-            SaveList f             -> do
-                fps <- getSaveFiles
-                return $ f fps
+instance RendererActions AppEnv where
+    getFontSize :: AppEnv FontSize
+    getFontSize = gets appEnvDataOutputHandles >>= getOutputFontSize
 
-    resolveStep :: AnyGamePlayState -> Step -> AppEnv (Maybe AnyGamePlayState)
-    resolveStep _     Exit           = return Nothing
-    resolveStep state NoChange       = return $ Just state
-    resolveStep _     (Transition next) = do
-        step <- executeThink next
-        resolveStep next step
+    getWindowSize :: AppEnv (Int, Int)
+    getWindowSize = gets appEnvDataOutputHandles >>= liftIO . getOutputWindowSize
+
+    cleanupRenderer :: AppEnv ()
+    cleanupRenderer = gets appEnvDataOutputHandles >>= liftIO . cleanupOutputHandles
+
+    executeDraw :: ToRender -> AppEnv ()
+    executeDraw toRender = do
+        outs <- gets appEnvDataOutputHandles
+        renderFrame outs toRender
+
+instance GameStateStep AppEnv where
+    getUpdate :: GameState -> AppEnv Update
+    getUpdate gs = do
+        cfgs   <- readConfigs
+        inputs <- readInputState
+        gr     <- readGraphics
+        return $ anyThink (gameCurrentState gs) cfgs inputs gr
+
+    executeAction :: Update -> AppEnv (Maybe Step)
+    executeAction Exit                = return Nothing
+    executeAction (PureStep step)     = return $ Just step
+    executeAction (GenerateNewGame f) = do
+        cfgs <- readConfigs
+        gd   <- liftIO $ startNewGame cfgs
+        return $ Just (f gd)
+    executeAction (SaveFile gd step)  = do
+        liftIO $ saveToFile gd
+        return $ Just step
+    executeAction (LoadFile fp f)     = do
+        result <- liftIO $ loadFromFile fp
+        return $ Just (f result)
+    executeAction (SaveList f)        = do
+        fps <- getSaveFiles
+        return $ Just (f fps)
+
+    stepGame :: GameState -> Step -> AppEnv (Maybe GameState)
+    stepGame _  UseCache            = return Nothing
+    stepGame _  (UpdateTo next)     = do
+        gr   <- readGraphics
+        cfgs <- readConfigs
+        return $ Just $ GameState next (anyDraw next gr cfgs) Nothing
+    stepGame _  (TransitionTo next) = do
+        gr   <- readGraphics
+        cfgs <- readConfigs
+        return $ Just $ GameState next (anyDraw next gr cfgs) Nothing

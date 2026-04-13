@@ -8,6 +8,8 @@ import OutputHandles (initOutputHandles)
 import Game (runGame)
 
 
+-- todo: Instead of this have a splash screen that doesn't need any file reads
+
 mkInitialState :: GameConfigs -> OutputHandles -> Graphics -> InputState -> IO GameState
 mkInitialState cfgs outs gr inputs = do
     gdM <- case lastSaveM (stateCfgs cfgs) of

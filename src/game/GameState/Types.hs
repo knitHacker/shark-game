@@ -3,8 +3,6 @@
 module GameState.Types
     ( AnyGamePlayState(..)
     , GameState(..)
-    , GameStateRead(..)
-    , GameStateInit(..)
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
@@ -22,7 +20,7 @@ import qualified Data.Text as T
 
 import OutputHandles.Types
 import Graphics.Types
-import Graphics ( GraphicsRead )
+import Graphics.Types ( GraphicsRead )
 import SaveData
 import Configs
 import InputState

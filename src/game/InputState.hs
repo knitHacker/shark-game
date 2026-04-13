@@ -88,7 +88,7 @@ initInputState = do
 class Monad m => InputRead m where
     readInputState :: m InputState
     -- should i pass in the timeout or make it ConfigsRead m => m? probably this is more flexible
-    pollInputUpdates :: Word32 -> m InputResult
+    pollInputState :: Word32 -> m InputResult
     -- umm might need to change the class because this isn't just reading but if i do this i don't have to touch appEnvData
         -- unless pollInputDate should update it internally be default?
     updateInputState :: InputState -> m ()
@@ -96,96 +96,99 @@ class Monad m => InputRead m where
 
 
 escapePressed :: InputState -> Bool
-escapePressed (InputState (Just (Keyboard _ _ (Just EscapePress) _)) _ _ _) = True
+escapePressed (InputState (Just (Keyboard _ (Just EscapePress) _)) _ _) = True
 escapePressed _ = False
 
 escapeJustPressed :: InputState -> Bool
-escapeJustPressed (InputState (Just (Keyboard _ _ (Just EscapePress) False)) _ _ _) = True
+escapeJustPressed (InputState (Just (Keyboard _ (Just EscapePress) False)) _ _) = True
 escapeJustPressed _ = False
 
 enterPressed :: InputState -> Bool
-enterPressed (InputState (Just (Keyboard _ _ (Just EnterPress) _)) _ _ _) = True
+enterPressed (InputState (Just (Keyboard _ (Just EnterPress) _)) _ _) = True
 enterPressed _ = False
 
 enterJustPressed :: InputState -> Bool
-enterJustPressed (InputState (Just (Keyboard _ _ (Just EnterPress) False)) _ _ _) = True
+enterJustPressed (InputState (Just (Keyboard _ (Just EnterPress) False)) _ _) = True
 enterJustPressed _ = False
 
 backPressed :: InputState -> Bool
-backPressed (InputState (Just (Keyboard _ _ (Just BackPress) _)) _ _ _) = True
+backPressed (InputState (Just (Keyboard _ (Just BackPress) _)) _ _) = True
 backPressed _ = False
 
 backJustPressed :: InputState -> Bool
-backJustPressed (InputState (Just (Keyboard _ _ (Just BackPress) False)) _ _ _) = True
+backJustPressed (InputState (Just (Keyboard _ (Just BackPress) False)) _ _) = True
 backJustPressed _ = False
 
 iPressed :: InputState -> Bool
-iPressed (InputState (Just (Keyboard _ _ (Just IPress) _)) _ _ _) = True
+iPressed (InputState (Just (Keyboard _ (Just IPress) _)) _ _) = True
 iPressed _ = False
 
 spacePressed :: InputState -> Bool
-spacePressed (InputState (Just (Keyboard _ _ (Just SpacePress) _)) _ _ _) = True
+spacePressed (InputState (Just (Keyboard _ (Just SpacePress) _)) _ _) = True
 spacePressed _ = False
 
 moveInputPressed :: InputState -> Bool
-moveInputPressed (InputState (Just (Keyboard _ (Just _) _ _)) _ _ _) = True
+moveInputPressed (InputState (Just (Keyboard (Just _) _ _)) _ _) = True
 moveInputPressed _ = False
 
 
 updateRepeat :: InputState -> Int64 -> InputState
-updateRepeat (InputState (Just (Keyboard sq sd c _)) _ _ _) ts = InputState (Just (Keyboard sq sd c True)) Nothing Nothing ts
-updateRepeat (InputState Nothing _ _ _) ts = InputState Nothing Nothing Nothing ts
+updateRepeat (InputState (Just (Keyboard sd c _)) _ _) ts = InputState (Just (Keyboard sd c True)) Nothing ts
+updateRepeat (InputState Nothing _ _) ts = InputState Nothing Nothing ts
 
 inputRepeating :: InputState -> Bool
-inputRepeating (InputState (Just (Keyboard _ _ _ r)) _ _ _) = r
+inputRepeating (InputState (Just (Keyboard _ _ r)) _ _) = r
 inputRepeating _ = False
 
+-- window resize is now in InputResult, not InputState
 wasWindowResized :: InputState -> Bool
-wasWindowResized (InputState _ _ (Just _) _) = True
 wasWindowResized _ = False
 
 inputDirection :: InputState -> Maybe Direction
-inputDirection (InputState (Just key) _ _ _) = inputStateDirection key
+inputDirection (InputState (Just key) _ _) = inputStateDirection key
 inputDirection _ = Nothing
 
 getTime :: MonadIO m => m Int64
 getTime = do
     time <- liftIO getSystemTime
     let ts = systemSeconds time
-        tn = systemNanoSeconds time
+        tn = systemNanoseconds time
     return $ ts * 1000 + fromIntegral (div tn 1000000)
 
 -- helper function for default behavior
 -- Polls SDL with the given timeout in miliseconds
-updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputState
+updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputResult
 updateInput to = do
     input <- readInputState
     event <- SDL.waitEventTimeout (fromIntegral to)
     tsInt <- getTime
     case event of
-        (Just event) -> return $ payloadToIntent event tsInt
-        _ -> return $ updateRepeat input tsInt
+        (Just ev) -> return $ payloadToIntent ev tsInt
+        _         -> return $ InputResult (updateRepeat input tsInt) Nothing False
 
 
-payloadToIntent :: SDL.Event -> Int64 -> InputState
-payloadToIntent (SDL.Event _ SDL.QuitEvent) ts = InputState (Just (Keyboard True Nothing Nothing False)) Nothing Nothing ts
+payloadToIntent :: SDL.Event -> Int64 -> InputResult
+payloadToIntent (SDL.Event _ SDL.QuitEvent) ts =
+    InputResult (InputState Nothing Nothing ts) Nothing True
 payloadToIntent (SDL.Event _ (SDL.KeyboardEvent k)) ts =
     case getKey k of
-        Nothing -> InputState Nothing Nothing Nothing ts
-        Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) Nothing Nothing ts
-        Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) Nothing Nothing ts
-payloadToIntent (SDL.Event _ (SDL.MouseWheelEvent mwd)) ts = InputState Nothing (Just (MouseInputs (getScroll mwd))) Nothing ts
-payloadToIntent (SDL.Event _ (SDL.WindowResizedEvent (SDL.WindowResizedEventData _ (SDL.V2 w h)))) ts = InputState Nothing Nothing (Just (fromIntegral w, fromIntegral h)) ts
+        Nothing            -> InputResult (InputState Nothing Nothing ts) Nothing False
+        Just (r, Left ctr) -> InputResult (InputState (Just (Keyboard Nothing (Just ctr) r)) Nothing ts) Nothing False
+        Just (r, Right d)  -> InputResult (InputState (Just (Keyboard (Just d) Nothing r)) Nothing ts) Nothing False
+payloadToIntent (SDL.Event _ (SDL.MouseWheelEvent mwd)) ts =
+    InputResult (InputState Nothing (Just (MouseInputs (getScroll mwd))) ts) Nothing False
+payloadToIntent (SDL.Event _ (SDL.WindowResizedEvent (SDL.WindowResizedEventData _ (SDL.V2 w h)))) ts =
+    InputResult (InputState Nothing Nothing ts) (Just (fromIntegral w, fromIntegral h)) False
 payloadToIntent (SDL.Event _ (SDL.ControllerButtonEvent cbd)) ts =
     case getControllerButton cbd of
-        Nothing -> InputState Nothing Nothing Nothing ts
-        Just (r, Left ctr) -> InputState (Just (Keyboard False Nothing (Just ctr) r)) Nothing Nothing ts
-        Just (r, Right d) -> InputState (Just (Keyboard False (Just d) Nothing r)) Nothing Nothing ts
+        Nothing            -> InputResult (InputState Nothing Nothing ts) Nothing False
+        Just (r, Left ctr) -> InputResult (InputState (Just (Keyboard Nothing (Just ctr) r)) Nothing ts) Nothing False
+        Just (r, Right d)  -> InputResult (InputState (Just (Keyboard (Just d) Nothing r)) Nothing ts) Nothing False
 payloadToIntent (SDL.Event _ (SDL.ControllerAxisEvent cad)) ts =
     case getControllerAxis cad of
-        Nothing -> InputState Nothing Nothing Nothing ts
-        Just d -> InputState (Just (Keyboard False (Just d) Nothing False)) Nothing Nothing ts
-payloadToIntent (SDL.Event _ _) ts = InputState Nothing Nothing Nothing ts
+        Nothing -> InputResult (InputState Nothing Nothing ts) Nothing False
+        Just d  -> InputResult (InputState (Just (Keyboard (Just d) Nothing False)) Nothing ts) Nothing False
+payloadToIntent (SDL.Event _ _) ts = InputResult (InputState Nothing Nothing ts) Nothing False
 
 
 getScroll :: SDL.MouseWheelEventData -> Int

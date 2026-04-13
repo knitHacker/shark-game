@@ -7,7 +7,7 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Map.Strict ((!))
 
 import Configs
-import Graphics (GraphicsRead(..))
+import Graphics.Types (GraphicsRead(..))
 import GameState.Types
 import OutputHandles.Types
 import OutputHandles.Draw

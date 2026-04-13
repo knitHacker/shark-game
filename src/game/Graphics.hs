@@ -2,7 +2,6 @@
 module Graphics
     ( initGraphics
     , updateGraphics
-    , GraphicsRead(..)
     ) where
 
 import qualified Data.Map.Strict as M
@@ -12,17 +11,13 @@ import Graphics.Menu
 import OutputHandles.Types
 import OutputHandles
 import Configs
-import InputState
-
-class Monad m => GraphicsRead m where
-    readGraphics :: m Graphics
 
 -- Assumes monospaced font
 
 initGraphics :: TextureCfg -> OutputHandles -> IO Graphics
 initGraphics tm outs = do
-    fontSize <- getFontSize outs
-    (width, height) <- getWindowSize outs
+    fontSize <- getOutputFontSize outs
+    (width, height) <- getOutputWindowSize outs
     let iTxts = M.map (\(ImageTexture sX sY _) -> ImageInfo sX sY) $ textureImages tm
         aTxts = M.map (\(AnimationTexture sX sY _ f d) -> AnimationInfo sX sY f d) $ textureAnimations tm
     return Graphics
@@ -34,8 +29,8 @@ initGraphics tm outs = do
         }
 
 -- Eventually update potential graphics and font sizing based on config changes
-updateGraphics :: Graphics -> GameConfigs -> InputState -> Graphics
-updateGraphics graphics _ inputState =
-    case windowResized inputState of
+updateGraphics :: Graphics -> GameConfigs -> Maybe (Int, Int) -> Graphics
+updateGraphics graphics _ resizeM =
+    case resizeM of
         Nothing -> graphics
         Just (width, height) -> graphics { graphicsWindowWidth = width, graphicsWindowHeight = height }

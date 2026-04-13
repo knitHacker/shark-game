@@ -35,6 +35,7 @@ module Graphics.Types
     , updateMenuData
     , updateTimeoutData
     , updateMenu
+    , GraphicsRead(..)
     ) where
 
 import qualified Data.Text as T

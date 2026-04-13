@@ -3,9 +3,9 @@
 module OutputHandles
     ( initOutputHandles
     , cleanupOutputHandles
-    , executeDraw
-    , getFontSize
-    , getWindowSize
+    , renderFrame
+    , getOutputFontSize
+    , getOutputWindowSize
     ) where
 
 
@@ -45,14 +45,14 @@ rendererConfig = SDL.RendererConfig
 
 -- Get the font size
 -- Only works because the font is monospaced
-getFontSize :: MonadIO m => OutputHandles -> m FontSize
-getFontSize outs =
+getOutputFontSize :: MonadIO m => OutputHandles -> m FontSize
+getOutputFontSize outs =
     do
         size <- liftIO $ Font.size (font outs) " "
         return (fromIntegral (fst size), fromIntegral (snd size))
 
-getWindowSize :: OutputHandles -> IO (Int, Int)
-getWindowSize outs = do
+getOutputWindowSize :: OutputHandles -> IO (Int, Int)
+getOutputWindowSize outs = do
     (V2 w h) <- SDL.get (SDL.windowSize (window outs))
     return (fromIntegral w, fromIntegral h)
 
@@ -100,5 +100,5 @@ cleanupOutputHandles outs = do
     SDL.quit
 
 
-executeDraw :: (MonadIO m, OutputRead m, ConfigsRead m) => ToRender -> m ()
-executeDraw = drawAll
+renderFrame :: (MonadIO m, ConfigsRead m) => OutputHandles -> ToRender -> m ()
+renderFrame = drawAll
