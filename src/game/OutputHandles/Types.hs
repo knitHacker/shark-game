@@ -20,6 +20,7 @@ module OutputHandles.Types
     , mapDraws
     , filterDraws
     , addDraw
+    , RendererActions(..)
     ) where
 
 import Foreign.C.Types ( CInt )

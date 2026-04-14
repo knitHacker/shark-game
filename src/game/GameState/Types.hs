@@ -6,14 +6,14 @@ module GameState.Types
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
+    , ViewMenu(..)
     , GamePlayState(..)
     , GameStateStep(..)
     , Step(..)
     , Update(..)
     , anyThink
     , anyDraw
-    , anyAnimate
-    , anyHandleInput
+    , anyInitialize
     ) where
 
 import qualified Data.Text as T
@@ -39,10 +39,13 @@ data GameState = GameState
     }
 
 
+-- | Wraps Menu Update; exists to avoid a GameState.Types -> Graphics.Types circular import
+newtype ViewMenu = ViewMenu (Menu Update)
+
 data GameView = GameView
     { viewLayer   :: View AnyGamePlayState
     , viewOverlay :: Maybe (OverlayView AnyGamePlayState)
-    , viewMenu    :: Maybe (Menu AnyGamePlayState)
+    , viewMenu    :: Maybe ViewMenu
     }
 
 data OverlayView a = OverlayView
@@ -54,7 +57,7 @@ data OverlayView a = OverlayView
 -- Convenience wrapper used by simple menu-only states
 data GameMenu = GameMenu
     { gameViewLayer :: View AnyGamePlayState
-    , gameMenuLayer :: Menu AnyGamePlayState
+    , gameMenuLayer :: ViewMenu
     }
 
 
@@ -83,19 +86,15 @@ data Update
 
 class GamePlayState a where
     -- | Called every frame; describes any IO needed and how to advance state
-    think :: a -> GameConfigs -> InputState -> Graphics -> Update
+    think :: a -> GameConfigs -> InputResult -> Graphics -> Update
 
-    -- | Pure render; called after think resolves and on every window resize
+    -- | Pure render; called when state changes (UpdateTo or TransitionTo)
     draw :: a -> Graphics -> GameConfigs -> GameView
     draw _ _ _ = GameView (View [] [] [] [] Nothing) Nothing Nothing
 
-    -- | Per-frame animation step; returns updated state
-    animate :: a -> Graphics -> InputState -> a
-    animate s _ _ = s
-
-    -- | Per-frame input handling; Left = updated state, Right = transition
-    handleInput :: a -> InputState -> Either a AnyGamePlayState
-    handleInput s _ = Left s
+    -- | Build the initial GameState when transitioning into this state
+    initialize :: a -> Bool -> Graphics -> GameConfigs -> GameState
+    initialize s p gr cfgs = GameState (AnyGamePlayState s p) (draw s gr cfgs) Nothing
 
     {-# MINIMAL think #-}
 
@@ -108,20 +107,14 @@ data AnyGamePlayState = forall a. GamePlayState a => AnyGamePlayState
     , canPause  :: Bool
     }
 
-anyThink :: AnyGamePlayState -> GameConfigs -> InputState -> Graphics -> Update
+anyThink :: AnyGamePlayState -> GameConfigs -> InputResult -> Graphics -> Update
 anyThink (AnyGamePlayState s _) cfgs inputs gr = think s cfgs inputs gr
 
 anyDraw :: AnyGamePlayState -> Graphics -> GameConfigs -> GameView
 anyDraw (AnyGamePlayState s _) gr cfgs = draw s gr cfgs
 
-anyAnimate :: AnyGamePlayState -> Graphics -> InputState -> AnyGamePlayState
-anyAnimate (AnyGamePlayState s p) gr inputs = AnyGamePlayState (animate s gr inputs) p
-
-anyHandleInput :: AnyGamePlayState -> InputState -> Either AnyGamePlayState AnyGamePlayState
-anyHandleInput (AnyGamePlayState s p) inputs =
-    case handleInput s inputs of
-        Left  s'   -> Left  (AnyGamePlayState s' p)
-        Right next -> Right next
+anyInitialize :: AnyGamePlayState -> Graphics -> GameConfigs -> GameState
+anyInitialize (AnyGamePlayState s p) gr cfgs = initialize s p gr cfgs
 
 
 -- ---------------------------------------------------------------------------
@@ -129,8 +122,8 @@ anyHandleInput (AnyGamePlayState s p) inputs =
 -- Separate instances: AppEnv (real IO) vs PreviewEnv (skip transitions)
 
 class Monad m => GameStateStep m where
-    -- | Dispatch think; reads input/graphics/configs from the monad
-    getUpdate :: GameState -> m Update
+    -- | Dispatch think; reads graphics/configs from the monad, input passed explicitly
+    getUpdate :: InputResult -> GameState -> m Update
 
     -- | Execute the IO described by Update; return resulting Step
     executeAction :: Update -> m (Maybe Step)

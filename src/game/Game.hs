@@ -4,14 +4,14 @@ module Game
     ) where
 
 import OutputHandles.Types
-import OutputHandles
 import Env
 import Env.Types
 import InputState
-import GameState
+import GameState.Types
 import GameState.Draw
-import Graphics
+import Graphics.Types ( GraphicsRead(..) )
 import Configs
+import SaveData ( GameDataStorage )
 
 import Data.Word ( Word32 )
 
@@ -28,13 +28,13 @@ runGame gameState = do
         (InputResult _ _ True) -> cleanup
         (InputResult _ (Just rs) _) -> do
             resizeGraphics rs
-            doGame gameState
-        (InputResult _ _ _) -> doGame gameState
+            doGame inputRes gameState
+        (InputResult _ _ _) -> doGame inputRes gameState
 
 
-doGame :: (Monad m, ConfigsRead m, InputRead m, GraphicsRead m, RendererActions m, GameDataStorage m, GameStateStep m) => GameState -> m ()
-doGame gs = do
-    up <- getUpdate gs
+doGame :: (Monad m, ConfigsRead m, InputRead m, GraphicsRead m, RendererActions m, GameDataStorage m, GameStateStep m) => InputResult -> GameState -> m ()
+doGame inputRes gs = do
+    up <- getUpdate inputRes gs
     stepM <- executeAction up
     case stepM of
         Nothing -> cleanup
@@ -47,7 +47,7 @@ doGame gs = do
                     runGame gs'
 
 
-drawGame :: (Monad m, ConfigsRead m, InputRead m, GraphicsRead m, RendererActions m, GameDataStorage m, GameStateStep m) => GameState -> m ()
+drawGame :: (GraphicsRead m, RendererActions m) => GameState -> m ()
 drawGame (GameState _ gv _) = do
     gr <- readGraphics
     executeDraw (renderGameView gr gv)

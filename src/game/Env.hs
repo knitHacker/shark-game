@@ -12,8 +12,9 @@ module Env
 import Env.Types ( AppEnv(..), AppEnvData(AppEnvData) )
 import Configs ( TextureCfg, GameConfigs, stateCfgs, lastSaveM )
 import OutputHandles.Types ( OutputHandles )
-import InputState ( initInputState )
+import InputState ( initInputState, InputState )
 import Graphics ( initGraphics )
+import Graphics.Types ( Graphics )
 import SaveData ( loadFromFile )
 import qualified Data.Text as T
 

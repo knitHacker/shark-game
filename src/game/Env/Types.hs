@@ -100,12 +100,11 @@ instance RendererActions AppEnv where
         renderFrame outs toRender
 
 instance GameStateStep AppEnv where
-    getUpdate :: GameState -> AppEnv Update
-    getUpdate gs = do
-        cfgs   <- readConfigs
-        inputs <- readInputState
-        gr     <- readGraphics
-        return $ anyThink (gameCurrentState gs) cfgs inputs gr
+    getUpdate :: InputResult -> GameState -> AppEnv Update
+    getUpdate inputRes gs = do
+        cfgs <- readConfigs
+        gr   <- readGraphics
+        return $ anyThink (gameCurrentState gs) cfgs inputRes gr
 
     executeAction :: Update -> AppEnv (Maybe Step)
     executeAction Exit                = return Nothing
@@ -133,4 +132,4 @@ instance GameStateStep AppEnv where
     stepGame _  (TransitionTo next) = do
         gr   <- readGraphics
         cfgs <- readConfigs
-        return $ Just $ GameState next (anyDraw next gr cfgs) Nothing
+        return $ Just $ anyInitialize next gr cfgs

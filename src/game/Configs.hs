@@ -16,6 +16,7 @@ module Configs
     , initConfigs
     , updateStateConfigs
     , getTextureFiles
+    , applyConfigs
     ) where
 
 import Control.Monad ()
