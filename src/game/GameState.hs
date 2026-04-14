@@ -3,6 +3,7 @@
 module GameState
     ( getGameUpdate
     , drawOverlay
+    , moveTo
     ) where
 
 import InputState
@@ -53,3 +54,9 @@ drawOverlay (PauseOverlay cursor gd) gr = OverlayView True (textView words) over
                     ]
         menuData  = selOneOpts (overlayX + 150) (overlayY + 300) 4 15 opts Nothing (CursorRect White) cursor
         overlayMenu = Overlay overlayX overlayY 750 600 DarkBlue menuData
+
+moveTo :: GameSection -> AnyGamePlayState
+moveTo (ResearchCenter gd) = initialMainMenuState $ Just gd
+moveTo (Trip gd) = undefined -- TODO: this goes to the menus in TripMenu
+moveTo (DataReview gd) = undefined -- TODO: this goes to menus in DataReviewMenu
+moveTo (LabManagement gd) = undefined -- TODO: this goes to menus in LabMenus

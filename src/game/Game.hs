@@ -42,12 +42,16 @@ doGame inputRes gs = do
         (Just step) -> do
             gsM <- stepGame gs step
             case gsM of
-                Nothing -> runGame gs
+                Nothing -> do
+                    -- redraw to keep graphics fresh
+                    drawGame gs
+                    runGame gs
                 (Just gs') -> do
                     drawGame gs'
                     runGame gs'
 
 
+-- TODO: completely ignoring the cached render currently. eventually would be good to use it
 drawGame :: (GraphicsRead m, RendererActions m) => GameState -> m ()
 drawGame gs = do
     gr <- readGraphics

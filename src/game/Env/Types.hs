@@ -13,7 +13,7 @@ import OutputHandles
 import InputState
 import Data.Word (Word32)
 import GameState.Types
-import GameState (getGameUpdate)
+import GameState (getGameUpdate, moveTo)
 import Graphics.Types (GraphicsRead(..))
 import Graphics.Types
 import SaveData
@@ -139,3 +139,7 @@ instance GameStateStep AppEnv where
         return $ Just $ anyInitialize next gr cfgs
     stepGame gs (SetOverlay ovM)  =
         return $ Just $ gs { gameOverlay = ovM, gameLastDraw = Nothing }
+    stepGame gs (MoveTo gameSect) = do
+        gr <- readGraphics
+        cfgs <- readConfigs
+        return $ Just $ anyInitialize (moveTo gameSect) gr cfgs

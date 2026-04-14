@@ -6,29 +6,19 @@ import OutputHandles (initOutputHandles)
 import OutputHandles.Types (OutputHandles)
 import Graphics (initGraphics)
 import Graphics.Types (Graphics)
-import InputState (initInputState, InputState)
+import InputState (initInputState, InputState(..))
 import SaveData (loadFromFile)
-import GameState.Types (GameState(..), anyDraw)
-import GameState.Menu.GameMenus (initialMainMenuState)
+import GameState.Types (GameState(..), AnyGamePlayState(..), anyInitialize)
+import GameState.Menu.GameMenus (SplashScreenState(..))
 import Game (runGame)
 
 
 -- todo: Instead of this have a splash screen that doesn't need any file reads
 
-mkInitialState :: GameConfigs -> OutputHandles -> Graphics -> InputState -> IO GameState
-mkInitialState cfgs outs gr inputs = do
-    gdM <- case lastSaveM (stateCfgs cfgs) of
-                Nothing -> return Nothing
-                Just sf -> do
-                    gdE <- loadFromFile sf
-                    case gdE of
-                        Left err -> do
-                            putStrLn $ show err
-                            return Nothing
-                        Right gd -> return $ Just gd
-    let mmState = initialMainMenuState gdM
-        gv = anyDraw mmState gr cfgs
-    return $ GameState mmState gv Nothing Nothing
+mkInitialState :: GameConfigs -> Graphics -> InputState -> GameState
+mkInitialState cfgs gr inputs = anyInitialize splash gr cfgs
+    where
+        splash = AnyGamePlayState (SplashScreen (timestamp inputs)) False
 
 main :: IO ()
 main = do
@@ -37,5 +27,5 @@ main = do
     gr <- initGraphics tm outs
     inputs <- initInputState
     let env = initAppEnvData configs outs gr inputs
-    gs <- mkInitialState configs outs gr inputs
+        gs = mkInitialState configs gr inputs
     runAppEnv env $ runGame gs

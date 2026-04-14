@@ -2,7 +2,8 @@
 {-# LANGUAGE TupleSections #-}
 
 module GameState.Menu.GameMenus
-    ( initialMainMenuState
+    ( SplashScreenState (..)
+    , initialMainMenuState
     ) where
 
 import qualified Data.Map.Strict as M
@@ -24,6 +25,33 @@ import Graphics.Animation
 
 import InputState
 import Data.Int (Int64)
+
+import Debug.Trace
+
+splashDuration :: Int64
+splashDuration = 100
+
+data SplashScreenState = SplashScreen
+    { startTime :: Int64
+    }
+
+-- Todo make animation or logo or something
+instance GamePlayState SplashScreenState where
+    think (SplashScreen t) _ inputs _
+        | timestamp (newInputs inputs) - t > splashDuration = PureStep $ Transition $ AnyGamePlayState ReadLastSave False
+        | otherwise = PureStep UseCache
+
+
+data ReadLastSave = ReadLastSave
+
+instance GamePlayState ReadLastSave where
+    think _ cfgs _ _ =
+        case lastSaveM (stateCfgs cfgs) of
+            Nothing -> PureStep $ Transition $ initialMainMenuState Nothing
+            Just sf -> LoadFile sf step
+        where
+            step (Right gd) = Transition $ initialMainMenuState $ Just gd
+            step _ = Transition $ initialMainMenuState Nothing
 
 
 -- ===========================================================================

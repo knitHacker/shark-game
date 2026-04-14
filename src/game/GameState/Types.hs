@@ -10,6 +10,7 @@ module GameState.Types
     , ViewMenu(..)
     , GamePlayState(..)
     , GameStateStep(..)
+    , GameSection(..)
     , Step(..)
     , Update(..)
     , anyThink
@@ -65,26 +66,30 @@ data GameMenu = GameMenu
     }
 
 
+data GameSection = ResearchCenter GameData
+                  | Trip GameData
+                  | DataReview GameData
+                  | LabManagement GameData
+
 -- ---------------------------------------------------------------------------
 -- Step and Update: the think/update split
 
 -- | Result after executeAction; consumed by stepGame
-data Step
-    = UseCache                        -- no state change, preserve gameLastDraw
-    | Refresh AnyGamePlayState       -- state updated in place, needs re-render
-    | Transition AnyGamePlayState   -- transition to a new state, needs re-render
-    | SetOverlay (Maybe GameOverlay)  -- Just overlay = open/update; Nothing = close
+data Step = UseCache                        -- no state change, preserve gameLastDraw
+          | Refresh AnyGamePlayState       -- state updated in place, needs re-render
+          | Transition AnyGamePlayState   -- transition to a new state, needs re-render
+          | SetOverlay (Maybe GameOverlay)  -- Just overlay = open/update; Nothing = close
+          | MoveTo GameSection
 
 -- | Capability request produced by think; consumed by executeAction
 -- Exit is handled by the loop before executeAction
-data Update
-    = PureStep Step
-    | Exit
-    | GenerateNewGame (GameData -> Step)
-    | SaveFile GameData Step
-    | SaveAndExit GameData
-    | LoadFile FilePath (Either T.Text GameData -> Step)
-    | SaveList ([FilePath] -> Step)
+data Update = PureStep Step
+            | Exit
+            | GenerateNewGame (GameData -> Step)
+            | SaveFile GameData Step
+            | SaveAndExit GameData
+            | LoadFile FilePath (Either T.Text GameData -> Step)
+            | SaveList ([FilePath] -> Step)
 
 
 -- ---------------------------------------------------------------------------
