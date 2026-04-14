@@ -28,7 +28,7 @@ mkInitialState cfgs outs gr inputs = do
                         Right gd -> return $ Just gd
     let mmState = initialMainMenuState gdM
         gv = anyDraw mmState gr cfgs
-    return $ GameState mmState gv Nothing
+    return $ GameState mmState gv Nothing Nothing
 
 main :: IO ()
 main = do

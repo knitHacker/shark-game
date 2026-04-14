@@ -12,6 +12,7 @@ module GameState.Helpers
     , stepTimeouts
     , gameMenuView
     , gameMenuWithOverlay
+    , thinkWithPause
     ) where
 
 import InputState
@@ -19,6 +20,7 @@ import Graphics.Types hiding (updateMenu)
 import Graphics.Menu
 import Graphics.Animation
 import GameState.Types
+import SaveData ( GameData )
 
 
 -- | Update a menu based on input.
@@ -87,5 +89,13 @@ gameMenuView (GameMenu v m) = GameView v Nothing (Just m)
 
 
 -- | Build a GameView from a GameMenu with a pause overlay attached.
-gameMenuWithOverlay :: OverlayView AnyGamePlayState -> GameMenu -> GameView
+gameMenuWithOverlay :: OverlayView Update -> GameMenu -> GameView
 gameMenuWithOverlay ov (GameMenu v m) = GameView v (Just ov) (Just m)
+
+
+-- | Wrap a think result to intercept ESC and open the pause overlay.
+-- Only call this from states where canPause = True.
+thinkWithPause :: GameData -> InputResult -> Update -> Update
+thinkWithPause gd inputRes innerUpdate
+    | escapeJustPressed (newInputs inputRes) = PureStep $ SetOverlay $ Just $ PauseOverlay 0 gd
+    | otherwise                           = innerUpdate

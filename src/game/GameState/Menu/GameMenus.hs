@@ -74,8 +74,8 @@ data MainMenuState = MainMenuState
 
 mainMenuOpts :: Maybe GameData -> [MenuAction Update]
 mainMenuOpts gdM =
-    let newGame         = MenuAction "New Game"  Nothing $ Just $ GenerateNewGame $ \gd -> TransitionTo $ AnyGamePlayState (IntroState IntroWelcome gd) False
-        continueGame gd = MenuAction "Continue"  Nothing $ Just $ PureStep $ TransitionTo $ AnyGamePlayState (ResearchCenterState gd 0 0 0) False
+    let newGame         = MenuAction "New Game"  Nothing $ Just $ GenerateNewGame $ \gd -> Transition $ AnyGamePlayState (IntroState IntroWelcome gd) False
+        continueGame gd = MenuAction "Continue"  Nothing $ Just $ PureStep $ Transition $ AnyGamePlayState (ResearchCenterState gd 0 0 0) True
         exitOpt         = MenuAction "Exit"       Nothing $ Just Exit
     in case gdM of
         Nothing -> [newGame, exitOpt]
@@ -102,11 +102,11 @@ instance GamePlayState MainMenuState where
             ViewMenu m = mkMainMenu gdM gr cursor
         in case updateMenu inputs m of
             Just (Right upd) -> upd
-            Just (Left m')   -> PureStep $ UpdateTo $ AnyGamePlayState
+            Just (Left m')   -> PureStep $ Refresh $ AnyGamePlayState
                                     (s' { mainMenuCursor = cursorPosition (options m') }) True
             Nothing
                 | animTick || windowResized inputRes /= Nothing ->
-                    PureStep $ UpdateTo $ AnyGamePlayState s' True
+                    PureStep $ Refresh $ AnyGamePlayState s' True
                 | otherwise -> PureStep UseCache
 
     draw (MainMenuState gdM waves _ _ cursor) gr _ =
@@ -152,23 +152,23 @@ nextIntroState IntroBoat      gd = AnyGamePlayState (IntroState IntroEquipment g
 nextIntroState IntroEquipment gd = AnyGamePlayState (IntroState IntroResearch  gd) False
 nextIntroState IntroResearch  gd = AnyGamePlayState (IntroState IntroFunds     gd) False
 nextIntroState IntroFunds     gd = AnyGamePlayState (IntroState IntroEnd       gd) False
-nextIntroState IntroEnd       gd = AnyGamePlayState (ResearchCenterState gd 0 0 0) False
+nextIntroState IntroEnd       gd = AnyGamePlayState (ResearchCenterState gd 0 0 0) True
 
 instance GamePlayState IntroState where
     think (IntroState page gd) _ inputRes _ =
         let inputs = newInputs inputRes
         in if enterJustPressed inputs
-           then PureStep $ TransitionTo $ nextIntroState page gd
+           then PureStep $ Transition $ nextIntroState page gd
            else if windowResized inputRes /= Nothing
-                then PureStep $ UpdateTo $ AnyGamePlayState (IntroState page gd) False
+                then PureStep $ Refresh $ AnyGamePlayState (IntroState page gd) False
                 else PureStep UseCache
 
     draw (IntroState page gd) gr cfgs = drawIntroPage page gd gr cfgs
 
 
 introNextOpt :: IntroPage -> GameData -> MenuAction Update
-introNextOpt IntroEnd gd = MenuAction "Begin Research" Nothing $ Just $ PureStep $ TransitionTo $ nextIntroState IntroEnd gd
-introNextOpt page     gd = MenuAction "Next"           Nothing $ Just $ PureStep $ TransitionTo $ nextIntroState page    gd
+introNextOpt IntroEnd gd = MenuAction "Begin Research" Nothing $ Just $ PureStep $ Transition $ nextIntroState IntroEnd gd
+introNextOpt page     gd = MenuAction "Next"           Nothing $ Just $ PureStep $ Transition $ nextIntroState page    gd
 
 introNextMenu :: IntroPage -> GameData -> Graphics -> ViewMenu
 introNextMenu page gd gr =
@@ -327,14 +327,15 @@ instance GamePlayState ResearchCenterState where
             lastAnim' = if animTick then timestamp inputs else lastAnim
             s'        = s { rcFlagFrame = flagFrame', rcLastAnim = lastAnim' }
             ViewMenu m = mkResearchCenterMenu gd cursor
-        in case updateMenu inputs m of
-            Just (Right upd) -> upd
-            Just (Left m')   -> PureStep $ UpdateTo $ AnyGamePlayState
-                                    (s' { rcCursor = cursorPosition (options m') }) True
-            Nothing
-                | animTick || windowResized inputRes /= Nothing ->
-                    PureStep $ UpdateTo $ AnyGamePlayState s' True
-                | otherwise -> PureStep UseCache
+            inner = case updateMenu inputs m of
+                Just (Right upd) -> upd
+                Just (Left m')   -> PureStep $ Refresh $ AnyGamePlayState
+                                        (s' { rcCursor = cursorPosition (options m') }) True
+                Nothing
+                    | animTick || windowResized inputRes /= Nothing ->
+                        PureStep $ Refresh $ AnyGamePlayState s' True
+                    | otherwise -> PureStep UseCache
+        in thinkWithPause gd inputRes inner
 
     draw (ResearchCenterState gd flagFrame _ cursor) gr _ =
         let xEnd = 620

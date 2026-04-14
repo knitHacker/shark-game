@@ -13,6 +13,7 @@ import OutputHandles
 import InputState
 import Data.Word (Word32)
 import GameState.Types
+import GameState (getGameUpdate)
 import Graphics.Types (GraphicsRead(..))
 import Graphics.Types
 import SaveData
@@ -104,7 +105,7 @@ instance GameStateStep AppEnv where
     getUpdate inputRes gs = do
         cfgs <- readConfigs
         gr   <- readGraphics
-        return $ anyThink (gameCurrentState gs) cfgs inputRes gr
+        return $ getGameUpdate cfgs gr inputRes gs
 
     executeAction :: Update -> AppEnv (Maybe Step)
     executeAction Exit                = return Nothing
@@ -116,6 +117,9 @@ instance GameStateStep AppEnv where
     executeAction (SaveFile gd step)  = do
         liftIO $ saveToFile gd
         return $ Just step
+    executeAction (SaveAndExit gd)    = do
+        liftIO $ saveToFile gd
+        return Nothing
     executeAction (LoadFile fp f)     = do
         result <- liftIO $ loadFromFile fp
         return $ Just (f result)
@@ -124,12 +128,14 @@ instance GameStateStep AppEnv where
         return $ Just (f fps)
 
     stepGame :: GameState -> Step -> AppEnv (Maybe GameState)
-    stepGame _  UseCache            = return Nothing
-    stepGame _  (UpdateTo next)     = do
+    stepGame _  UseCache          = return Nothing
+    stepGame gs (Refresh next)    = do
         gr   <- readGraphics
         cfgs <- readConfigs
-        return $ Just $ GameState next (anyDraw next gr cfgs) Nothing
-    stepGame _  (TransitionTo next) = do
+        return $ Just $ GameState next (anyDraw next gr cfgs) Nothing (gameOverlay gs)
+    stepGame _  (Transition next) = do
         gr   <- readGraphics
         cfgs <- readConfigs
         return $ Just $ anyInitialize next gr cfgs
+    stepGame gs (SetOverlay ovM)  =
+        return $ Just $ gs { gameOverlay = ovM, gameLastDraw = Nothing }

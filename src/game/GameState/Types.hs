@@ -2,6 +2,7 @@
 
 module GameState.Types
     ( AnyGamePlayState(..)
+    , GameOverlay(..)
     , GameState(..)
     , GameView(..)
     , OverlayView(..)
@@ -32,10 +33,13 @@ import InputState
 
 -- Okay need to get this top level refactor going so I guess keep as close to what I had before.
 
+data GameOverlay = PauseOverlay !Int !GameData
+
 data GameState = GameState
     { gameCurrentState :: !AnyGamePlayState
-    , gameView :: !GameView
+    , gameView         :: !GameView
     , gameLastDraw     :: !(Maybe ToRender)
+    , gameOverlay      :: !(Maybe GameOverlay)
     }
 
 
@@ -44,7 +48,7 @@ newtype ViewMenu = ViewMenu (Menu Update)
 
 data GameView = GameView
     { viewLayer   :: View AnyGamePlayState
-    , viewOverlay :: Maybe (OverlayView AnyGamePlayState)
+    , viewOverlay :: Maybe (OverlayView Update)
     , viewMenu    :: Maybe ViewMenu
     }
 
@@ -67,8 +71,9 @@ data GameMenu = GameMenu
 -- | Result after executeAction; consumed by stepGame
 data Step
     = UseCache                        -- no state change, preserve gameLastDraw
-    | UpdateTo AnyGamePlayState       -- state updated in place, needs re-render
-    | TransitionTo AnyGamePlayState   -- transition to a new state, needs re-render
+    | Refresh AnyGamePlayState       -- state updated in place, needs re-render
+    | Transition AnyGamePlayState   -- transition to a new state, needs re-render
+    | SetOverlay (Maybe GameOverlay)  -- Just overlay = open/update; Nothing = close
 
 -- | Capability request produced by think; consumed by executeAction
 -- Exit is handled by the loop before executeAction
@@ -77,6 +82,7 @@ data Update
     | Exit
     | GenerateNewGame (GameData -> Step)
     | SaveFile GameData Step
+    | SaveAndExit GameData
     | LoadFile FilePath (Either T.Text GameData -> Step)
     | SaveList ([FilePath] -> Step)
 
@@ -88,13 +94,13 @@ class GamePlayState a where
     -- | Called every frame; describes any IO needed and how to advance state
     think :: a -> GameConfigs -> InputResult -> Graphics -> Update
 
-    -- | Pure render; called when state changes (UpdateTo or TransitionTo)
+    -- | Pure render; called when state changes (Refresh or Transition)
     draw :: a -> Graphics -> GameConfigs -> GameView
     draw _ _ _ = GameView (View [] [] [] [] Nothing) Nothing Nothing
 
     -- | Build the initial GameState when transitioning into this state
     initialize :: a -> Bool -> Graphics -> GameConfigs -> GameState
-    initialize s p gr cfgs = GameState (AnyGamePlayState s p) (draw s gr cfgs) Nothing
+    initialize s p gr cfgs = GameState (AnyGamePlayState s p) (draw s gr cfgs) Nothing Nothing
 
     {-# MINIMAL think #-}
 

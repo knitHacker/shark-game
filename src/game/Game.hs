@@ -9,6 +9,7 @@ import Env.Types
 import InputState
 import GameState.Types
 import GameState.Draw
+import GameState ( drawOverlay )
 import Graphics.Types ( GraphicsRead(..) )
 import Configs
 import SaveData ( GameDataStorage )
@@ -48,8 +49,11 @@ doGame inputRes gs = do
 
 
 drawGame :: (GraphicsRead m, RendererActions m) => GameState -> m ()
-drawGame (GameState _ gv _) = do
+drawGame gs = do
     gr <- readGraphics
+    let gv = case gameOverlay gs of
+                Just ov -> (gameView gs) { viewOverlay = Just $ drawOverlay ov gr }
+                Nothing -> (gameView gs) { viewOverlay = Nothing }
     executeDraw (renderGameView gr gv)
 
 cleanup :: (RendererActions m) => m ()
