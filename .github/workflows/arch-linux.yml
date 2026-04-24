@@ -30,8 +30,8 @@ jobs:
       run: |
         # Copy SDL2 shared libraries next to the binary
         mkdir -p release
-        cp shark-game-exe release/
-        ldd shark-game-exe | grep SDL2 | awk '{print $3}' | xargs -I {} cp {} release/
+        cp a-shark-game release/
+        ldd a-shark-game | grep SDL2 | awk '{print $3}' | xargs -I {} cp {} release/
         # Copy game data and assets for portable package
         cp -r data release/
         cp -r assets release/

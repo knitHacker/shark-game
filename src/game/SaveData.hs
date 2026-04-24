@@ -8,6 +8,7 @@ module SaveData
     , GameSharkData(..)
     , ResearchCompleteInfo(..)
     , GameDataEquipment(..)
+    , GameDataStorage(..)
     , SharkIndex
     , startNewGame
     , getRandomPercent
@@ -221,6 +222,9 @@ addShark gd gsd = gd { gameDataSharkIndex = i + 1
 getShark :: GameData -> SharkIndex -> GameSharkData
 getShark gd i = gameDataSharks gd M.! i
 
-class Monad m => SaveData m where
-    saveData :: m ()
-    loadData :: m GameData
+class Monad m => GameDataStorage m where
+    newData :: m GameData
+    saveData :: GameData -> m ()
+    loadData :: FilePath -> m (Either T.Text GameData)
+    -- TODO: show user all available save files and last modified
+    --getSaveFiles :: m [(FilePath, T.Text)]

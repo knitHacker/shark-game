@@ -4,6 +4,7 @@
 module OutputHandles.Types
     ( OutputHandles(..)
     , OutputRead(..)
+    , RenderAction(..)
     , Draw(..)
     , Color(..)
     , Draws
@@ -157,3 +158,7 @@ data OutputHandles = OutputHandles
 
 class Monad m => OutputRead m where
     getOutputs :: m OutputHandles
+
+class Monad m => RenderAction m where
+    drawRender :: ToRender -> m ()
+    cleanupRenderer :: m ()

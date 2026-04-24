@@ -1,10 +1,14 @@
+{-# LANGUAGE OverloadedStrings #-}
 
 module Shark.Util
     ( mkSharkFinds
     , mkSharkFind
     , mkSharkFindFromIndex
     , mkGameShark
+    , equipTypeText
     ) where
+
+import qualified Data.Text as T
 
 import Shark.Types
 import SaveData
@@ -27,3 +31,7 @@ mkGameShark :: SharkFind -> GameSharkData
 mkGameShark sf = GameShark (findMonth sf) (entryKey (findSpecies sf)) r l (entryKey (findEquipment sf))
     where
         (r, l) = entryKey (findLocation sf)
+
+equipTypeText :: EquipInfoType -> T.Text
+equipTypeText Caught = "caught"
+equipTypeText Observed = "observed"

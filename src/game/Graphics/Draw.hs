@@ -1,269 +1,291 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Graphics.Draw
-    ( updateGameMenu
-    , updateGameView
-    , updateMenuOptions
-    , updateOverlayMenu
+    ( drawAssets
     ) where
 
-import Foreign.C.Types ( CInt )
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
-import Data.Map.Strict ((!))
-import Data.Maybe (isJust)
+import qualified Data.Set as S
+import Data.Maybe (fromJust, fromMaybe)
 
+import Graphics.Types
+import Graphics.Asset
+import Graphics.TextUtil
 import OutputHandles.Types
 import OutputHandles.Images
 import OutputHandles.Text
 import OutputHandles.Util
-import Graphics.Types
-import Graphics.Menu
 
-
--- Add the scroll rectangle visual on the side.
--- parameters
---  - render to add to
---  - depth for layering
---  - x start position for bar
---  - y start positing for scroll area
---  - height of the visible area
---  - the full height of the area if it wasn't scrolled
---  - height of step when you scroll down
---  - current offset (number of steps) down in the scroll
-addScrollRects :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender
-addScrollRects r d x y viewHeight fullHeight barHeight offH
-    -- No scroll bar if the area fits
-    | fullHeight < viewHeight = r
-    | otherwise = addRectangle (addRectangle r d 1 rect) d 2 rect2
+drawAssets :: Graphics -> GView -> ToRender
+drawAssets gr gv = r''
     where
-        x' = fromIntegral (x - 40)
-        w = 20
-        maxBarY = y + viewHeight - barHeight
-        subStart = fromIntegral $ min (fromIntegral $ y + offH) maxBarY
-        rect = DRectangle DarkGray (fromIntegral x') (fromIntegral (y - 1)) w (fromIntegral (viewHeight + 2))
-        rect2 = DRectangle Gray (fromIntegral x') subStart w (fromIntegral barHeight)
+        baseView = foldl (drawAsset gr 0) mempty (assets gv)
+        appendMenu r Nothing = r
+        appendMenu r (Just mAss) = fst $ drawMenu gr 0 r mAss
+        r' = appendMenu baseView $ menuAsset gv
+        r'' = if null (overlays gv) then r' else foldl appendOverlay r' $ zip [1..] $ S.toList $ overlays gv
+        appendOverlay rNew (idx, ov) = drawOverlay gr ov (idx + 1) rNew
 
-
--- Update a view that has a scroll bar
-updateGameViewScroll :: Graphics -> Int -> ViewScroll a -> ToRender
-updateGameViewScroll gr d (ViewScroll subView off maxY step (ScrollData xStart yStart viewHeight scrollHeight barHeight barStep maxOff)) = r'''
+drawOverlay :: Graphics -> Overlay -> Int -> ToRender -> ToRender
+drawOverlay gr (AOverlay _ assets menu ox oy ow oh oc _) d r = r'''
     where
-        fs = graphicsFontSize gr
-        r = updateGameView gr d subView
-        offH = step * off
-        bOffH = round $ barStep * fromIntegral off
-        r' = moveRenderY r (-offH)
-        r'' = clipYRender fs r' yStart maxY
-        r''' = addScrollRects r'' (d + 1) xStart yStart viewHeight scrollHeight barHeight bOffH
+        r' = addRectangle r d 0 $ DRectangle oc (fromIntegral ox) (fromIntegral oy) (fromIntegral ow) (fromIntegral oh)
+        r'' = foldl (drawAsset gr d) r' assets
+        r''' = maybe r'' (fst . drawMenu gr d r'') menu
 
-updateOverlayMenu :: Graphics -> Int -> OverlayMenu a -> ToRender
-updateOverlayMenu gr d (Overlay x y w h c m) = r'
+getMax :: Bool -> Graphics -> Int -> Int -> AssetObj -> Int
+getMax True gr x y asset = x + assetObjWidth gr asset
+getMax False gr x y asset = y + assetObjHeight gr asset
+
+getMaxes :: Graphics -> Int -> Int -> AssetObj -> (Int, Int)
+getMaxes gr x y asset = (x + assetObjWidth gr asset, y + assetObjHeight gr asset)
+
+getTexture :: Graphics -> Image -> Int -> Int -> Double -> DrawTexture
+getTexture gr img x y s = DTexture img (fromIntegral x) (fromIntegral y) w h Nothing
     where
-        r = addRectangle renderEmpty d 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))
-        r' = r <> updateMenuOptions gr (d + 1) m
+        iInfo = graphicsStaticTextures gr M.! img
+        w = floor $ fromIntegral (imageSizeX iInfo) * s
+        h = floor $ fromIntegral (imageSizeY iInfo) * s
 
--- Update a generic view
-updateGameView :: Graphics -> Int -> View a -> ToRender
-updateGameView gr d (View words imgs ans rs scrollM) = r4
+getTexturePartial :: Graphics -> Image -> Int -> Int -> Double -> (Int, Int, Int, Int) -> DrawTexture
+getTexturePartial gr img x y s (mx, my, wOff, hOff) = partialTexture img x y w h (mx, my, w + wOff, h + hOff)
     where
-        r = foldl (\rend (td, tDepth) -> addText rend d tDepth td) renderEmpty words
-        r' = foldl (\rend (t, iDepth) -> addTexture rend d iDepth t) r $ toDraw <$> imgs
-        r'' = foldl (\rend (s, a, fd) -> if s then addAnimTexture rend d fd a else rend) r' $ animToDraw gr <$> ans
-        r3 = foldl (\rend (RPlace c x y w h rD) -> addRectangle rend d rD (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))) r'' rs
-        toDraw :: ImagePlacement -> (DrawTexture, Int)
-        toDraw (IPlace x y s tE rectDepth) =
-            let (w, h) = getTextureSize $ ImageCfg (graphicsStaticTextures gr ! tE)
-            in (DTexture tE (fromIntegral x) (fromIntegral y)
-                                        (floor (fromIntegral w * s)) (floor (fromIntegral h * s)) Nothing, rectDepth)
-        r4 = case scrollM of
-                Nothing -> r3
-                Just scroll -> r3 <> updateGameViewScroll gr d scroll
+        iInfo = graphicsStaticTextures gr M.! img
+        w = floor $ fromIntegral (imageSizeX iInfo) * s
+        h = floor $ fromIntegral (imageSizeY iInfo) * s
 
-animToDraw :: Graphics -> AnimPlacement -> (Bool, DrawAnimFrame, Int)
-animToDraw gr (APlace x y s t f d fd show) = (show, DFrame t x' y' w' h' s f d, fd)
+getTextPartial :: Graphics -> T.Text -> Color -> Int -> Int -> Int -> (Int, Int, Int, Int) -> TextDisplay
+getTextPartial gr txt c sz x y (mx, my, wOff, hOff) = partialText txt c sz x y (mx, my, w + wOff, h + hOff)
     where
-        (w, h) = getTextureSize $ AnimationCfg (graphicsAnimTextures gr ! t)
-        x' = fromIntegral x
-        y' = fromIntegral y
-        w' = fromIntegral w
-        h' = fromIntegral h
+        w = floor $ fromIntegral (T.length txt) * (fontWidth gr) * fromIntegral sz
+        h = floor $ fontHeight gr * fromIntegral sz
 
--- Add a popup menu to the render
-addPopup :: Graphics -> Int -> ToRender -> MenuPopup a -> ToRender
-addPopup gr d r (MenuPopup v md x y w h c) = r'
+getAnimFrame :: Graphics -> Image -> Int -> Int -> Int -> Int -> Double -> DrawAnimFrame
+getAnimFrame gr img fr dp x y s = DFrame img (fromIntegral x) (fromIntegral y) w h s fr dp
     where
-        r' = addRectangle r (d+1) 1 (DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h))
-            <> updateGameView gr (d+2) v
-            <> updateMenuOptions gr (d+3) md
+        iInfo = graphicsAnimTextures gr M.! img
+        w = fromIntegral $ animSizeX iInfo
+        h = fromIntegral $ animSizeY iInfo
 
 
--- Translate a menu obeject into a render object to show it on screen
-updateGameMenu :: Graphics -> Int -> Menu a -> ToRender
-updateGameMenu gr d (Menu opts (Just mp)) = addPopup gr d (updateMenuOptions gr d opts) mp
-updateGameMenu gr d (Menu opts Nothing) = updateMenuOptions gr d opts
+drawAsset :: Graphics -> Int -> ToRender -> Asset -> ToRender
+drawAsset gr d r (Asset o x y l isVis _)
+    | not isVis = r
+    | otherwise = case o of
+                    AssetImage i s -> addTexture r d l $ getTexture gr i x y s
+                    AssetAnimation an fr dp s -> addAnimTexture r d l $ getAnimFrame gr an fr dp x y s
+                    AssetText txt c s -> addText r d l $ TextDisplay txt (fromIntegral x) (fromIntegral y) s c Nothing
+                    AssetRect w h c -> addRectangle r d l $ DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
+                    AssetStacked (AssetStack dir ais sp) -> fst $ addStack dir gr d r l sp x y ais
+                    AssetScroll sc -> addScroll gr r d l x y sc
+                    _ -> r
 
--- Translate the menu options into render object to draw
-updateMenuOptions :: Graphics -> Int -> MenuData a -> ToRender
-updateMenuOptions gr d mopts@(MenuData _ bdi p)
-    | optionLength mopts == 0 = renderEmpty
+
+addScroll :: Graphics -> ToRender -> Int -> Int -> Int -> Int -> AssetScroll -> ToRender
+addScroll gr r d l x y (ScrollObj assMap pos height) = r''
+    where
+        positions = M.elems $ M.mapWithKey (\k (Asset o x y _ _ _) -> (y, y + assetObjHeight gr o, k)) (M.filter (\a -> isVisible a) assMap)
+        seenOriginal = filter (\(yStart, yEnd, _) -> yEnd > pos && yStart < height + pos) positions
+        seen = (\(s, e, i) -> (s - pos, e - pos, i)) <$> seenOriginal
+        scrollMax = if M.size assMap == 0 then 0 else maximum $ M.map (\(Asset o _ y _ _ _) -> y + assetObjHeight gr o) assMap
+        r' = foldl scrollAddFold r seen
+        scrollAddFold rend (s, e, i) = addScrollItem gr rend d l height x y (assMap M.! i) (s, e)
+        scrollRatio = fromIntegral height / fromIntegral scrollMax
+        scrollPos = round $ fromIntegral pos * scrollRatio
+        scrollSubH = floor $ scrollRatio * fromIntegral height
+        r'' = if scrollMax <= height
+                then r'
+                else drawScrollBar r' d l (x - 40) y height scrollPos scrollSubH
+
+addScrollItem :: Graphics -> ToRender -> Int -> Int -> Int -> Int -> Int -> Asset -> (Int, Int) -> ToRender
+addScrollItem gr r d l h x y (Asset obj sx sy sl _ _) (s, e)
+    | s >= 0 && h >= e = drawAsset gr d r (Asset obj (sx + x) (s + y) (l + sl) True Nothing)
     | otherwise =
-        case menuOptions mopts of
-            (SelOneListOpts oalOpt) -> updateSelOneListOptions gr d p bdi oalOpt
-            (SelMultiListOpts mslOpt) -> updateMultiListOptions gr d p bdi mslOpt
-            (ScrollListOpts slOpt) -> updateScrollListOptions gr d p bdi slOpt
+        case obj of
+            AssetImage i scale -> addTexture r d (l + sl) $ getTexturePartial gr i (x + sx) (y + s) scale (0, yRelative, 0, hRelative)
+            AssetText txt c sz -> addText r d (l + sl) $ getTextPartial gr txt c sz (x + sx) (y + s) (x + sx, y + s + yRelative, 0, hRelative)
+            AssetRect w h c -> addRectangle r d (l + sl) $ DRectangle c (fromIntegral (x + sx)) (fromIntegral (y + s + yRelative)) (fromIntegral w) (fromIntegral (h + hRelative))
+            AssetStacked (AssetStack StackVertical stackItems spacing) ->
+                foldl renderSub r subInfos
+                where
+                    subInfos = snd $ foldl accum (0, []) stackItems
+                    accum (yAcc, acc) (StackItem subObj subXOff subYOff) =
+                        let subStart = yAcc + subYOff
+                            subEnd   = subStart + assetObjHeight gr subObj
+                        in (subEnd + spacing, acc ++ [(subObj, subXOff, subStart)])
+                    renderSub rend (subObj, subXOff, subYStart) =
+                        let s' = s + subYStart
+                            e' = s' + assetObjHeight gr subObj
+                        in if s' >= h || e' <= 0 then rend
+                           else addScrollItem gr rend d l h x y (Asset subObj (sx + subXOff) 0 sl True Nothing) (s', e')
+            AssetStacked (AssetStack AbsoluteVertical stackItems spacing) ->
+                foldl renderSub r (zip [0..] stackItems)
+                where
+                    renderSub rend (i, StackItem subObj subXOff subYOff) =
+                        let s' = s + i * spacing + subYOff
+                            e' = s' + assetObjHeight gr subObj
+                        in if s' >= h || e' <= 0 then rend
+                           else addScrollItem gr rend d l h x y (Asset subObj (sx + subXOff) 0 sl True Nothing) (s', e')
+            AssetStacked _ -> drawAsset gr d r (Asset obj (sx + x) (s + y) (l + sl) True Nothing)
+            AssetScroll sc -> addScroll gr r d (l + sl) (sx + x) (s + y) sc
+            -- AssetAnimation has no partial clip support in DrawAnimFrame; skip boundary clipping for now
+            AssetAnimation _ _ _ _  -> r
+            AssetEmpty -> r
+    where
+        topCutOff = if s < 0 then s else 0
+        botCutOff = if e > h then - (e - h) else 0
+        yRelative = if s < 0 then -s else 0
+        hRelative = topCutOff + botCutOff
+
+addStack :: StackDir -> Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> [AssetStackItem] -> (ToRender, Int)
+addStack dir gr d r l sp x y ls =
+    case dir of
+        StackHorizontal ->
+            let (r', _, end) = foldl drawSH (r, x, x) ls
+            in (r', end)
+        StackVertical ->
+            let (r', _, end) = foldl drawSV (r, y, y) ls
+            in (r', end)
+        AbsoluteHorizontal ->
+            let (r', _, end) = foldl drawAH (r, 0, x) ls
+            in (r', end)
+        AbsoluteVertical ->
+            let (r', _, end) = foldl drawAV (r, 0, y) ls
+            in (r', end)
+    where
+        drawSH (r', end, _) si@(StackItem obj xOff _) =
+            let end' = end + xOff + assetObjWidth gr obj
+            in (drawStack gr d r' l end y si, end' + sp, end')
+        drawSV (r', end, _) si@(StackItem obj _ yOff) =
+            let end' = end + yOff + assetObjHeight gr obj
+            in (drawStack gr d r' l x end si, end' + sp, end')
+        drawAH (r', sp', end) si@(StackItem obj xOff _) =
+            (drawStack gr d r' l (x + sp') y si, sp' + sp, x + sp' + xOff + assetObjWidth gr obj)
+        drawAV (r', sp', end) si@(StackItem obj _ yOff) =
+            (drawStack gr d r' l x (y + sp') si, sp' + sp, y + sp' + yOff + assetObjHeight gr obj)
+
+drawStack :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> AssetStackItem -> ToRender
+drawStack gr d r l x y (StackItem item xOff yOff) =
+    case item of
+        AssetImage img s -> addTexture r d l $ getTexture gr img (x + xOff) (y + yOff) s
+        AssetAnimation an fr dp s -> addAnimTexture r d l $ getAnimFrame gr an fr dp x (y + yOff) s
+        AssetText txt c s -> addText r d l $ TextDisplay txt (fromIntegral (x + xOff)) (fromIntegral (y + yOff)) s c Nothing
+        AssetRect w h c -> addRectangle r d l $ DRectangle c (fromIntegral (x + xOff)) (fromIntegral (y + yOff)) (fromIntegral w) (fromIntegral h)
+        AssetScroll scroll -> undefined
+        AssetStacked (AssetStack dir stack sp) -> fst $ addStack dir gr d r l sp (x + xOff) (y + yOff) stack
+
+-- TODO: Add the scroll bar draw logic
+drawScrollBar :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender
+drawScrollBar r d baseL startX startY height offSet subH = r''
+    where
+        w = 20
+        r' = addRectangle r d baseL $ DRectangle DarkGray (fromIntegral startX) (fromIntegral startY) w (fromIntegral height)
+        r'' = addRectangle r' d (baseL + 1) $ DRectangle Gray (fromIntegral startX) (fromIntegral (startY + offSet)) w (fromIntegral subH)
+
+drawMenu :: Graphics -> Int -> ToRender -> AssetMenu -> (ToRender, Int)
+drawMenu gr d r (ScrollMenu (ScrollMenuAsset x y l _ sp sz items startIdx viewable stationary)) = (r''', max scrollBottom stationaryBottom)
+    where
+        visible     = take viewable $ drop startIdx items
+        numTotal    = length items
+        itemHeight  = ceiling (fontHeight gr * fromIntegral sz) + sp
+        shownHeight = viewable * itemHeight
+        barOffset   = if numTotal == 0 then 0
+                      else floor $ fromIntegral shownHeight * fromIntegral startIdx / fromIntegral numTotal
+        subH        = if numTotal == 0 then shownHeight
+                      else floor $ fromIntegral shownHeight * fromIntegral viewable / fromIntegral numTotal
+        r'          = if numTotal <= viewable then r
+                      else drawScrollBar r d (l + 1) (x - 40) y shownHeight barOffset subH
+        (r'', scrollBottom)      = foldl (\(rNew, yNew) mi -> drawScrollMenuItem gr d rNew l sz sp x yNew mi) (r', y) visible
+        (r''', stationaryBottom) = foldl (\(rNew, yNew) mi -> drawMenuItem gr d rNew l sp x yNew mi) (r'', scrollBottom + sp) stationary
+drawMenu gr d r (DefaultMenu (MenuAsset x y l _ sp items)) = foldl foldItem (r, y) items
+    where
+        foldItem (rNew, y') menuItem = drawMenuItem gr d rNew l sp x y' menuItem
 
 -- Make a rectangle around text in the given space
-getTextRectangle :: Color -> CInt -> CInt -> Int -> Int -> Int -> Int -> DrawRectangle
-getTextRectangle c x y textL textH fSize sp = DRectangle c x' y' w h
+getTextRectangle :: Graphics -> Color -> Int -> Int -> Int -> Int -> Int -> DrawRectangle
+getTextRectangle gr c txtLen x y sz sp = DRectangle c x' y' w h
     where
-        xAdj = max 1 (fromIntegral fSize)
-        yAdj = max 2 (min (floor (fromIntegral (sp - 1) / 2)) (fromIntegral (div (textH - 1) 2)))
+        fontW = fontWidth gr
+        fontH = fontHeight gr
+        textL = ceiling $ fontW * (fromIntegral txtLen) * (fromIntegral sz)
+        textH = ceiling $ fontH * (fromIntegral sz)
+        xAdj = max 1 (fromIntegral sz)
+        yAdj = max 2 (min (floor (fromIntegral sp / 2)) (fromIntegral (div (textH - 2) 2)))
         x' = fromIntegral $ x - xAdj
         y' = fromIntegral $ y - yAdj
-        w = fromIntegral textL + (2 * xAdj)
-        h = fromIntegral textH + (2 * yAdj)
+        w = fromIntegral $ textL + (2 * xAdj)
+        h = fromIntegral $ textH + (2 * yAdj) - 2
 
--- Draw the menu options for menus that you only select one option at a time
-updateSelOneListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> OneActionListOptions a -> ToRender
-updateSelOneListOptions gr@(Graphics _ _ (fw, fh) _ _) d pos (BlockDrawInfo x y s sp) (OALOpts ma backOptM _ curs) = r''
+getCursor :: Graphics -> Image -> Double -> Int -> Int -> Int -> DrawTexture
+getCursor gr img iS x y sz = DTexture img x' y' (floor curW) (floor curH) Nothing
     where
-        allOpts = case backOptM of
-                    Nothing -> ma
-                    Just backOpt -> ma ++ [backOpt]
-        r = if pos >= 0 && pos < length allOpts then updateListCursor gr d oX yPos' cL (h - sp) s sp curs else renderEmpty
-        r' = foldl (\rend td -> addText rend d 2 td) r txts
-        r'' = foldl (\rend t -> addTexture rend d 2 t) r' imgs
-        (txts, imgs) = updateMenuListOptions gr opts s h oX oY
-        opts = (\mo -> (menuOptionText mo, if isJust $ menuNextState mo then Blue else Gray, menuImage mo)) <$> allOpts
-        yPos = y + (h * pos)
-        yPos' = fromIntegral yPos
-        oX = fromIntegral x
-        oY = fromIntegral y
-        opt = allOpts !! pos
-        cL = ceiling $ fw * fromIntegral (s * T.length (menuOptionText opt))
-        h = sp + ceiling (fh * fromIntegral s)
+        iInfo = graphicsStaticTextures gr M.! img
+        txtH = fontHeight gr * fromIntegral sz
+        yMid = fromIntegral y + (txtH / 2.0)
+        fw = fontWidth gr * fromIntegral sz
+        curW = (fromIntegral (imageSizeX iInfo)) * iS
+        curH = (fromIntegral (imageSizeY iInfo)) * iS
+        x' = floor $ (fromIntegral x) - curW - fw
+        y' = floor $ yMid - (curH / 2.0) - 5
 
--- Draw the cursor texture or a rectangle around a given section of the screen based on text position / size
-updateListCursor :: Graphics -> Int -> CInt -> CInt -> Int -> Int -> Int -> Int -> CursorType -> ToRender
-updateListCursor gr d x y _ _ _ sp (CursorPointer t) = addTexture renderEmpty d 0 $ DTexture t x' y' w h Nothing
+drawScrollMenuItem :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> Int -> ScrollMenuItem -> (ToRender, Int)
+drawScrollMenuItem gr d r l sz sp x y (ScrollMenuItem (MText txt) c xOff hlM imgM) = (addText r'' d (l + 1) draw, maxY + sp)
     where
-        (tW, tH) = getTextureSize $ ImageCfg (graphicsStaticTextures gr ! t)
-        x' = x - 80
-        y' = y - 16
-        w = fromIntegral (tW * 4)
-        h = fromIntegral (tH * 4)
-updateListCursor _ d x y tl th r sp (CursorRect c) = addRectangle renderEmpty d 0 rect
+        x'   = x + xOff
+        r'   = case hlM of
+                   Nothing -> r
+                   Just rc -> addRectangle r d l $ getTextRectangle gr rc (T.length txt) x' y sz sp
+        r''  = case imgM of
+                   Nothing -> r'
+                   Just (csr, iS) -> addTexture r' d l $ getCursor gr csr iS x' y sz
+        draw = TextDisplay txt (fromIntegral x') (fromIntegral y) sz c Nothing
+        maxY = fromJust $ getTextMaxY (graphicsFontSize gr) [draw]
+drawScrollMenuItem gr d r l sz sp x y (ScrollMenuItem (MRow cells) c xOff hlM imgM) = (r''', maxY + sp)
     where
-        rect = getTextRectangle c x y tl th r sp
+        x'   = x + xOff
+        r'   = case imgM of
+                   Nothing -> r
+                   Just (csr, iS) -> addTexture r d l $ getCursor gr csr iS x' y sz
+        r''' = foldl drawCell r' cells
+        drawCell rAcc (txt, cxOff, colorM, hl) =
+            let cx    = x' + cxOff
+                cc    = fromMaybe c colorM
+                rAcc' = case (hlM, hl) of
+                            (Just rc, True) -> addRectangle rAcc d l $ getTextRectangle gr rc (T.length txt) cx y sz sp
+                            _ -> rAcc
+            in addText rAcc' d (l + 1) $ TextDisplay txt (fromIntegral cx) (fromIntegral y) sz cc Nothing
+        maxY = case cells of
+                   (txt, _, _, _):_ -> fromJust $ getTextMaxY (graphicsFontSize gr) [TextDisplay txt (fromIntegral x') (fromIntegral y) sz c Nothing]
+                   [] -> y
 
--- Draw the menu options for menus that you can select multiple options at a time
-updateMultiListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> MultiSelectListOptions a -> ToRender
-updateMultiListOptions (Graphics _ _ fs _ _) d pos (BlockDrawInfo x y s sp) (MSLOpts mo _ cM backM) =
-    case backM of
-        Nothing -> updateSelectedOptions fs s sp renderEmpty pos 0 d mo' x' y'
-        Just b -> updateSelectedOptions fs s sp renderEmpty pos 0 d (moBack b) x' y'
+drawMenuItem :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> AssetMenuItem -> (ToRender, Int)
+drawMenuItem _ _ r _ _ _ y (MenuItem _ _ _ _ _ False _ _) = (r, y)
+drawMenuItem gr d r l sp x y (MenuItem (MText txt) c sz xOff yOff True hlM csrM) = (addText r'' d (l + 1) draw, maxY + sp)
     where
-        x' = fromIntegral x
-        y' = fromIntegral y
-        canContinue = isJust cM
-        mo' = mo ++ [SelectOption "Continue" "" False False (not canContinue)]
-        moBack b = mo' ++ [SelectOption "Back" "" False False False]
-
--- Differentiate between selected and unselected options and draw list of options given that info
-updateSelectedOptions :: FontSize -> Int -> Int -> ToRender -> Int -> Int -> Int -> [SelectOption] -> CInt -> CInt -> ToRender
-updateSelectedOptions (fw, fh) s sp r cp curp d opts x = updateSelectedOptions' r curp opts
+        x' = x + xOff
+        y' = y + yOff
+        r' = case hlM of
+                Nothing -> r
+                Just rc -> addRectangle r d l $ getTextRectangle gr rc (T.length txt) x' y' sz sp
+        r'' = case csrM of
+                Nothing -> r'
+                Just (csr, iS) -> addTexture r' d l $ getCursor gr csr iS x' y' sz
+        draw = TextDisplay txt (fromIntegral x') (fromIntegral y') sz c Nothing
+        maxY = fromJust $ getTextMaxY (graphicsFontSize gr) [draw]
+drawMenuItem gr d r l sp x y (MenuItem (MRow cells) c sz xOff yOff True hlM csrM) = (r''', maxY + sp)
     where
-        updateSelectedOptions' :: ToRender -> Int -> [SelectOption] -> CInt -> ToRender
-        updateSelectedOptions' rend _ [] _ = rend
-        updateSelectedOptions' rend pos (h:tl) yPos = updateSelectedOptions' r'' (pos + 1) tl yPos'
-            where
-                r' = addText rend d 2 td
-                r'' = if selectSelected h || cp == pos then addRectangle r' d 1 hRect else r'
-                str = selectOptionText h
-                tlen = ceiling (fw * fromIntegral (T.length str * s))
-                tH = fh * fromIntegral s
-                textColor = if selectDisabled h then Gray else Blue
-                td = TextDisplay str x yPos s textColor Nothing
-                hlC
-                    | cp == pos = Yellow
-                    | selectChangeable h = White
-                    | otherwise = Gray
-                tHI = ceiling tH
-                yPos' = yPos + fromIntegral (sp + tHI)
-                hRect = getTextRectangle hlC x yPos tlen tHI s sp
-
--- Update which items are selected in a multi-select list
-updateMenuListOptions :: Graphics -> [(T.Text, Color, Maybe ImagePlacement)] -> Int -> Int -> CInt -> CInt -> ([TextDisplay], [DrawTexture])
-updateMenuListOptions gr opts s h x = updateMenuListOptions' opts
-    where
-        toTexture (IPlace ix iy is it _) y = DTexture it (fromIntegral ix + x) (fromIntegral iy + y)
-            (floor (fromIntegral w * is)) (floor (fromIntegral h * is)) Nothing
-            where
-                (w, h) = getTextureSize $ ImageCfg (graphicsStaticTextures gr ! it)
-        updateMenuListOptions' [] _ = ([], [])
-        updateMenuListOptions' ((optText, col, imgM):tl) y =
-            case imgM of
-                Nothing -> (dis: txts, imgs)
-                Just ip -> (dis: txts, toTexture ip y : imgs)
-            where
-                (txts, imgs) = updateMenuListOptions' tl newY
-                newY = y + fromIntegral h
-                dis = TextDisplay optText x y s col Nothing
-
--- Draw menu options with columns and a button for each row
-updateColumnButtonOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ColumnButtonOptions a -> (ToRender, Int)
-updateColumnButtonOptions gr@(Graphics _ _ fs@(fw, fh) _ _) d pos bdi@(BlockDrawInfo x y s sp) (CBOpts bt tw hds opts) = rend
-    where
-        rend = columnButtonOptionTexts gr pos d s sp tw bt hds opts (fromIntegral x) (fromIntegral y)
-
-
-columnButtonOptionTexts :: Graphics -> Int -> Int -> Int -> Int -> Int -> T.Text -> [T.Text] -> [ColumnAction a] -> Int -> Int -> (ToRender, Int)
-columnButtonOptionTexts (Graphics _ _ fs@(fw, fh) _ _) p d s sp w butText headers opts x y = columnButtonOptionTexts' rend 0 opts (fromIntegral y + fromIntegral (sp + tH))
-    where
-        (lastX, rend) = foldl (\(tx, ls) t -> (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral y) s White Nothing)) (fromIntegral x, mempty) headers
-        tL = ceiling $ fw * fromIntegral (s * T.length butText)
-        tH = ceiling (fh * fromIntegral s)
-        yAdj = fromIntegral (sp + tH)
-        columnButtonOptionTexts' :: ToRender -> Int -> [ColumnAction a] -> CInt -> (ToRender, Int)
-        columnButtonOptionTexts' r _ [] yPos = (r, fromIntegral yPos)
-        columnButtonOptionTexts' r n (h:tl) yPos = columnButtonOptionTexts' r'' (n + 1) tl newY
-            where
-                buttonColor = if p == n then (if isEnabled then Yellow else Red) else (if isEnabled then Green else Gray)
-                newY = yPos + yAdj
-                (maxX, r') = foldl columnDraw (fromIntegral x, r) $ colOptionTexts h
-                r'' = addText (addRectangle r' d 1 $ getTextRectangle buttonColor lastX yPos tL tH s sp) d 2 (TextDisplay butText lastX yPos s (if isEnabled then Blue else Black) Nothing)
-                isEnabled = isJust $ colOptionAction h
-                columnDraw (tx, ls) t = (tx + fromIntegral w, addText ls d 2 $ TextDisplay t tx (fromIntegral yPos) s Blue Nothing)
-
-
-updateScrollListOptions :: Graphics -> Int -> Int -> BlockDrawInfo -> ScrollListOptions a -> ToRender
-updateScrollListOptions gr@(Graphics _ _ fs@(fw, fh) _ _) d p bdi@(BlockDrawInfo x y s sp) (SLOpts opts fixedOpts backOptM (Scroll mx off))
-    | optCount <= mx = r `mappend` fixedR
-    | otherwise = rend
-    where
-        -- p' is the position within the visible scrolling window
-        p' = p - off
-        h = sp + ceiling (fh * fromIntegral s)
-        scrollHeight = h * end
-        optCount = getOptSize opts
-        end = min mx optCount
-        -- Calculate scroll bar dimensions based on visible/total ratio
-        totalHeight = fromIntegral (scrollHeight - sp)
-        -- darkHeight represents the visible portion as a fraction of total content
-        darkHeight = (totalHeight * fromIntegral end) `div` fromIntegral optCount
-        -- Calculate scroll position proportionally
-        maxScrollY = totalHeight - darkHeight
-        ry = fromIntegral y + ((maxScrollY * fromIntegral off) `div` fromIntegral (optCount - end))
-        rx = fromIntegral (x - 40)
-        -- Total track height represents the full scrollable area
-        rect = DRectangle DarkGray rx (fromIntegral y - 1) 20 (totalHeight + 2)
-        rect2 = DRectangle Gray rx ry 20 darkHeight
-        ((r, yEnd), cur) = case opts of
-                    BasicSOALOpts oo@(OALOpts oal _ _ c) -> ((updateSelOneListOptions gr d p' bdi $ oo { oalOpts = take mx (drop off oal) }, y + scrollHeight), c)
-                    BasicMSLOpts mo@(MSLOpts msl _ _ _) -> ((updateMultiListOptions gr d p' bdi $ mo { mslOpts = take mx (drop off msl) }, y + scrollHeight), CursorRect White)
-                    BasicCBOpts cbo@(CBOpts _ _  _ opts) -> (updateColumnButtonOptions gr d p' bdi $ cbo { colButOptActions = take mx (drop off opts) }, CursorRect White)
-        -- Fixed options cursor position: p is in scroll area if < optCount, else subtract optCount to get fixed index
-        fixedP = p - optCount
-        fixedR = updateSelOneListOptions gr d fixedP (bdi { blockY = yEnd }) $ OALOpts fixedOpts backOptM Nothing cur
-        rend = addRectangle (addRectangle r d 1 rect `mappend` fixedR) d 2 rect2
+        x' = x + xOff
+        y' = y + yOff
+        r' = case csrM of
+                Nothing -> r
+                Just (csr, iS) -> addTexture r d l $ getCursor gr csr iS x' y' sz
+        r''' = foldl drawCell r' cells
+        drawCell rAcc (txt, cxOff, colorM, hl) =
+            let cx = x' + cxOff
+                cc = fromMaybe c colorM
+                rAcc' = case (hlM, hl) of
+                            (Just rc, True) -> addRectangle rAcc d l $ getTextRectangle gr rc (T.length txt) cx y' sz sp
+                            _ -> rAcc
+            in addText rAcc' d (l + 1) $ TextDisplay txt (fromIntegral cx) (fromIntegral y') sz cc Nothing
+        maxY = case cells of
+                   (txt, _, _, _):_ -> fromJust $ getTextMaxY (graphicsFontSize gr) [TextDisplay txt (fromIntegral x') (fromIntegral y') sz c Nothing]
+                   [] -> y'

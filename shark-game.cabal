@@ -104,7 +104,7 @@ library shark-game-collision
   hs-source-dirs:
       src/collision
   build-depends:
-      base >=4.7 && <5
+      base >=4.16 && <5
     , containers >=0.6.4.1
   default-language: Haskell2010
 
@@ -116,17 +116,15 @@ library shark-game-core
       Env.Types
       Game
       GameState
-      GameState.Draw
       GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
       GameState.Menu.LabMenus
       GameState.Menu.TripMenus
       GameState.Types
+      GameState.Util
       Graphics
-      Graphics.Animation
+      Graphics.Asset
       Graphics.Draw
-      Graphics.ImageUtil
-      Graphics.Menu
       Graphics.TextUtil
       Graphics.Types
       InputState
@@ -151,7 +149,7 @@ library shark-game-core
       src/game
   build-depends:
       aeson >=2.0.3.0
-    , base >=4.7 && <5
+    , base >=4.16 && <5
     , containers >=0.6.4.1
     , data-default
     , directory >=1.3.6.0
@@ -177,7 +175,7 @@ library shark-game-tools
   hs-source-dirs:
       tools/common
   build-depends:
-      base >=4.7 && <5
+      base >=4.16 && <5
     , containers
     , mwc-random
     , shark-game-core
@@ -195,7 +193,7 @@ executable a-shark-game
       app
   ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base >=4.16 && <5
     , shark-game-core
   default-language: Haskell2010
   if os(windows)
@@ -211,7 +209,7 @@ executable generate-save
       tools/generate-save
   ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base >=4.16 && <5
     , shark-game-core
     , shark-game-tools
   default-language: Haskell2010
@@ -228,9 +226,14 @@ executable preview
       tools/preview
   ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base >=4.16 && <5
+    , containers
+    , mtl
+    , optparse-applicative
     , shark-game-core
     , shark-game-tools
+    , text
+    , transformers
   default-language: Haskell2010
   if os(windows)
     ghc-options: -optl-mwindows
@@ -247,7 +250,7 @@ test-suite shark-game-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      base >=4.16 && <5
     , hspec
     , shark-game-core
     , shark-game-tools
