@@ -237,3 +237,8 @@ class Monad m => ConfigsRead m where
     debugMode = do
         cfgs <- readConfigs
         return $ debug $ settingCfgs cfgs
+
+class Monad m => SettingsUpdate m where
+    readSettings :: m GameConfigs
+
+    updateSettings :: GameConfigs -> m ()

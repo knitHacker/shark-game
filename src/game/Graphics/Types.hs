@@ -30,6 +30,8 @@ module Graphics.Types
     , AnimPlacement(..)
     , RectPlacement(..)
     , AnimationAction(..)
+    , GraphicsRead(..)
+    , GraphicsUpdate(..)
     , updateView
     , mergeOverlayMenu
     , updateMenuData
@@ -329,3 +331,12 @@ data MenuPopup a = MenuPopup
 
 data CursorType = CursorPointer Image | CursorRect Color
                 deriving (Show, Eq)
+
+
+class Monad m => GraphicsRead m where
+    readGraphics :: m Graphics
+
+class Monad m => GraphicsUpdate m where
+    updateWindow :: Maybe (Int, Int) -> m ()
+
+    updateFont :: FontSize -> m ()

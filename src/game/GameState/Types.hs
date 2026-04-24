@@ -29,8 +29,7 @@ data TransitionBehavior = AllowTransitions | BlockTransitions
     deriving (Eq, Show)
 
 data GameState = GameState
-    { gameGraphics :: !Graphics
-    , gameLastState :: !GamePlayState
+    { gameLastState :: !GamePlayState
     , gameView :: !GameDrawInfo
     , gameLastDraw :: !(Maybe ToRender)
     }
@@ -76,8 +75,22 @@ mergeGameViews gvInputUpdates gvNewDraw = GameView
         (_, m2M) -> m2M
     }
 
+data GameStep =
+      NoChange
+    | Update
+    | Transition
+
+data Action =
+      Step GameStep
+    | LoadSave FilePath (GameData -> GameStep)
+    | SaveData GameData GameStep
+    | Exit (Maybe GameData)
+    | SaveList ([FilePath] -> GameStep)
+    | NewGame (GameData -> GameStep)
+
 data GamePlayState =
-      MainMenu (Maybe GameData)
+      SplashScreen
+    | MainMenu (Maybe GameData)
     | PauseMenu GameData GamePlayState
     | IntroWelcome (Maybe GameData)
     | IntroMission GameData
@@ -118,3 +131,8 @@ data GamePlayState =
 -- Class for reading game state from the top level monad
 class Monad m => GameStateRead m where
     readGameState :: m GameState
+
+class Monad m => GameStateStep m where
+    getAction :: m Action
+    executeAction :: Action -> m (Maybe GameStep)
+    stepGame :: GameStep -> m ToRender

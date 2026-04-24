@@ -6,6 +6,7 @@ module InputState
     , MouseInputs(..)
     , InputRead(..)
     , Direction(..)
+    , InputUpdate(..)
     , inputRepeating
     , initInputState
     , updateInput
@@ -79,6 +80,11 @@ initInputState = do
 class Monad m => InputRead m where
     readInputState :: m InputState
 
+class Monad m => InputUpdate m where
+    -- Get new input state and update the monad with the new state and return it
+    updateInputState :: m InputState
+
+
 escapePressed :: InputState -> Bool
 escapePressed (InputState (Just (Keyboard _ _ (Just EscapePress) _)) _ _ _) = True
 escapePressed _ = False
@@ -136,9 +142,8 @@ inputQuit :: InputState -> Bool
 inputQuit (InputState (Just key) _ _ _) = inputStateQuit key
 inputQuit _ = False
 
-updateInput :: (InputRead m, MonadIO m) => Word32 -> m InputState
-updateInput to = do
-    input <- readInputState
+updateInput :: (MonadIO m) => Word32 -> InputState -> m InputState
+updateInput to input = do
     time <- liftIO getSystemTime
     event <- SDL.waitEventTimeout (fromIntegral to)
     let ts = systemSeconds time

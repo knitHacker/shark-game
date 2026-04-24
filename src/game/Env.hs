@@ -18,11 +18,8 @@ import GameState ( initGameState )
 import Control.Monad.Reader     (runReaderT)
 
 
-initAppEnvData :: TextureCfg -> GameConfigs -> OutputHandles -> IO AppEnvData
-initAppEnvData tm cfgs outs = do
-    inputs <- initInputState
-    game <- initGameState tm cfgs outs inputs
-    return $ AppEnvData cfgs outs inputs game
+initAppEnvData :: GameConfigs -> OutputHandles -> InputState -> Graphics -> GameState -> AppEnvData
+initAppEnvData = AppEnvData
 
 
 runAppEnv :: AppEnvData -> AppEnv a -> IO a

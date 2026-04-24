@@ -12,5 +12,6 @@ main :: IO ()
 main = do
     (tm, configs) <- initConfigs
     outs <- initOutputHandles tm configs
-    appEnvData <- initAppEnvData tm configs outs
-    runGame appEnvData
+    gr <- initGraphics tm outs
+    inputs <- initInputState
+    runGame $ initAppEnvData configs outs inputs gr $ initGameState

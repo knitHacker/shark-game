@@ -27,36 +27,27 @@ import Control.Arrow
 
 import Debug.Trace
 
--- Time for a frame
-frameTime :: Word32 -> Word32
-frameTime fps = div 1000 (fps + 1)
-
 -- Game loop that enforces a frame rate throttling
-runGame :: AppEnvData -> IO ()
-runGame appEnvData = do
-    input <- runAppEnv appEnvData stepGame
-    applyInputs input appEnvData
+runGame :: (Monad m, ConfigsRead m, InputUpdate m, GraphicsRead m) => m ()
+runGame = do
+    -- instance of InputUpdate decides how to get new input object
+    input' <- updateInputState
+    if inputStateQuit input'
+        then return endGame
+        else applyInputs input'
 
 
-applyInputs :: InputState -> AppEnvData -> IO ()
-applyInputs input appEnvData = do
-    gameState' <- runAppEnv appEnvData updateGameState
-    let stop = inputQuit input
-        appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
+applyInputs :: (Monad m, InputRead m) => InputState -> m ()
+applyInputs input' = do
+    _ <- updateWindow (windowResizeed input)
+    action <- getAction
+    stepM <- executeAction action
+    case stepM of
+        Nothing -> return endGame
+        Just step -> do
+            render <- stepGame step
+            drawRender render
+            runGame
 
-    case (gameView gameState', stop) of
-        (GameExiting, _) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        (_, True) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        _ -> do
-            runGame appEnvData'
-
-stepGame :: AppEnv InputState
-stepGame = do
-    draws <- updateWindow
-    _ <- executeDraw draws
-    fr <- readFrameRate
-    updateInput $ frameTime fr
+endGame :: (Monad m, RenderAction m) => m ()
+endGame = cleanupRenderer

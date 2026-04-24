@@ -4,7 +4,6 @@
 module GameState
     ( initGameState
     , updateGameState
-    , updateGameStateWith
     , reDrawState
     ) where
 
@@ -33,31 +32,10 @@ import Control.Monad.IO.Class ( MonadIO(..) )
 import Debug.Trace
 import Data.Maybe (catMaybes)
 
-initGameState :: TextureCfg -> GameConfigs -> OutputHandles -> InputState -> IO GameState
-initGameState tm cfgs outs inputs = do
-    graph <- initGraphics tm outs
-    (gps, gv) <- mainMenuView cfgs outs graph inputs
-    return $ GameState graph gps gv Nothing
-
-
-updateGameStateWith :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => TransitionBehavior -> m GameState
-updateGameStateWith transitionType = do
-    cfgs <- readConfigs
-    inputs <- readInputState
-    gs <- readGameState
-    outs <- getOutputs
-    let gr' = updateGraphics (gameGraphics gs) cfgs inputs
-        gsM = updateGameView gr' inputs $ gameView gs
-    case (windowResized inputs, gsM) of
-        (Just resize, _) ->
-            let gv = reDrawState (gameLastState gs) cfgs inputs gr'
-            in return $ GameState gr' (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
-        (Nothing, Nothing) -> return gs
-        (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
-        (_, Just (Right gps)) -> do
-            (lgps, gv) <- liftIO $ moveToNextState gps cfgs inputs gr'
-            return $ GameState gr' lgps gv Nothing
-
+initGameState :: GameState
+initGameState = GameState SplashScreen (GameViewInfo (GameView vw Nothing [] Nothing)) Nothing
+    where
+        vw = View [] [] [] [] Nothing
 
 
 updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
@@ -66,12 +44,13 @@ updateGameState = do
     inputs <- readInputState
     gs <- readGameState
     outs <- getOutputs
-    let gr' = updateGraphics (gameGraphics gs) cfgs inputs
+    gr <- readGraphics
+    let gr' = updateGraphics gr cfgs inputs
         gsM = updateGameView gr' inputs $ gameView gs
     case (windowResized inputs, gsM) of
-        (Just resize, _) ->
+        (Just resize, _) -> do
             let gv = reDrawState (gameLastState gs) cfgs inputs gr'
-            in return $ GameState gr' (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
+            return $ GameState gr' (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
         (Nothing, Nothing) -> return gs
         (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
         (_, Just (Right gps)) -> do

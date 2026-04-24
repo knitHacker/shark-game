@@ -13,40 +13,75 @@ import InputState
 import GameState.Types
 import Graphics.Types
 
-import Control.Monad.Reader (MonadReader, ReaderT, asks)
+-- import Control.Monad.Reader (MonadReader, ReaderT, asks)
+import Control.Monad.State.Strict (StateT, MonadState, gets, modify)
 import Control.Monad
 import Control.Monad.IO.Class (MonadIO)
 
+import Data.Word (Word32)
 
+
+-- Time for a frame
+frameTime :: Word32 -> Word32
+frameTime fps = div 1000 (fps + 1)
+
+
+-- Have a InputState / GameState stepped and updated every step
 data AppEnvData = AppEnvData
     { appEnvDataConfigs :: !GameConfigs
     , appEnvDataOutputHandles :: !OutputHandles
     , appEnvDataInputState :: !InputState
+    , appEnvDataGraphics :: !Graphics
     , appEnvDataGameState :: !GameState
     }
 
 
-newtype AppEnv a = AppEnv (ReaderT AppEnvData IO a)
+newtype AppEnv a = AppEnv (StateT AppEnvData IO a)
     deriving newtype
         ( Functor
         , Applicative
         , Monad
-        , MonadReader AppEnvData
+        , MonadState AppEnvData
         , MonadIO
         )
 
 instance OutputRead AppEnv where
     getOutputs :: AppEnv OutputHandles
-    getOutputs = asks appEnvDataOutputHandles
-
-instance InputRead AppEnv where
-    readInputState :: AppEnv InputState
-    readInputState = asks appEnvDataInputState
+    getOutputs = gets appEnvDataOutputHandles
 
 instance ConfigsRead AppEnv where
     readConfigs :: AppEnv GameConfigs
-    readConfigs = asks appEnvDataConfigs
+    readConfigs = gets appEnvDataConfigs
+
+instance GraphicsRead AppEnv where
+    readGraphics :: AppEnv Graphics
+    readGraphics = gets appEnvDataGraphics
 
 instance GameStateRead AppEnv where
     readGameState :: AppEnv GameState
-    readGameState = asks appEnvDataGameState
+    readGameState = gets appEnvDataGameState
+
+instance InputRead AppEnv where
+    readInputState :: AppEnv InputState
+    readInputState = gets appEnvDataInputState
+
+instance InputUpdate AppEnv where
+    updateInputState :: AppEnv InputState
+    updateInputState = do
+        fr <- readFrameRate
+        old <- readInputState
+        new <- updateInput (frameTime fr) old
+        modify $ \ae -> ae { appEnvDataInputState = new }
+        return new
+
+instance GraphicsUpdate AppEnv where
+    updateWindow Nothing = return ()
+    updateWindow (Just (w, h)) = do
+        gr <- readGraphics
+        let gr' = gr { graphicsWindowWidth = w, graphicsWindowHeight = h}
+        modify $ \ae -> ae { appEnvDataGraphics = gr' }
+
+    updateFont fs = do
+        gr <- readGraphics
+        let gr' = gr { graphicsFontSize = fs }
+        modify $ \ae -> ae { appEnvDataGraphics = gr' }
