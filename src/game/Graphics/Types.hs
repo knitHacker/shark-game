@@ -30,6 +30,7 @@ module Graphics.Types
     , AnimPlacement(..)
     , RectPlacement(..)
     , AnimationAction(..)
+    , ScrollMenuState(..)
     , updateView
     , mergeOverlayMenu
     , updateMenuData
@@ -266,6 +267,13 @@ data MenuScroll = Scroll
 
 optionScroll :: Int -> MenuScroll
 optionScroll max = Scroll max 0
+
+-- | Cursor + scroll offset for a resizing scroll menu.
+-- Stored in state so scroll position survives redraws.
+data ScrollMenuState = ScrollMenuState
+    { smsCursor :: !Int
+    , smsOffset :: !Int
+    } deriving (Show, Eq)
 
 data BlockDrawInfo = BlockDrawInfo
     { blockX :: !Int

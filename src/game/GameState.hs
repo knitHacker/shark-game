@@ -9,7 +9,8 @@ module GameState
 import InputState
 import GameState.Types
 import GameState.Helpers
-import GameState.Menu.GameMenus ( initialMainMenuState )
+import GameState.Menu.GameMenus ( initialMainMenuState, initialResearchCenterState )
+import GameState.Menu.TripMenus ( initialTripDestinationSelect )
 import Graphics.Types
 import Graphics.TextUtil
 import Graphics.Menu
@@ -56,7 +57,7 @@ drawOverlay (PauseOverlay cursor gd) gr = OverlayView True (textView words) over
         overlayMenu = Overlay overlayX overlayY 750 600 DarkBlue menuData
 
 moveTo :: GameSection -> AnyGamePlayState
-moveTo (ResearchCenter gd) = initialMainMenuState $ Just gd
-moveTo (Trip gd) = undefined -- TODO: this goes to the menus in TripMenu
+moveTo (ResearchCenter gd) = initialResearchCenterState gd
+moveTo (Trip gd) = initialTripDestinationSelect gd
 moveTo (DataReview gd) = undefined -- TODO: this goes to menus in DataReviewMenu
 moveTo (LabManagement gd) = undefined -- TODO: this goes to menus in LabMenus

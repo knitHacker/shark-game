@@ -4,6 +4,7 @@
 module GameState.Menu.GameMenus
     ( SplashScreenState (..)
     , initialMainMenuState
+    , initialResearchCenterState
     ) where
 
 import qualified Data.Map.Strict as M
@@ -25,6 +26,8 @@ import Graphics.Animation
 
 import InputState
 import Data.Int (Int64)
+
+import GameState.Menu.TripMenus ( initialTripDestinationSelect )
 
 import Debug.Trace
 
@@ -336,8 +339,8 @@ data ResearchCenterState = ResearchCenterState
     }
 
 researchCenterOpts :: GameData -> [MenuAction Update]
-researchCenterOpts _ =
-    [ MenuAction "Plan Research Trip" Nothing $ Just $ PureStep UseCache
+researchCenterOpts gd =
+    [ MenuAction "Plan Research Trip" Nothing $ Just $ PureStep $ Transition $ initialTripDestinationSelect gd
     , MenuAction "Review Data"        Nothing $ Just $ PureStep UseCache
     , MenuAction "Lab Management"     Nothing $ Just $ PureStep UseCache
     ]
@@ -380,3 +383,6 @@ instance GamePlayState ResearchCenterState where
                           ]
             v = View ((,0) <$> (words ++ fundWords)) [image] [flagAnim] [] Nothing
         in GameView v Nothing (Just $ mkResearchCenterMenu gd cursor)
+
+initialResearchCenterState :: GameData -> AnyGamePlayState
+initialResearchCenterState gd = AnyGamePlayState (ResearchCenterState gd 0 0 0) True

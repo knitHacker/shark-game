@@ -7,6 +7,8 @@ module Graphics.Menu
     , scrollOpts
     , scrollOptsBasic
     , resizingScrollOpts
+    , scrollMaxVisible
+    , stepScrollMenu
     , getNextMenu
     , getNextOption
     , getBackOption
@@ -116,23 +118,34 @@ scrollOptsBasic x y s sp opts backM fixed maxScroll pos = MenuData (ScrollListOp
     where
         initialOffset = if pos < maxScroll then 0 else max 0 (pos - maxScroll + 1)
 
-resizingScrollOpts :: Graphics -> Int -> Int -> Int -> Int -> Int -> OneActionListOptions a -> Maybe (MenuAction a) -> [MenuAction a] -> Int -> MenuData a
-resizingScrollOpts gr margin x y s sp opts backM fixed pos = MenuData (ScrollListOpts $ SLOpts (BasicSOALOpts opts) fixed backM (Scroll maxScroll initialOffset)) (BlockDrawInfo x y s sp) pos
+resizingScrollOpts :: Graphics -> Int -> Int -> Int -> Int -> Int -> OneActionListOptions a -> Maybe (MenuAction a) -> [MenuAction a] -> ScrollMenuState -> MenuData a
+resizingScrollOpts gr margin x y s sp opts backM fixed (ScrollMenuState cursor scrollOff) =
+    MenuData (ScrollListOpts $ SLOpts (BasicSOALOpts opts) fixed backM (Scroll maxScroll scrollOff)) (BlockDrawInfo x y s sp) cursor
     where
-        windowHeight = graphicsWindowHeight gr
-        fontSize = graphicsFontSize gr
-        availableHeight = windowHeight - y - margin
-        optionHeight = getOptionHeight fontSize s sp
         additionalOptsCount = length fixed + (if isJust backM then 1 else 0)
-        maxVisibleOptions = max 1 (availableHeight `div` optionHeight)
-        maxScroll = max 1 (maxVisibleOptions - additionalOptsCount)
-        scrollableCount = length (oalOpts opts)
-        -- Calculate initial scroll offset to ensure cursor position is visible
-        -- If cursor is in fixed options area, clamp to show end of scrollable list
-        -- If cursor is within the first maxScroll items, no offset needed
-        -- Otherwise, offset so the cursor is visible (centered when possible)
-        scrollPos = min pos (scrollableCount - 1)
-        initialOffset = if scrollPos < maxScroll then 0 else max 0 (scrollPos - maxScroll + 1)
+        maxScroll = scrollMaxVisible gr margin y s sp additionalOptsCount
+
+-- | Compute the number of scrollable items visible in the window.
+scrollMaxVisible :: Graphics -> Int -> Int -> Int -> Int -> Int -> Int
+scrollMaxVisible gr margin y s sp additionalOptsCount =
+    max 1 (max 1 (availableHeight `div` optionHeight) - additionalOptsCount)
+    where
+        availableHeight = graphicsWindowHeight gr - y - margin
+        optionHeight    = getOptionHeight (graphicsFontSize gr) s sp
+
+-- | Advance a ScrollMenuState by one step in the given direction (+1 or -1).
+-- Only scrolls the window when the cursor moves past the visible edge.
+stepScrollMenu :: Int -> Int -> Int -> ScrollMenuState -> ScrollMenuState
+stepScrollMenu maxScroll optCount dir (ScrollMenuState cursor offset) =
+    ScrollMenuState newCursor newOffset
+    where
+        newCursor = max 0 $ min (optCount - 1) (cursor + dir)
+        newOffset
+            | dir > 0 && newCursor >= offset + maxScroll =
+                min (max 0 (optCount - maxScroll)) (offset + 1)
+            | dir < 0 && newCursor < offset =
+                max 0 (offset - 1)
+            | otherwise = offset
 
 
 
