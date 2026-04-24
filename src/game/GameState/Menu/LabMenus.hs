@@ -2,15 +2,22 @@
 {-# LANGUAGE TupleSections #-}
 
 module GameState.Menu.LabMenus
-    ( labTopMenu
-    , fleetManagementTopMenu
-    , equipmentManagementTopMenu
-    , equipmentStoreMenu
-    , fundraiserTopMenu
-    , boatStoreMenu
-    , chooseActiveBoatMenu
-    , donorList
-    , fundraisingMenu
+    ( LabTopState(..)
+    , initLabTopState
+    , FundraiserTopState(..)
+    , initFundraiserTopState
+    , DonorListState(..)
+    , initDonorList
+    , FundraisingState(..)
+    , initFundraisingState
+    , FleetManagementState(..)
+    , initFleetManagementState
+    , BoatStoreState(..)
+    , initBoatStoreState
+    , EquipManagementState(..)
+    , initEquipManagementState
+    , EquipStoreState(..)
+    , initEquipStoreState
     ) where
 
 import GameState.Types
@@ -20,10 +27,11 @@ import OutputHandles.Util
 import SaveData
 import GameState.Types
 import Shark.Trip
+import Shark.Util
 import Graphics.Types
 import Graphics.TextUtil
-import Graphics.Menu
-import Graphics.Animation
+import Graphics.Asset
+import GameState.Util
 import Configs
 import InputState
 
@@ -34,247 +42,664 @@ import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.List as L
-import Data.Maybe (fromMaybe)
+import Data.Maybe (isJust, isNothing, fromMaybe)
 import Data.Map.Strict ((!))
-import Graphics.Animation (startAnimation, updateAnimation)
 
 import Debug.Trace
 
-labTopMenu :: GameData -> Graphics -> GameMenu
-labTopMenu gd gr = GameMenu (textView (words ++ fundWords)) (Menu (selOneOpts 200 450 3 15 opts (Just backOpt) mc 0) Nothing)
-    where
-        funds = gameDataFunds gd
-        mc = CursorRect White
-        fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        words = [ TextDisplay "Lab" 40 20 10 White Nothing
-                , TextDisplay "Management" 150 150 10 White Nothing
-                ]
-        fundWords = oneLine gr fundTxts 150 350 2
-        opts = [ MenuAction "Fundraising" Nothing $ Just $ FundraiserTop gd
-               , MenuAction "Fleet Management" Nothing $ Just $ FleetManagement gd
-               , MenuAction "Equipment Management" Nothing $ Just $ EquipmentManagement gd
-               ]
-        backOpt = MenuAction "Return to Research Center" Nothing $ Just $ ResearchCenter gd
--- To make sure the user doesn't get stuck with no money they can "host" a fundraiser
--- This will give a small amount of money but also will add a new name for a donor to
--- the research center's name
-fundraiserTopMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
-fundraiserTopMenu gd cfgs gr = GameMenu (textView (words ++ fundWords)) (Menu (selOneOpts 250 450 4 15 opts (Just backOpt) mc 0) Nothing)
-    where
-        funds = gameDataFunds gd
-        mc = CursorRect White
-        fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        dateTxt = "Center research run time:"
-        words = [ TextDisplay "Research" 40 20 10 White Nothing
-                , TextDisplay "Center" 150 150 10 White Nothing
-                --, TextDisplay dateTxt 200 300 3 White Nothing
-                ]
-        fundWords = oneLine gr fundTxts 200 350 2
-        opts = [ MenuAction "Host Fundraiser" Nothing Nothing
-               , MenuAction "View Donors" Nothing $ Just $ ViewDonors gd
-               ]
-        backOpt = MenuAction "Return to Lab Management" Nothing $ Just $ LabManagement gd
+data LabTopOpt = LabTopFundraising | LabTopFleet | LabTopEquip | LabTopReturnRC
+               deriving (Show, Eq, Enum, Ord, Bounded)
 
-donorList :: GameData -> Graphics -> GameMenu
-donorList gd gr = GameMenu (View words [] [] [] scrollData) (Menu (selOneOpts 200 550 3 10 [] (Just backOpt) mc 0) Nothing)
-    where
-        donors = []
-        mc = CursorRect White
-        donorDis = (\(t, i) -> TextDisplay t 150 (200 + i * 40) 3 LightGray Nothing) <$> zip donors [0..]
-        words = [ (TextDisplay "Donor" 20 20 9 White Nothing, 0)
-                , (TextDisplay "List" 80 150 9 White Nothing, 0)
-                , (TextDisplay "No donors yet." 150 300 4 LightGray Nothing, 0)
-                ]
-        scrollData = mkScrollView gr donorDis [] [] 0 500 5
-        backOpt = MenuAction "Return to Fundraising" Nothing $ Just $ FundraiserTop gd
+data LabTopState = LabTopState GameData LabTopOpt (Maybe PauseOpt)
 
-fundraisingMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
-fundraisingMenu gd cfgs gr = GameMenu (textView words) (Menu (selOneOpts 250 450 4 15 [] (Just backOpt) mc 0) Nothing)
-    where
-        funds = gameDataFunds gd
-        mc = CursorRect White
-        fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        dateTxt = "Center research run time:"
-        words = [ TextDisplay "Research" 40 20 10 White Nothing
-                , TextDisplay "Center" 150 150 10 White Nothing
-                --, TextDisplay dateTxt 200 300 3 White Nothing
-                ]
-        backOpt = MenuAction "Return to Fundraising" Nothing $ Just $ FundraiserTop gd
+initLabTopState :: GameData -> LabTopState
+initLabTopState gd = LabTopState gd minBound Nothing
 
-boatBounceAnim :: Int -> Int -> Image -> AnimPlacement -> Int -> (ImagePlacement, AnimPlacement)
-boatBounceAnim baseX baseY boatI ap frame =
-    ( IPlace (baseX + xAdj) (baseY + yAdj) 1.3 boatI 2
-    , ap { animPosX = baseX + 85 + xAdj, animPosY = baseY + 55 + yAdj }
-    )
-    where
-        xAdj = case mod frame 8 of
-            0 -> -5
-            1 -> -5
-            2 -> 0
-            3 -> 0
-            4 -> 5
-            5 -> 5
-            6 -> 0
-            7 -> 0
-            _ -> 0
-        yAdj = case mod (frame + 1) 6 of
-            0 -> 0
-            1 -> 5
-            2 -> 10
-            3 -> 15
-            4 -> 10
-            5 -> 5
-            _ -> 0
+instance GamePlayStateE LabTopState where
+    think gps@(LabTopState gd mOpt pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | isJust pSelM && (enterJustPressed inputs || moveInputJustPressed inputs) =
+            case (inputDirection inputs, enterJustPressed inputs, pSelM) of
+                (_, True, Just pSel) -> getPauseEnterAction pSel gd $ AnyGamePlayState $ LabTopState gd mOpt Nothing
+                (Just dir, _, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (LabTopState gd mOpt (Just po)))
+                _ -> Step NoChange
+        | escapeJustPressed inputs =
+            case pSelM of
+                Nothing -> stepInputUpdate $ LabTopState gd mOpt $ Just minBound
+                _ -> stepInputUpdate $ LabTopState gd mOpt Nothing
+        | enterJustPressed inputs =
+            case mOpt of
+                LabTopFundraising -> Step $ Transition $ AnyGamePlayState $ initFundraiserTopState gd
+                LabTopFleet -> Step $ Transition $ AnyGamePlayState $ initFleetManagementState gd
+                LabTopEquip -> Step $ Transition $ AnyGamePlayState $ initEquipManagementState gd
+                LabTopReturnRC -> Step $ TopTransition ResearchCenterMenu gd
+        | moveInputJustPressed inputs =
+            case inputDirection inputs of
+                Just dir -> moveMenuPos dir mOpt (\newMOpt -> LabTopState gd newMOpt pSelM)
+                Nothing -> Step NoChange
+        | otherwise = Step NoChange
 
-fleetManagementTopMenu :: GameData -> GameConfigs -> InputState -> Graphics -> GameView
-fleetManagementTopMenu gd cfgs inputs gr = GameView v Nothing [to, toFlag] $ Just md
-    where
-        v = View ((,0) <$> words) [waterImg, boatStart, dockImg] [apStart] [] Nothing
-        md = Menu (selOneOpts 200 550 4 15 opts (Just backOpt) mc 0) Nothing
-        to = TimeoutData (timestamp inputs) 300 $ TimeoutAnimation $ startAnimation 10 nextFrame
-        toFlag = TimeoutData (timestamp inputs) 150 $ TimeoutAnimation $ startTextAnim gr
-        myBoat = gameActiveBoat $ gameDataEquipment gd
-        boatInfo = boats (sharkCfgs cfgs) ! myBoat
-        boatI = boatImage boatInfo
-        mc = CursorRect White
-        slotTxt = "Equipment Slots: " <> (T.pack . show $ boatEquipmentSlots boatInfo)
-        fuelTxt = "Fuel Cost: $" <> (T.pack . show $ boatFuelCost boatInfo)
-        words = [ TextDisplay "Fleet" 20 20 8 White Nothing
-                , TextDisplay "Management" 50 125 8 White Nothing
-                , TextDisplay "Boat Information" 75 275 3 LightGray Nothing
-                , TextDisplay (boatName boatInfo) 125 350 3 LightGray Nothing
-                , TextDisplay slotTxt 75 400 3 LightGray Nothing
-                , TextDisplay fuelTxt 75 475 3 LightGray Nothing
-                ]
-        imgBaseX = 750
-        imgBaseY = 250
-        baseBoatX = imgBaseX + 115
-        baseBoatY = imgBaseY + 50
-        waterImg = IPlace imgBaseX imgBaseY 0.9 "water" 1
-        dockImg = IPlace imgBaseX imgBaseY 0.9 "dock" 3
-        boatStart = IPlace baseBoatX baseBoatY 1.3 boatI 2
-        apStart = APlace (baseBoatX + 85) (baseBoatY + 55) 0.9 "flag" 0 0 4 True
-        opts = [ MenuAction "Change Boats" Nothing $ Just $ ChooseBoat gd
-               , MenuAction "Boat Store" Nothing $ Just $ BoatStore Nothing gd
-                ]
-        backOpt = MenuAction "Return to Management" Nothing$ Just $ LabManagement gd
-        nextFrame (View ws _ aps _ _) frame =
-                let (img, ap) = boatBounceAnim baseBoatX baseBoatY boatI (head aps) frame
-                in View ws [waterImg, img, dockImg] [ap] [] Nothing
+    transition gps@(LabTopState gd mOpt pSelM) cfgs gr = (gview, [])
+        where
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays Nothing = mempty
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Lab" White 40 20 10 0
+                                      , staticText "Management" White 150 150 10 0
+                                      ]
+            menu = DefaultMenu $ MenuAsset 200 450 1 Nothing 15 menuItems
+            itemHL i = if fromEnum mOpt == i then Just White else Nothing
+            menuItems = [ MenuItem (MText "Fundraising") Blue 3 0 0 True (itemHL 0) Nothing
+                        , MenuItem (MText "Fleet Management") Blue 3 0 0 True (itemHL 1) Nothing
+                        , MenuItem (MText "Equipment Management") Blue 3 0 0 True (itemHL 2) Nothing
+                        , MenuItem (MText "Return to Research Center") Blue 3 0 0 True (itemHL 3) Nothing
+                        ]
 
-chooseActiveBoatMenu :: GameData -> GameConfigs -> GameMenu
-chooseActiveBoatMenu gd cfgs = GameMenu (textView words) (Menu (md pos) Nothing)
-    where
-        md = scrollOpts 250 520 3 6 (OALOpts opts Nothing Nothing mc) (Just cancelOpt) [] 3
-        cancelOpt = MenuAction "Back" Nothing $ Just $ FleetManagement gd
-        mc = CursorRect White
-        bts = boats $ sharkCfgs cfgs
-        owned = gameOwnedBoats $ gameDataEquipment gd
-        available = L.sortOn (\(_, cfg) -> boatEquipmentSlots cfg) $ M.assocs $ M.filterWithKey (\k _ -> k `elem` owned) bts
-        pos = fromMaybe 0 $ L.findIndex (\(b, _) -> b == gameActiveBoat (gameDataEquipment gd)) available
-        boatsOpts = (\(b, bCfg) -> (b, T.concat [boatName bCfg, " - ", T.pack (show (boatEquipmentSlots bCfg)), " slots"])) <$> available
-        words = [ TextDisplay "Choose" 20 20 6 White Nothing
-                , TextDisplay "Active Boat" 80 120 8 White Nothing
-                , TextDisplay "Current Boat:" 200 240 4 LightGray Nothing
-                , TextDisplay (boatName $ bts ! gameActiveBoat (gameDataEquipment gd)) 460 240 4 Green Nothing
-                , TextDisplay "Owned Boats" 400 420 4 LightGray Nothing
-                ]
-        gd' ab = gd { gameDataEquipment = (gameDataEquipment gd) { gameActiveBoat = ab } }
-        opts = (\(b, txt) -> MenuAction txt Nothing $ Just $ ChooseBoat (gd' b)) <$> boatsOpts
+data FundraiserTopOpt = HostFundRaiserOpt | ViewDonorsOpt | BackLabManagementOpt
+                      deriving (Show, Eq, Ord, Enum, Bounded)
 
-boatStoreMenu :: Maybe (T.Text, Int, GameData) -> GameData -> GameConfigs -> Graphics -> GameMenu
-boatStoreMenu popupGd gd cfgs gr = GameMenu v $ Menu (md 0) pop
+data FundraiserTopState = FundraiserTopState GameData FundraiserTopOpt (Maybe PauseOpt)
+
+initFundraiserTopState :: GameData -> FundraiserTopState
+initFundraiserTopState gd = FundraiserTopState gd minBound Nothing
+
+instance GamePlayStateE FundraiserTopState where
+    think gps@(FundraiserTopState gd mOpt pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | enterJustPressed inputs && isNothing pSelM =
+            case mOpt of
+                HostFundRaiserOpt -> Step $ Transition $ AnyGamePlayState $ initFundraisingState gd
+                ViewDonorsOpt -> Step $ Transition $ AnyGamePlayState $ initDonorList gd
+                BackLabManagementOpt -> Step $ Transition $ AnyGamePlayState $ initLabTopState gd
+        | enterJustPressed inputs =
+            case pSelM of
+                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ FundraiserTopState gd mOpt Nothing
+                _ -> error "Shouldn't get here: fundraiser top"
+        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ FundraiserTopState gd mOpt $ Just minBound
+        | escapeJustPressed inputs = stepInputUpdate $ FundraiserTopState gd mOpt Nothing
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, pSelM) of
+                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (FundraiserTopState gd mOpt (Just po)))
+                (Just dir, _) -> moveMenuPos dir mOpt (\newOpt -> FundraiserTopState gd newOpt pSelM)
+                _ -> Step NoChange
+        | otherwise = Step NoChange
+
+    transition gps@(FundraiserTopState gd mOpt pSelM) cfgs gr = (gview, [])
+        where
+            pauseIdx = 0
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays _ = mempty
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Center" White 40 20 8 0
+                                      , staticText "Fundraising" White 150 150 10 0
+                                      ]
+            menu = DefaultMenu $ MenuAsset 250 450 0 Nothing 3 mItems
+            getHL i = if i == fromEnum mOpt then Just White else Nothing
+            mItems = [ MenuItem (MText "Host Fundraiser") Blue 4 0 0 True (getHL 0) Nothing
+                     , MenuItem (MText "View Donors") Blue 4 0 0 True (getHL 1) Nothing
+                     , MenuItem (MText "Return to Lab Management") Blue 4 0 0 True (getHL 2) Nothing
+                     ]
+
+data DonorListState = DonorListState GameData (Maybe PauseOpt)
+
+initDonorList :: GameData -> DonorListState
+initDonorList gd = DonorListState gd Nothing
+
+instance GamePlayStateE DonorListState where
+    think gps@(DonorListState gd pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | enterJustPressed inputs =
+            case pSelM of
+                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ DonorListState gd Nothing
+                _ -> Step $ Transition $ AnyGamePlayState $ initFundraiserTopState gd
+        | escapeJustPressed inputs && isNothing pSelM =  stepInputUpdate $ DonorListState gd $ Just minBound
+        | escapeJustPressed inputs =  stepInputUpdate $ DonorListState gd Nothing
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, pSelM) of
+                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (DonorListState gd (Just po)))
+                _ -> Step NoChange
+        | otherwise = Step NoChange
+
+
+    transition gps@(DonorListState gd pSelM) cfgs gr = (gview, [])
+        where
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays Nothing = mempty
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Donor" White 20 20 9 0
+                                      , staticText "List" White 80 150 9 0
+                                      , staticText "No donors yet." LightGray 150 300 4 0
+                                      ]
+            menu = DefaultMenu $ MenuAsset 250 450 0 Nothing 3
+                                           [ MenuItem (MText "Return to Fundraising") Blue 4 0 0 True (Just White) Nothing ]
+
+
+data FundraisingState = FundraisingState GameData (Maybe PauseOpt)
+
+initFundraisingState :: GameData -> FundraisingState
+initFundraisingState gd = FundraisingState gd Nothing
+
+instance GamePlayStateE FundraisingState where
+    think gps@(FundraisingState gd pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | enterJustPressed inputs =
+            case pSelM of
+                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ FundraisingState gd Nothing
+                _ -> Step $ Transition $ AnyGamePlayState $ initLabTopState gd
+        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ FundraisingState gd $ Just minBound
+        | escapeJustPressed inputs = stepInputUpdate $ initFundraisingState gd
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, pSelM) of
+                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (FundraisingState gd (Just po)))
+                _ -> Step NoChange
+        | otherwise = Step NoChange
+
+    transition gps@(FundraisingState gd pSelM) cfgs gr = (gview, [])
+        where
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays Nothing = mempty
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Raise" White 40 20 10 0
+                                      , staticText "Funds" White 150 150 10 0
+                                      , staticText currTxt Green 200 300 4 0
+                                      ]
+            currTxt = T.append "Current Funds: " (showMoney (gameDataFunds gd))
+            menu = DefaultMenu $ MenuAsset 250 450 0 Nothing 3
+                                           [ MenuItem (MText "Return to Lab Management") Blue 4 0 0 True (Just White) Nothing ]
+
+data FleetMOpt = ChangeBoatsOpt | BoatStoreOpt | ReturnLabTop
+               deriving (Show, Eq, Ord, Enum, Bounded)
+
+data FleetManagementState = FleetManagementState GameData FleetMOpt (Maybe PauseOpt) [AnimationState]
+
+initFleetManagementState :: GameData -> FleetManagementState
+initFleetManagementState gd = FleetManagementState gd minBound Nothing []
+
+--boatBounceAnim :: Int -> Int -> Image -> AnimPlacement -> Int -> (ImagePlacement, AnimPlacement)
+--boatBounceAnim baseX baseY boatI ap frame =
+--    ( IPlace (baseX + xAdj) (baseY + yAdj) 1.3 boatI 2
+--    , ap { animPosX = baseX + 85 + xAdj, animPosY = baseY + 55 + yAdj }
+--    )
+--    where
+--        xAdj = case mod frame 8 of
+--            0 -> -5
+--            1 -> -5
+--            2 -> 0
+--            3 -> 0
+--            4 -> 5
+--            5 -> 5
+--            6 -> 0
+--            7 -> 0
+--            _ -> 0
+--        yAdj = case mod (frame + 1) 6 of
+--            0 -> 0
+--            1 -> 5
+--            2 -> 10
+--            3 -> 15
+--            4 -> 10
+--            5 -> 5
+--            _ -> 0
+
+instance GamePlayStateE FleetManagementState where
+    think gps@(FleetManagementState gd mOpt pSelM animS) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | enterJustPressed inputs =
+            case (pSelM, mOpt) of
+                (Just po, _) -> getPauseEnterAction po gd $ AnyGamePlayState $ FleetManagementState gd mOpt Nothing animS
+                (_, ChangeBoatsOpt) -> Step $ Transition $ AnyGamePlayState $ initChooseBoatState gd
+                (_, BoatStoreOpt) -> Step $ Transition $ AnyGamePlayState $ initBoatStoreState gd
+                (_, ReturnLabTop) -> Step $ Transition $ AnyGamePlayState $ initLabTopState gd
+        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ FleetManagementState gd mOpt (Just minBound) animS
+        | escapeJustPressed inputs = stepInputUpdate $ FleetManagementState gd mOpt Nothing animS
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, pSelM) of
+                (Just dir, Just pSel) -> getPauseMoveAction dir pSel (\po -> AnyGamePlayState (FleetManagementState gd mOpt (Just po) animS))
+                (Just dir, _) -> moveMenuPos dir mOpt (\newOpt -> FleetManagementState gd newOpt pSelM animS)
+                _ -> Step NoChange
+        | otherwise = Step $ getAnimationStep inputs animS
+
+    transition gps@(FleetManagementState gd mSel pSelM _) cfgs gr = (gview, [])
+        where
+            pauseIdx = 0
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays _ = mempty
+            assets = M.fromList $
+                zip [0..]
+                    [ staticText "Fleet" White 20 20 8 0
+                    , staticText "Management" White 50 125 8 0
+                    , staticText "Boat Information" LightGray 75 275 3 0
+                    , staticText (boatName boatInfo) LightGray 125 350 3 0
+                    , staticText slotTxt LightGray 75 400 3 0
+                    , staticText fuelTxt LightGray 75 475 3 0
+                    , Asset (AssetImage "water" (scale gr)) (imgBaseX gr) imgBaseY 1 True  $ Just rsWater
+                    , Asset (AssetImage boatI (scaleB gr)) (boatBaseX gr) (boatBaseY gr) 2 True  $ Just rsBoat
+                    , Asset (AssetImage "dock" (scale gr)) (imgBaseX gr) imgBaseY 3 True  $ Just rsDock
+                    , Asset (AssetAnimation "flag" 0 0 (scaleB gr)) (flagBaseX gr) (flagBaseY gr) 3 True $ Just rsFlag
+                    ]
+            myBoat = gameActiveBoat $ gameDataEquipment gd
+            boatInfo = boats (sharkCfgs cfgs) ! myBoat
+            boatI = boatImage boatInfo
+            slotTxt = "Equipment Slots: " <> (T.pack . show $ boatEquipmentSlots boatInfo)
+            fuelTxt = "Fuel Cost: $" <> (T.pack . show $ boatFuelCost boatInfo)
+            rsWater ass gr' = ass { object = AssetImage "water" (scale gr'), assetX = imgBaseX gr' }
+            rsBoat ass gr' = ass { object = AssetImage boatI (scaleB gr'), assetX = boatBaseX gr', assetY = boatBaseY gr' }
+            rsFlag ass gr' = ass { object = AssetAnimation "flag" 0 0 (scaleB gr'), assetX = flagBaseX gr', assetY = flagBaseY gr' }
+            rsDock ass gr' = ass { object = AssetImage "dock" (scale gr'), assetX = imgBaseX gr' }
+            imgBaseX gr' = (graphicsWindowWidth gr' `div` 2)
+            imgBaseY = 250
+            boatOffX = 125
+            boatOffY = 75
+            flagOffX = boatOffX + 95
+            flagOffY = boatOffY + 62
+            boatBaseX gr' = imgBaseX gr' + round (scale gr' * boatOffX)
+            boatBaseY gr' = imgBaseY + round (scale gr' * boatOffY)
+            flagBaseX gr' = imgBaseX gr' + round (scale gr' * flagOffX)
+            flagBaseY gr' = imgBaseY + round (scale gr' * flagOffY)
+            scaleX gr' = ((fromIntegral (graphicsWindowWidth gr') / 2) - 100) / fromIntegral (imageSizeX (graphicsStaticTextures gr' M.! "water"))
+            scaleY gr' = (fromIntegral (graphicsWindowHeight gr') - (490 + 250)) / fromIntegral (imageSizeY (graphicsStaticTextures gr' M.! "water"))
+            scale gr' = scaleX gr' --min (scaleX gr') (scaleY gr')
+            scaleB gr' = scale gr' * 1.5
+            hlM cmp = if cmp == mSel then Just White else Nothing
+            mY gr' = graphicsWindowHeight gr' - 250
+            menu = DefaultMenu $ MenuAsset 150 (mY gr) 0 (Just mnRs) 10 items
+            items = [ MenuItem (MText "Change Boats") Blue 3 0 0 True (hlM ChangeBoatsOpt) Nothing
+                    , MenuItem (MText "Boat Store") Blue 3 0 0 True (hlM BoatStoreOpt) Nothing
+                    , MenuItem (MText "Back") Blue 3 0 0 True (hlM ReturnLabTop) Nothing
+                    ]
+            mnRs ass gr' = ass { menuYBase = mY gr' }
+
+    update gps@(FleetManagementState gd mSel pSelM _) gsn cfgs gr = withPauseUpdate gr gps pSelM nGv gsn
+        where
+            nGv gv = updateDefMenuHighlight (fromEnum mSel) White gv
+
+    updateAnims (FleetManagementState gd mSel pSelM _) newAnims = FleetManagementState gd mSel pSelM newAnims
+
+
+newtype ChooseBoatState = ChooseBoatState (MenuStateInfo Int)
+
+initChooseBoatState :: GameData -> ChooseBoatState
+initChooseBoatState gd = ChooseBoatState $ MenuInfo 0 $ SimpleInfo gd Nothing
+
+instance GamePlayStateE ChooseBoatState where
+    think gps@(ChooseBoatState msi) cfgs inputs = menuInfoIntThink ChooseBoatState mAct maxMIdx msi inputs
+        where
+            -- TODO: choose option
+            mAct i
+                | i >= 0 && i < maxMIdx = stepInputUpdate $ ChooseBoatState $ menuUpdateData msi (gd' (owned !! i))
+                | i == maxMIdx = Step $ Transition $ AnyGamePlayState $ initFleetManagementState gd
+                | otherwise = Step NoChange
+            maxMIdx = length owned
+            owned = gameOwnedBoats $ gameDataEquipment gd
+            gd = menuGetData msi
+            gd' activeBoat = gd { gameDataEquipment = (gameDataEquipment gd) { gameActiveBoat = activeBoat } }
+
+    transition gps@(ChooseBoatState msi) cfgs gr = (gview, [])
+        where
+            pauseIdx = 0
+            pSelM = menuGetPause msi
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays _ = mempty
+            assets = M.fromList $ zip [0..]
+                                      [ staticText boatN Green 460 340 4 0
+                                      , staticText "Choose" White 20 20 6 0
+                                      , staticText "Active Boat" White 80 120 8 0
+                                      , staticText "Current Boat:" LightGray 200 240 4 0
+                                      , staticText "Owned Boats" LightGray 400 420 4 0
+                                      ]
+            menu = DefaultMenu $ MenuAsset 150 500 0 Nothing 6 items
+            items = btMenuItem ++ [MenuItem (MText "Back") Blue 3 0 0 True (hl (length boatsOpts)) Nothing]
+            gd = menuGetData msi
+            bts = boats $ sharkCfgs cfgs
+            boatN = boatName $ bts ! gameActiveBoat (gameDataEquipment gd)
+            owned = gameOwnedBoats $ gameDataEquipment gd
+            boatsOpts = (\bk -> let bCfg = bts ! bk in T.concat [boatName bCfg, " - ", T.pack (show (boatEquipmentSlots bCfg)), " slots"]) <$> owned
+            hl i = if menuSel msi == i then Just White else Nothing
+            btMenuItem = (\(i, bt) -> MenuItem (MText bt) Blue 3 0 0 True (hl i) Nothing) <$> zip [0..] boatsOpts
+
+    update gps@(ChooseBoatState msi) gsn cfgs gr = menuInfoUpdate ChooseBoatState msi gsn gr upBt
+        where
+            gd = menuGetData msi
+            upBt gv = gv { assets = M.adjust upAss 0 (assets gv) }
+            upAss ass = ass { object = AssetText boatN Green 4 }
+            bts = boats $ sharkCfgs cfgs
+            boatN = boatName $ bts ! gameActiveBoat (gameDataEquipment gd)
+
+data BuyPopupOpt = BuyPopupConfirm | BuyPopupCancel
+                 deriving (Show, Eq, Ord, Enum, Bounded)
+
+boatStoreInfo :: GameData -> GameConfigs -> [(T.Text, Boat)]
+boatStoreInfo gd cfgs = M.assocs available
     where
-        v = View ((,0) <$> words) [] [] [] Nothing
-        md = scrollOptsBasic 100 300 3 10 colOpts Nothing opts 6
-        mc = CursorRect White
         bts = boats $ sharkCfgs cfgs
         owned = gameOwnedBoats $ gameDataEquipment gd
         available = M.withoutKeys bts $ S.fromList owned
-        hds = ["Boat", "Size (slots)", "Price"]
-        colOpts = BasicCBOpts $ CBOpts "Buy" 350 hds $ mkBoatStoreEntry gd <$> M.assocs available
-        words = [ TextDisplay "Boat" 20 20 9 White Nothing
-                , TextDisplay "Store" 80 150 9 White Nothing
-                ]
-        opts = [ MenuAction "Leave Boat Store" Nothing $ Just $ FleetManagement gd
-               ]
-        pop = buyConfirm gd cfgs (BoatStore Nothing) <$> popupGd
 
-
-equipmentManagementTopMenu :: GameData -> GameConfigs -> Graphics -> GameMenu
-equipmentManagementTopMenu gd cfgs gr = GameMenu (View ((,0) <$> words) [] [] [] scrollData) (Menu (selOneOpts 150 650 3 15 opts (Just backOpt) mc 0) Nothing)
+slotText :: Boat -> T.Text
+slotText bt = T.concat [T.pack (show slotNum), " slot", if slotNum == 1 then "" else "s"]
     where
-        myEquipment = gameOwnedEquipment $ gameDataEquipment gd
-        equipmentInfo = (!) (equipment (sharkCfgs cfgs)) <$> myEquipment
-        mc = CursorRect White
-        equipTxts = (\e -> equipText e <> "    Equipment Slots: " <> (T.pack . show $ equipSize e)) <$> equipmentInfo
-        equipDis = (\(t, i) -> TextDisplay t 150 (375 + i * 50) 3 LightGray Nothing) <$> zip equipTxts [0..]
-        words = [ TextDisplay "Equipment" 30 10 8 White Nothing
-                , TextDisplay "Management" 175 120 8 White Nothing
-                , TextDisplay "Owned Equipment" 300 275 4 LightGray Nothing
-                ]
-        scrollData = mkScrollView gr equipDis [] [] 0 570 5
-        opts = [ MenuAction "Equipment Store" Nothing $ Just $ EquipmentStore Nothing gd ]
-        backOpt = MenuAction "Return to Management" Nothing $ Just $ LabManagement gd
+        slotNum = boatEquipmentSlots bt
 
-buyConfirm :: GameData -> GameConfigs -> (GameData -> GamePlayState) -> (T.Text, Int, GameData) -> MenuPopup GamePlayState
-buyConfirm gd cfgs gps (item, price, gd') = MenuPopup v md 200 100 900 600 DarkBlue
+boatCostTxt :: Boat -> Int -> T.Text
+boatCostTxt bt maxCost = T.justifyRight width ' ' $ showMoney $ boatPrice bt
     where
-        v = View ((,0) <$> words) [] [] [] Nothing
-        md = selOneOpts 350 500 3 4 opts (Just backOpt) (CursorRect White) 0
-        funds = gameDataFunds gd
-        enoughFunds = funds >= price
-        fundTxt = T.append "Current Funds: " (showMoney funds)
-        itemTxt = T.append "Item Cost: " (showMoney price)
-        afterTxt = T.append "After Purchase: " (showMoney (funds - price))
-        words = [ TextDisplay item 250 150 9 White Nothing
-                , TextDisplay fundTxt 300 300 3 Green Nothing
-                , TextDisplay itemTxt 300 350 3 Red Nothing
-                , TextDisplay afterTxt 300 400 3 (if enoughFunds then Green else Red) Nothing
-                ]
-        opts = [ MenuAction "Confirm Purchase" Nothing $ if enoughFunds then Just (gps gd') else Nothing ]
-        backOpt = MenuAction "Cancel" Nothing $ Just $ gps gd
+        width = T.length $ showMoney maxCost
+
+data BoatPopupInfo = BoatPopupInfo
+    { boatKey :: T.Text
+    , boatDisplay :: T.Text
+    , boatCost :: Int
+    , popupSel :: BuyPopupOpt
+    } -- TODO: probably will add img name to display image
+
+data BoatStoreState = BoatStoreState (Either Int BoatPopupInfo) SimpleStateInfo
+
+initBoatStoreState :: GameData -> BoatStoreState
+initBoatStoreState gd = BoatStoreState (Left 0) $ SimpleInfo gd Nothing
+
+initBoatPopupInfo :: (T.Text, Boat) -> BoatPopupInfo
+initBoatPopupInfo (bk, boat) = BoatPopupInfo bk (boatName boat) (boatPrice boat) minBound
+
+instance GamePlayStateE BoatStoreState where
+    think gps@(BoatStoreState boatPopE si) cfgs inputs
+        | moveInputJustPressed inputs && not (simpleInfoPaused si) =
+            case (inputDirection inputs, boatPopE) of
+                (Just DUp, Left 0) -> Step NoChange
+                (Just DUp, Left idx) -> stepInputUpdate $ BoatStoreState (Left (idx - 1)) si
+                (Just DDown, Left idx) | idx == availBoats -> Step NoChange
+                (Just DDown, Left idx) -> stepInputUpdate $ BoatStoreState (Left (idx + 1)) si
+                (Just DUp, Right bpi@(BoatPopupInfo _ _ _ BuyPopupCancel)) -> stepInputUpdate $ BoatStoreState (Right (bpi { popupSel = BuyPopupConfirm })) si
+                (Just DDown, Right bpi@(BoatPopupInfo _ _ _ BuyPopupConfirm)) -> stepInputUpdate $ BoatStoreState (Right (bpi { popupSel = BuyPopupCancel })) si
+                _ -> Step NoChange
+        | otherwise = simpleInfoThink (BoatStoreState boatPopE) (enterAction boatPopE) si inputs
+        where
+            mAct idx = Step NoChange
+            gd = gamedata si
+            currFunds = gameDataFunds gd
+            getPrice idx = boatPrice $ snd $ bList !! idx
+            bList = boatStoreInfo gd cfgs
+            availBoats = length bList
+            newGD (bk, boat) msi' = menuUpdateData msi' (buyBoat gd bk (boatPrice boat))
+            enterAction (Left idx)
+                | idx < length bList && getPrice idx > currFunds = Step NoChange
+                | idx < length bList = stepInputUpdate $ BoatStoreState (Right (initBoatPopupInfo (bList !! idx))) si
+                | otherwise = Step $ Transition $ AnyGamePlayState $ initFleetManagementState gd
+            enterAction (Right (BoatPopupInfo bk _ _ BuyPopupCancel)) =
+                case L.elemIndex bk (fst <$> bList) of
+                    Nothing -> stepInputUpdate $ BoatStoreState (Left 0) si
+                    Just idx -> stepInputUpdate $ BoatStoreState (Left idx) si
+            enterAction (Right (BoatPopupInfo bk _ price BuyPopupConfirm)) =
+                let gd' = buyBoat gd bk price
+                in stepInputUpdate $ BoatStoreState (Left 0) $ si { gamedata = gd' }
+
+    transition gps@(BoatStoreState popE si) cfgs gr = (gview, [])
+        where
+            pSelM = pauseSelM si
+            gd = gamedata si
+            bts = boatStoreInfo gd cfgs
+            numBts = length bts
+            maxCost = maximum $ (boatPrice . snd) <$> bts
+            maxPriceStr = T.length $ showMoney maxCost
+            headingFS = 3
+            listingFS = 3
+            yStart = div (graphicsWindowHeight gr) 2
+            yRsM ma gr' = ma { menuYBase = div (graphicsWindowHeight gr') 2 }
+            currFunds = gameDataFunds gd
+            canAfford bt = boatPrice bt <= currFunds
+            isBoatSel i = case popE of
+                Left idx -> i == idx
+                Right _  -> False
+            isLeaveSel = case popE of
+                Left idx -> idx == numBts
+                Right _  -> False
+            buyColor i bt
+                | canAfford bt && isBoatSel i = White
+                | canAfford bt                = Green
+                | isBoatSel i                 = Red
+                | otherwise                   = Gray
+            headingRow = (Right [("Boat", Nothing, False), ("Size (slots)", Nothing, False), (T.justifyRight maxPriceStr ' ' "Cost", Nothing, False), (" ", Nothing, False)], headingFS, White, Nothing)
+            boatRows = zipWith (\i (_, bt) ->
+                (Right [(boatName bt, Nothing, False), (slotText bt, Nothing, False), (boatCostTxt bt maxCost, Nothing, False), ("Buy", Nothing, True)], listingFS, Blue, Just (buyColor i bt))
+                ) [0..] bts
+            leaveRow = (Left "Leave Boat Store", listingFS, Blue, if isLeaveSel then Just White else Nothing)
+            menu = makeTableMenu gr (Just yRsM) (headingRow : boatRows ++ [leaveRow]) 60 60 100 yStart 10 1
+            gview = GView assets (overlays' popE) $ Just menu
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Boat" White 20 20 9 0
+                                      , staticText "Store" White 80 150 9 0
+                                      ]
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays _ = mempty
+            overlays' (Left _) = overlays pSelM
+            overlays' (Right bpi) = S.insert (buyBoatPopup bpi gd gr) $ overlays pSelM
 
 
-mkBoatStoreEntry :: GameData -> (T.Text, Boat) -> ColumnAction GamePlayState
-mkBoatStoreEntry gd (k, e) = ColAction txt action
+buyBoatPopup :: BoatPopupInfo -> GameData -> Graphics -> Overlay
+buyBoatPopup (BoatPopupInfo bk name price sel) gd gr = AOverlay 1 popAssets (Just menu) (oX gr) (oY gr) (oW gr) (oH gr) DarkGray $ Just rs
     where
-        cost = boatPrice e
-        name = boatName e
-        price = T.pack $ "$" ++ show cost
-        txt = [name, T.concat [T.pack (show (boatEquipmentSlots e)), " slot(s)"], price] -- [Text]
-        confirmBuy = buyBoat gd k cost
-        action = if boatPrice e > gameDataFunds gd then Nothing else Just (BoatStore (Just (name, cost, confirmBuy)) gd)
+        oW gr' = max 400 $ floor $ fromIntegral (graphicsWindowWidth gr') * 0.8
+        oH gr' = max 300 $ floor $ fromIntegral (graphicsWindowHeight gr') * 0.7
+        oX gr' = midStartX gr' $ oW gr'
+        oY gr' = midStartY gr' $ oH gr'
+        rs ass gr' = ass { overlayX = oX gr', overlayY = oY gr', overlayW = oW gr', overlayH = oH gr'}
+        currFundTxt = T.append "Current Funds: " $ showMoney $ gameDataFunds gd
+        costTxt = T.append "Item Cost: " $ showMoney price
+        aftTxt = T.append "After Purchase: " $ showMoney (gameDataFunds gd - price)
+        stack = AssetStacked $ AssetStack StackVertical [ StackItem (AssetText currFundTxt Green 3) 0 0
+                                                        , StackItem (AssetText costTxt Red 3) 0 0
+                                                        , StackItem (AssetText aftTxt Green 3) 0 0
+                                                        ] 5
+        popAssets = M.fromList $ zip [0..]
+                                     [ Asset (AssetText name White 9) (oX gr + 100) (oY gr + 60) 1 True $
+                                             Just (\ass gr' -> ass { assetX = oX gr' + 100, assetY = oY gr' + 60 })
+                                     , Asset stack (oX gr + 150) (oY gr + 200) 1 True $
+                                             Just (\ass gr' -> ass { assetX = oX gr' + 150, assetY = oY gr' + 200})
+                                     ]
+        rsFn ma gr' = ma { menuXBase = oX gr' + 100, menuYBase = oY gr' + oH gr' - 150 }
+        menu = DefaultMenu $ MenuAsset (oX gr + 100) (oY gr + oH gr - 150) 2 (Just rsFn) 5
+                                       [ MenuItem (MText "Confirm Purchase") White 4 0 0 True (if BuyPopupConfirm == sel then Just LightGray else Nothing) Nothing
+                                       , MenuItem (MText "Cancel") White 4 0 0 True (if BuyPopupCancel == sel then Just LightGray else Nothing) Nothing
+                                       ]
 
 
+data EquipMOpt = EquipStoreOpt | EquipReturnLabOpt
+               deriving (Show, Eq, Ord, Enum, Bounded)
 
-mkStoreEntry :: GameData -> (T.Text, GameEquipment) -> ColumnAction GamePlayState
-mkStoreEntry gd (k, e) = ColAction txt action
+data EquipManagementState = EquipManagementState (MenuStateInfo EquipMOpt) Int
+
+initEquipManagementState :: GameData -> EquipManagementState
+initEquipManagementState gd = EquipManagementState (initMenuStateInfo gd) 0
+
+emsScrollIdx :: Int
+emsScrollIdx = 0
+
+instance GamePlayStateE EquipManagementState where
+    think gps@(EquipManagementState msi scrPos) cfgs inputs =
+        case mouseInputs inputs of
+            Just (MouseInputs sAmt) -> stepInputUpdate $ EquipManagementState msi (max 0 (scrPos + 5 * (-sAmt)))
+            Nothing -> menuInfoThink mkGPS menuAction msi inputs
+        where
+            mkGPS msi' = EquipManagementState msi' scrPos
+            gd = menuGetData msi
+            menuAction EquipStoreOpt = Step $ Transition $ AnyGamePlayState $ initEquipStoreState gd
+            menuAction EquipReturnLabOpt = Step $ Transition $ AnyGamePlayState $ initLabTopState gd
+
+    transition gps@(EquipManagementState msi scrPos) cfgs gr = (gview, [])
+        where
+            gd = menuGetData msi
+            mOpt = menuSel msi
+            pSelM = menuGetPause msi
+            gview = GView assets (overlays pSelM) $ Just menu
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays _ = mempty
+            ownTxt = "Owned Equipment"
+            ownX gr' = midTextStart gr' ownTxt $ fromIntegral 4
+            assets = M.fromList $ zip [0..]
+                                      [ Asset (AssetScroll $ ScrollObj (M.singleton 0 (mkTable gr)) scrPos (scrollH gr)) 10 (scrollYStart gr) 0 True $ Just rs
+                                      , staticText "Equipment" White 20 20 8 0
+                                      , staticText "Management" White 175 120 8 0
+                                      , Asset (AssetText ownTxt LightGray 4) (ownX gr) ((graphicsWindowHeight gr `div` 2) - 100) 0 True $
+                                              Just (\ass gr' -> ass { assetX = ownX gr', assetY = (graphicsWindowHeight gr' `div` 2) - 100 })
+                                      ]
+            scrollYStart gr' = (graphicsWindowHeight gr' `div` 2) + 20
+            equipList = gameOwnedEquipment $ gameDataEquipment gd
+            equipItems = (!) (equipment $ sharkCfgs cfgs) <$> equipList
+            equipRows = (\e -> ([(equipText e, LightGray), (equipTypeText (equipInfoType e), LightGray), (slotsTxt e, LightGray)], 3)) <$> equipItems
+            slotsTxt e = T.pack (show (equipSize e)) <> if equipSize e == 1 then " slot" else " slots"
+            mkTable gr' = expandingCenterTable gr' (\ass _ -> ass) equipRows 0 0 80 0 15 0
+            scrollH gr' =
+                let ht = graphicsWindowHeight gr'
+                in ht - (ht `div` 2) + 20 - 150
+            rs as gr' = as { object = AssetScroll $ ScrollObj (M.singleton 0 (mkTable gr')) 0 (scrollH gr'), assetY = scrollYStart gr' }
+            hlM cmp = if cmp == mOpt then Just White else Nothing
+            mY gr' = graphicsWindowHeight gr' - 150
+            mnRs ass gr' = ass { menuYBase = mY gr' }
+            menu = DefaultMenu $ MenuAsset 150 (mY gr) 0 (Just mnRs) 10 items
+            items = [ MenuItem (MText "Equipment Store") Blue 3 0 0 True (hlM EquipStoreOpt) Nothing
+                    , MenuItem (MText "Back") Blue 3 0 0 True (hlM EquipReturnLabOpt) Nothing
+                    ]
+
+    update gps@(EquipManagementState msi scrPos) gvO cfgs gr = menuInfoUpdate newGPS msi gvO gr updateScrollPos
+        where
+            maxP = maybe 0 (getMaxPosition gr) (getScroll gvO)
+            newScrPos = min scrPos maxP
+            newGPS msi' = EquipManagementState msi' newScrPos
+            getScroll gv = case object (assets gv M.! emsScrollIdx) of
+                AssetScroll sc -> Just sc
+                _ -> Nothing
+            updateScrollPos gv = gv { assets = M.adjust upScroll 3 (assets gv) }
+            upScroll as = case object as of
+                AssetScroll sc -> as { object = AssetScroll $ updateScrollPosition gr sc newScrPos }
+                _ -> as
+
+
+equipStoreInfo :: GameData -> GameConfigs -> [(T.Text, GameEquipment)]
+equipStoreInfo gd cfgs = M.assocs available
     where
-        cost = equipPrice e
-        name = equipText e
-        price = T.pack $ "$" ++ show cost
-        infoType = case equipInfoType e of
-            Caught -> "caught"
-            Observed -> "observed"
-        txt = [name, infoType, price] -- [Text]
-        confirmBuy = buyEquipment gd k cost
-        action = if equipPrice e > gameDataFunds gd then Nothing else Just (EquipmentStore (Just (name, cost, confirmBuy)) gd)
-
-
-equipmentStoreMenu :: Maybe (T.Text, Int, GameData) -> GameData -> GameConfigs -> Graphics -> GameMenu
-equipmentStoreMenu popupGd gd cfgs gr = GameMenu v $ Menu md pop
-    where
-        v = View ((,0) <$> words) [] [] [] Nothing
-        md = scrollOptsBasic 100 300 3 10 colOpts (Just backOpt) [] 6 0
-        mc = CursorRect White
         equips = equipment $ sharkCfgs cfgs
         owned = gameOwnedEquipment $ gameDataEquipment gd
-        available = M.withoutKeys equips (S.fromList owned)
-        hds = ["Equipment", "Type", "Price"]
-        colOpts = BasicCBOpts $ CBOpts "Buy" 350 hds $ mkStoreEntry gd <$> M.assocs available
-        words = [ TextDisplay "Equipment" 20 20 9 White Nothing
-                , TextDisplay "Store" 80 150 9 White Nothing
-                ]
-        backOpt = MenuAction "Leave Equipment Store" Nothing $ Just $ EquipmentManagement gd
-        pop = buyConfirm gd cfgs (EquipmentStore Nothing) <$> popupGd
+        available = M.withoutKeys equips $ S.fromList owned
+
+equipCostTxt :: GameEquipment -> Int -> T.Text
+equipCostTxt e maxCost = T.justifyRight width ' ' $ showMoney $ equipPrice e
+    where
+        width = T.length $ showMoney maxCost
+
+data EquipPopupInfo = EquipPopupInfo
+    { equipKey     :: T.Text
+    , equipDisplay :: T.Text
+    , equipCost    :: Int
+    , equipPopSel  :: BuyPopupOpt
+    }
+
+data EquipStoreState = EquipStoreState (Either Int EquipPopupInfo) SimpleStateInfo
+
+initEquipStoreState :: GameData -> EquipStoreState
+initEquipStoreState gd = EquipStoreState (Left 0) $ SimpleInfo gd Nothing
+
+initEquipPopupInfo :: (T.Text, GameEquipment) -> EquipPopupInfo
+initEquipPopupInfo (ek, e) = EquipPopupInfo ek (equipText e) (equipPrice e) minBound
+
+instance GamePlayStateE EquipStoreState where
+    think gps@(EquipStoreState equipPopE si) cfgs inputs
+        | moveInputJustPressed inputs && not (simpleInfoPaused si) =
+            case (inputDirection inputs, equipPopE) of
+                (Just DUp, Left 0) -> Step NoChange
+                (Just DUp, Left idx) -> stepInputUpdate $ EquipStoreState (Left (idx - 1)) si
+                (Just DDown, Left idx) | idx == availEquips -> Step NoChange
+                (Just DDown, Left idx) -> stepInputUpdate $ EquipStoreState (Left (idx + 1)) si
+                (Just DUp, Right epi@(EquipPopupInfo _ _ _ BuyPopupCancel)) -> stepInputUpdate $ EquipStoreState (Right (epi { equipPopSel = BuyPopupConfirm })) si
+                (Just DDown, Right epi@(EquipPopupInfo _ _ _ BuyPopupConfirm)) -> stepInputUpdate $ EquipStoreState (Right (epi { equipPopSel = BuyPopupCancel })) si
+                _ -> Step NoChange
+        | otherwise = simpleInfoThink (EquipStoreState equipPopE) (enterAction equipPopE) si inputs
+        where
+            gd = gamedata si
+            currFunds = gameDataFunds gd
+            getPrice idx = equipPrice $ snd $ eList !! idx
+            eList = equipStoreInfo gd cfgs
+            availEquips = length eList
+            enterAction (Left idx)
+                | idx < length eList && getPrice idx > currFunds = Step NoChange
+                | idx < length eList = stepInputUpdate $ EquipStoreState (Right (initEquipPopupInfo (eList !! idx))) si
+                | otherwise = Step $ Transition $ AnyGamePlayState $ initEquipManagementState gd
+            enterAction (Right (EquipPopupInfo ek _ _ BuyPopupCancel)) =
+                case L.elemIndex ek (fst <$> eList) of
+                    Nothing -> stepInputUpdate $ EquipStoreState (Left 0) si
+                    Just idx -> stepInputUpdate $ EquipStoreState (Left idx) si
+            enterAction (Right (EquipPopupInfo ek _ price BuyPopupConfirm)) =
+                let gd' = buyEquipment gd ek price
+                in stepInputUpdate $ EquipStoreState (Left 0) $ si { gamedata = gd' }
+
+    transition gps@(EquipStoreState popE si) cfgs gr = (gview, [])
+        where
+            pSelM = pauseSelM si
+            gd = gamedata si
+            equips = equipStoreInfo gd cfgs
+            numEquips = length equips
+            maxCost = maximum $ (equipPrice . snd) <$> equips
+            maxPriceStr = T.length $ showMoney maxCost
+            headingFS = 3
+            listingFS = 3
+            yStart = div (graphicsWindowHeight gr) 2
+            yRsM ma gr' = ma { menuYBase = div (graphicsWindowHeight gr') 2 }
+            currFunds = gameDataFunds gd
+            canAfford e = equipPrice e <= currFunds
+            isEquipSel i = case popE of
+                Left idx -> i == idx
+                Right _  -> False
+            isLeaveSel = case popE of
+                Left idx -> idx == numEquips
+                Right _  -> False
+            buyColor i e
+                | canAfford e && isEquipSel i = White
+                | canAfford e                 = Green
+                | isEquipSel i                = Red
+                | otherwise                   = Gray
+            headingRow = (Right [("Equipment", Nothing, False), ("Type", Nothing, False), (T.justifyRight maxPriceStr ' ' "Cost", Nothing, False), (" ", Nothing, False)], headingFS, White, Nothing)
+            equipRows = zipWith (\i (_, e) ->
+                (Right [(equipText e, Nothing, False), (equipTypeText (equipInfoType e), Nothing, False), (equipCostTxt e maxCost, Nothing, False), ("Buy", Nothing, True)], listingFS, Blue, Just (buyColor i e))
+                ) [0..] equips
+            leaveRow = (Left "Leave Equipment Store", listingFS, Blue, if isLeaveSel then Just White else Nothing)
+            menu = makeTableMenu gr (Just yRsM) (headingRow : equipRows ++ [leaveRow]) 60 60 100 yStart 10 1
+            gview = GView assets (overlays' popE) $ Just menu
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Equipment" White 20 20 9 0
+                                      , staticText "Store" White 80 150 9 0
+                                      ]
+            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            overlays _ = mempty
+            overlays' (Left _) = overlays pSelM
+            overlays' (Right epi) = S.insert (buyEquipPopup epi gd gr) $ overlays pSelM
+
+
+buyEquipPopup :: EquipPopupInfo -> GameData -> Graphics -> Overlay
+buyEquipPopup (EquipPopupInfo _ name price sel) gd gr = AOverlay 1 popAssets (Just menu) (oX gr) (oY gr) (oW gr) (oH gr) DarkGray $ Just rs
+    where
+        oW gr' = max 400 $ floor $ fromIntegral (graphicsWindowWidth gr') * 0.8
+        oH gr' = max 300 $ floor $ fromIntegral (graphicsWindowHeight gr') * 0.7
+        oX gr' = midStartX gr' $ oW gr'
+        oY gr' = midStartY gr' $ oH gr'
+        rs ass gr' = ass { overlayX = oX gr', overlayY = oY gr', overlayW = oW gr', overlayH = oH gr' }
+        currFundTxt = T.append "Current Funds: " $ showMoney $ gameDataFunds gd
+        costTxt = T.append "Item Cost: " $ showMoney price
+        aftTxt = T.append "After Purchase: " $ showMoney (gameDataFunds gd - price)
+        stack = AssetStacked $ AssetStack StackVertical [ StackItem (AssetText currFundTxt Green 3) 0 0
+                                                        , StackItem (AssetText costTxt Red 3) 0 0
+                                                        , StackItem (AssetText aftTxt Green 3) 0 0
+                                                        ] 5
+        popAssets = M.fromList $ zip [0..]
+                                     [ Asset (AssetText name White 9) (oX gr + 100) (oY gr + 60) 1 True $
+                                             Just (\ass gr' -> ass { assetX = oX gr' + 100, assetY = oY gr' + 60 })
+                                     , Asset stack (oX gr + 150) (oY gr + 200) 1 True $
+                                             Just (\ass gr' -> ass { assetX = oX gr' + 150, assetY = oY gr' + 200 })
+                                     ]
+        rsFn ma gr' = ma { menuXBase = oX gr' + 100, menuYBase = oY gr' + oH gr' - 150 }
+        menu = DefaultMenu $ MenuAsset (oX gr + 100) (oY gr + oH gr - 150) 2 (Just rsFn) 5
+                                       [ MenuItem (MText "Confirm Purchase") White 4 0 0 True (if BuyPopupConfirm == sel then Just LightGray else Nothing) Nothing
+                                       , MenuItem (MText "Cancel") White 4 0 0 True (if BuyPopupCancel == sel then Just LightGray else Nothing) Nothing
+                                       ]

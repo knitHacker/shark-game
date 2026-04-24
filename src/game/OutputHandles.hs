@@ -65,9 +65,10 @@ initOutputHandles textCfgs cfgs = do
         , SDL.windowHighDPI = True
         , SDL.windowMode = if fs then SDL.FullscreenDesktop else SDL.Windowed
         , SDL.windowResizable = True
+        -- Stops it from flashing when starting
+        , SDL.windowVisible = False
         }
     --when fs $ SDL.setWindowMode window SDL.Maximized
-    SDL.showWindow window
     r <- SDL.createRenderer window (-1) rendererConfig
     -- clears the screen
     initWindow r
@@ -76,6 +77,7 @@ initOutputHandles textCfgs cfgs = do
     textList <- mapM (loadTexture r) $ M.toList $ getTextureFiles textCfgs
     let textures = M.fromList textList
     -- print $ fst <$> M.toList textures
+    SDL.showWindow window
     return $ OutputHandles window r textures font
     where
         gCfgs = settingCfgs cfgs

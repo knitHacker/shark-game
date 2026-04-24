@@ -9,6 +9,7 @@ module OutputHandles.Util
     , moveRenderY
     , clipYRender
     , mkRect
+    , partialText
     ) where
 
 import Foreign.C.Types ( CInt )
@@ -102,3 +103,9 @@ clipYRender fs rends startY endY = filterDraws clip rends
             | otherwise = Just d
             where
                 textH = ceiling (heightTextDisplay fs td)
+
+partialText :: T.Text -> Color -> Int -> Int -> Int -> (Int, Int, Int, Int) -> TextDisplay
+partialText txt c sz x y (mx, my, mw, mh) =
+    TextDisplay txt (fromIntegral x) (fromIntegral y) sz c $ Just mask
+    where
+        mask = mkRect (fromIntegral mx) (fromIntegral my) (fromIntegral mw) (fromIntegral mh)

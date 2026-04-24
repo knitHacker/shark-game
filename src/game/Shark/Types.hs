@@ -137,7 +137,7 @@ instance ToJSON Boat
 
 data TripAttempt = TripAttempt
     { attemptMonth :: Int
-    , attemptEqipment :: DataEntry T.Text GameEquipment
+    , attemptEquipment :: DataEntry T.Text GameEquipment
     } deriving (Show, Eq)
 
 data TripState = TripState

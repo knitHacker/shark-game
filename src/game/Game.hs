@@ -9,10 +9,10 @@ import Env
 import Env.Types
 import InputState
 import GameState
-import GameState.Draw
 import GameState.Types
 import SaveData
 import Configs
+import Graphics.Types
 
 import qualified SDL
 import Control.Monad.IO.Class ()
@@ -27,36 +27,27 @@ import Control.Arrow
 
 import Debug.Trace
 
--- Time for a frame
-frameTime :: Word32 -> Word32
-frameTime fps = div 1000 (fps + 1)
-
 -- Game loop that enforces a frame rate throttling
-runGame :: AppEnvData -> IO ()
-runGame appEnvData = do
-    input <- runAppEnv appEnvData stepGame
-    applyInputs input appEnvData
+runGame :: (Monad m, RenderAction m, GameStateStep m, ConfigsRead m, InputRead m, InputUpdate m, RenderAction m, GraphicsRead m, GraphicsUpdate m) => m ()
+runGame = do
+    -- instance of InputUpdate decides how to get new input object
+    input' <- updateInputState
+    if inputQuit input'
+        then endGame
+        else applyInputs input'
 
 
-applyInputs :: InputState -> AppEnvData -> IO ()
-applyInputs input appEnvData = do
-    gameState' <- runAppEnv appEnvData updateGameState
-    let stop = inputQuit input
-        appEnvData' = appEnvData { appEnvDataInputState = input, appEnvDataGameState = gameState' }
+applyInputs :: (Monad m, RenderAction m, ConfigsRead m, GameStateStep m, InputRead m, InputUpdate m, GraphicsRead m, GraphicsUpdate m) => InputState -> m ()
+applyInputs input' = do
+    _ <- updateWindowSize (windowResized input')
+    action <- getAction
+    stepM <- executeAction action
+    case stepM of
+        Nothing -> endGame
+        Just step -> do
+            render <- stepGame step
+            drawRender render
+            runGame
 
-    case (gameView gameState', stop) of
-        (GameExiting, _) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        (_, True) -> do
-            outputs <- runAppEnv appEnvData getOutputs
-            cleanupOutputHandles outputs
-        _ -> do
-            runGame appEnvData'
-
-stepGame :: AppEnv InputState
-stepGame = do
-    draws <- updateWindow
-    _ <- executeDraw draws
-    fr <- readFrameRate
-    updateInput $ frameTime fr
+endGame :: (Monad m, RenderAction m) => m ()
+endGame = cleanupRenderer

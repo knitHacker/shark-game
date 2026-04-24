@@ -7,7 +7,6 @@ module Graphics
 import qualified Data.Map.Strict as M
 
 import Graphics.Types
-import Graphics.Menu
 import OutputHandles.Types
 import OutputHandles
 import Configs
@@ -28,6 +27,7 @@ initGraphics tm outs = do
         , graphicsWindowWidth = width
         , graphicsWindowHeight = height
         }
+
 -- Eventually update potential graphics and font sizing based on config changes
 updateGraphics :: Graphics -> GameConfigs -> InputState -> Graphics
 updateGraphics graphics _ inputState =

@@ -8,6 +8,7 @@ module Shark.Trip
     , tripLength
     , initTripProgress
     , monthToText
+    , tripAvailableEquip
     ) where
 
 import SaveData
@@ -21,6 +22,14 @@ import qualified Data.List as L
 import Data.Maybe (isJust)
 
 import Debug.Trace
+
+tripAvailableEquip :: PlayConfigs -> GameData -> T.Text -> [DataEntry T.Text GameEquipment]
+tripAvailableEquip cfg gd loc = getEntry (equipment cfg) <$> ownedAllowed
+    where
+        region = getEntry (regions cfg) (gameCurrentRegion gd)
+        allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
+        ownedAllowed = filter (\e -> e `elem` (gameOwnedEquipment (gameDataEquipment gd))) allowedEq
+
 
 monthToText :: Int -> T.Text
 monthToText 0 = "0 months"

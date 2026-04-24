@@ -28,7 +28,7 @@ data-files:
 description:         Please see the README on GitHub at <https://github.com/knitHacker/shark-game#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+- base >= 4.16 && < 5
 
 
 internal-libraries:
@@ -95,6 +95,11 @@ executables:
     dependencies:
     - shark-game-core
     - shark-game-tools
+    - transformers
+    - text
+    - optparse-applicative
+    - mtl
+    - containers
 
   generate-save:
     main:                Main.hs
