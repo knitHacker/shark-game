@@ -28,6 +28,7 @@ initGraphics tm outs = do
         , graphicsWindowWidth = width
         , graphicsWindowHeight = height
         }
+
 -- Eventually update potential graphics and font sizing based on config changes
 updateGraphics :: Graphics -> GameConfigs -> InputState -> Graphics
 updateGraphics graphics _ inputState =

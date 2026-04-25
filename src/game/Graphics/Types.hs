@@ -337,6 +337,6 @@ class Monad m => GraphicsRead m where
     readGraphics :: m Graphics
 
 class Monad m => GraphicsUpdate m where
-    updateWindow :: Maybe (Int, Int) -> m ()
+    updateWindowSize :: Maybe (Int, Int) -> m ()
 
     updateFont :: FontSize -> m ()

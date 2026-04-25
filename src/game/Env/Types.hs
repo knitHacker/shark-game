@@ -8,9 +8,12 @@ module Env.Types
     ) where
 
 import Configs
+import OutputHandles
 import OutputHandles.Types
 import InputState
 import GameState.Types
+import GameState.Draw
+import GameState
 import Graphics.Types
 
 -- import Control.Monad.Reader (MonadReader, ReaderT, asks)
@@ -19,6 +22,7 @@ import Control.Monad
 import Control.Monad.IO.Class (MonadIO)
 
 import Data.Word (Word32)
+import Control.Monad.IO.Class (liftIO)
 
 
 -- Time for a frame
@@ -75,8 +79,8 @@ instance InputUpdate AppEnv where
         return new
 
 instance GraphicsUpdate AppEnv where
-    updateWindow Nothing = return ()
-    updateWindow (Just (w, h)) = do
+    updateWindowSize Nothing = return ()
+    updateWindowSize (Just (w, h)) = do
         gr <- readGraphics
         let gr' = gr { graphicsWindowWidth = w, graphicsWindowHeight = h}
         modify $ \ae -> ae { appEnvDataGraphics = gr' }
@@ -85,3 +89,27 @@ instance GraphicsUpdate AppEnv where
         gr <- readGraphics
         let gr' = gr { graphicsFontSize = fs }
         modify $ \ae -> ae { appEnvDataGraphics = gr' }
+
+instance RenderAction AppEnv where
+    drawRender :: ToRender -> AppEnv ()
+    drawRender rend = executeDraw rend
+
+    cleanupRenderer :: AppEnv ()
+    cleanupRenderer = do
+        outs <- getOutputs
+        liftIO $ cleanupOutputHandles outs
+
+instance GameStateStep AppEnv where
+    getAction :: AppEnv Action
+    getAction = return $ Step NoChange
+
+    executeAction :: Action -> AppEnv (Maybe GameStep)
+    executeAction (Exit _) = return Nothing
+    executeAction (Step step) = return $ Just step
+    executeAction _ = undefined
+
+    stepGame :: GameStep -> AppEnv ToRender
+    stepGame _ = do
+        gs' <- updateGameState
+        modify $ \ae -> ae { appEnvDataGameState = gs' }
+        updateWindow

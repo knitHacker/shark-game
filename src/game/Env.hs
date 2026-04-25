@@ -9,18 +9,17 @@ module Env
     ) where
 
 
-import Env.Types ( AppEnv(..), AppEnvData(AppEnvData) )
-import Configs ( TextureCfg, GameConfigs )
-import OutputHandles.Types ( OutputHandles )
-import InputState ( initInputState )
-import GameState ( initGameState )
+import Env.Types
+import Configs
+import OutputHandles.Types
+import InputState
+import GameState.Types
+import Graphics.Types
 
-import Control.Monad.Reader     (runReaderT)
-
+import Control.Monad.State.Strict (evalStateT)
 
 initAppEnvData :: GameConfigs -> OutputHandles -> InputState -> Graphics -> GameState -> AppEnvData
 initAppEnvData = AppEnvData
 
-
 runAppEnv :: AppEnvData -> AppEnv a -> IO a
-runAppEnv appEnvData (AppEnv appEnv) = runReaderT appEnv appEnvData
+runAppEnv appEnvData (AppEnv appEnv) = evalStateT appEnv appEnvData

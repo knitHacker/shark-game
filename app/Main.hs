@@ -2,11 +2,15 @@ module Main where
 
 import System.Exit (exitSuccess)
 
-import Env (initAppEnvData)
+import Env (initAppEnvData, runAppEnv)
 import Configs (initConfigs)
 import OutputHandles (initOutputHandles)
 import Game (runGame)
+import Graphics (initGraphics)
+import InputState
+import GameState
 
+import Control.Monad.IO.Class (liftIO)
 
 main :: IO ()
 main = do
@@ -14,4 +18,4 @@ main = do
     outs <- initOutputHandles tm configs
     gr <- initGraphics tm outs
     inputs <- initInputState
-    runGame $ initAppEnvData configs outs inputs gr $ initGameState
+    runAppEnv (initAppEnvData configs outs inputs gr $ initGameState) runGame

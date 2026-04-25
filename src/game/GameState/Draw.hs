@@ -24,13 +24,14 @@ import Graphics.Draw
 import Graphics.Types
 import Graphics.Menu
 
-updateWindow :: (MonadIO m, ConfigsRead m, GameStateRead m) => m ToRender
+updateWindow :: (MonadIO m, ConfigsRead m, GameStateRead m, GraphicsRead m) => m ToRender
 updateWindow = do
     cfgs <- readConfigs
     gs <- readGameState
+    gr <- readGraphics
     case (gameLastDraw gs, gameView gs) of
         (Just r, _) -> return r
-        (Nothing, GameViewInfo gv) -> return $ updateWindow' (gameGraphics gs) gv
+        (Nothing, GameViewInfo gv) -> return $ updateWindow' gr gv
         _ -> error "Cannot draw exiting game state"
 
 

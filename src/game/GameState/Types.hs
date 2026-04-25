@@ -9,6 +9,9 @@ module GameState.Types
     , OverlayView(..)
     , GameMenu(..)
     , TransitionBehavior(..)
+    , GameStateStep(..)
+    , GameStep(..)
+    , Action(..)
     , mergeGameViews
     , mergeGameDrawInfo
     ) where

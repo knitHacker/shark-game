@@ -11,6 +11,7 @@ module GameState.Menu.GameMenus
     , introResearch
     , introBoat
     , introEnd
+    , splash
     ) where
 
 import qualified Data.Map.Strict as M
@@ -39,6 +40,9 @@ import InputState
 import Util
 
 import Debug.Trace
+
+splash :: InputState -> GameView
+splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing
 
 updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
 updateWave gr fr (i, wave)

@@ -33,29 +33,28 @@ import Debug.Trace
 import Data.Maybe (catMaybes)
 
 initGameState :: GameState
-initGameState = GameState SplashScreen (GameViewInfo (GameView vw Nothing [] Nothing)) Nothing
+initGameState = GameState SplashScreen (GameViewInfo (GameView vw Nothing [TimeoutData 0 10 $ TimeoutNext $ MainMenu Nothing] Nothing)) Nothing
     where
         vw = View [] [] [] [] Nothing
 
 
-updateGameState :: (MonadIO m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
+updateGameState :: (MonadIO m, GraphicsRead m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
 updateGameState = do
     cfgs <- readConfigs
     inputs <- readInputState
     gs <- readGameState
     outs <- getOutputs
-    gr <- readGraphics
-    let gr' = updateGraphics gr cfgs inputs
-        gsM = updateGameView gr' inputs $ gameView gs
+    gr' <- readGraphics
+    let gsM = updateGameView gr' inputs $ gameView gs
     case (windowResized inputs, gsM) of
-        (Just resize, _) -> do
+        (Just resize, _) ->
             let gv = reDrawState (gameLastState gs) cfgs inputs gr'
-            return $ GameState gr' (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
+            in return $ GameState (gameLastState gs) (mergeGameDrawInfo (gameView gs) gv) Nothing
         (Nothing, Nothing) -> return gs
-        (_, Just (Left gv)) -> return $ GameState gr' (gameLastState gs) gv Nothing
+        (_, Just (Left gv)) -> return $ GameState (gameLastState gs) gv Nothing
         (_, Just (Right gps)) -> do
             (lgps, gv) <- liftIO $ moveToNextState gps cfgs inputs gr'
-            return $ GameState gr' lgps gv Nothing
+            return $ GameState lgps gv Nothing
 
 
 updateGameView :: Graphics -> InputState -> GameDrawInfo -> Maybe (Either GameDrawInfo GamePlayState)
@@ -148,6 +147,7 @@ gameMenuPause gr gps gd (GameMenu v m) = withPause gr gps gd $ GameView v Nothin
 reDrawState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> GameDrawInfo
 reDrawState gps cfgs inputs gr =
     case gps of
+        SplashScreen -> GameViewInfo $ splash inputs
         GameExitState (Just gd) -> GameExiting
         GameExitState Nothing -> GameExiting
         MainMenu gdM -> GameViewInfo $ mainMenu gdM gr

@@ -13,6 +13,7 @@ import GameState.Draw
 import GameState.Types
 import SaveData
 import Configs
+import Graphics.Types
 
 import qualified SDL
 import Control.Monad.IO.Class ()
@@ -28,22 +29,22 @@ import Control.Arrow
 import Debug.Trace
 
 -- Game loop that enforces a frame rate throttling
-runGame :: (Monad m, ConfigsRead m, InputUpdate m, GraphicsRead m) => m ()
+runGame :: (Monad m, RenderAction m, GameStateStep m, ConfigsRead m, InputRead m, InputUpdate m, RenderAction m, GraphicsRead m, GraphicsUpdate m) => m ()
 runGame = do
     -- instance of InputUpdate decides how to get new input object
     input' <- updateInputState
-    if inputStateQuit input'
-        then return endGame
+    if inputQuit input'
+        then endGame
         else applyInputs input'
 
 
-applyInputs :: (Monad m, InputRead m) => InputState -> m ()
+applyInputs :: (Monad m, RenderAction m, ConfigsRead m, GameStateStep m, InputRead m, InputUpdate m, GraphicsRead m, GraphicsUpdate m) => InputState -> m ()
 applyInputs input' = do
-    _ <- updateWindow (windowResizeed input)
+    _ <- updateWindowSize (windowResized input')
     action <- getAction
     stepM <- executeAction action
     case stepM of
-        Nothing -> return endGame
+        Nothing -> endGame
         Just step -> do
             render <- stepGame step
             drawRender render
