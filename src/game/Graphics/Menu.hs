@@ -20,6 +20,7 @@ module Graphics.Menu
     , getTextureSize
     , textView
     , getOptionHeight
+    , emptyView
     ) where
 
 import qualified Data.Text as T
@@ -34,6 +35,9 @@ import InputState
 import Data.IntMap (update)
 
 import Debug.Trace
+
+emptyView :: View a
+emptyView = View [] [] [] [] Nothing
 
 textView :: [TextDisplay] -> View a
 textView words = View ((,0) <$> words) [] [] [] Nothing

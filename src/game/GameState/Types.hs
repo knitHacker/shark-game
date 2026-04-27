@@ -3,17 +3,14 @@ module GameState.Types
     , CursorType(..)
     , GamePlayState(..)
     , GameState(..)
-    , GameDrawInfo(..)
     , GameStateRead(..)
     , GameView(..)
     , OverlayView(..)
     , GameMenu(..)
-    , TransitionBehavior(..)
     , GameStateStep(..)
     , GameStep(..)
     , Action(..)
     , mergeGameViews
-    , mergeGameDrawInfo
     ) where
 
 import qualified Data.Map.Strict as M
@@ -28,13 +25,11 @@ import Shark.Types
 import Util
 import Data.IntMap.Merge.Lazy (merge)
 
-data TransitionBehavior = AllowTransitions | BlockTransitions
-    deriving (Eq, Show)
 
 data GameState = GameState
-    { gameLastState :: !GamePlayState
-    , gameView :: !GameDrawInfo
-    , gameLastDraw :: !(Maybe ToRender)
+    { gameState :: !GamePlayState
+    , gameView :: !GameView
+    , exiting :: !Bool
     }
 
 data OverlayView a = OverlayView
@@ -43,7 +38,6 @@ data OverlayView a = OverlayView
     , overlayMenu :: OverlayMenu a
     }
 
-data GameDrawInfo = GameViewInfo GameView | GameExiting
 
 data GameMenu = GameMenu
     { gameViewLayer :: View GamePlayState
@@ -57,10 +51,6 @@ data GameView = GameView
     , viewMenu :: Maybe (Menu GamePlayState)
     }
 
-mergeGameDrawInfo :: GameDrawInfo -> GameDrawInfo -> GameDrawInfo
-mergeGameDrawInfo (GameViewInfo gvInputUpdates) (GameViewInfo gvNewDraw) =
-    GameViewInfo $ mergeGameViews gvInputUpdates gvNewDraw
-mergeGameDrawInfo _ gvNewDraw = gvNewDraw
 
 mergeGameViews :: GameView -> GameView -> GameView
 mergeGameViews gvInputUpdates gvNewDraw = GameView
