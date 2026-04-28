@@ -70,6 +70,17 @@ data Graphics = Graphics
     , graphicsWindowHeight :: !Int
     } deriving (Show, Eq)
 
+-- view scroll position (if view scroll) (more than one?)
+-- menu cursor poosition
+-- menu scroll position
+-- menu highlight for multi select
+-- animation state / timeout state
+-- action if cursor selected?
+--data ViewState = ViewState
+--    { viewScrollPos :: Maybe Int
+--    , 
+--    }
+
 data OverlayMenu a = Overlay
     { bgXPos :: !Int
     , bgYPos :: !Int

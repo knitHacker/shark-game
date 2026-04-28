@@ -9,6 +9,7 @@ import Game (runGame)
 import Graphics (initGraphics)
 import InputState
 import GameState
+import GameState.Types
 
 import Control.Monad.IO.Class (liftIO)
 
@@ -18,4 +19,4 @@ main = do
     outs <- initOutputHandles tm configs
     gr <- initGraphics tm outs
     inputs <- initInputState
-    runAppEnv (initAppEnvData configs outs inputs gr $ initGameState) runGame
+    runAppEnv (initAppEnvData configs outs inputs gr $ Old $ initGameState (timestamp inputs)) runGame

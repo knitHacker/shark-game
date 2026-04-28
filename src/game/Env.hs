@@ -18,7 +18,7 @@ import Graphics.Types
 
 import Control.Monad.State.Strict (evalStateT)
 
-initAppEnvData :: GameConfigs -> OutputHandles -> InputState -> Graphics -> GameState -> AppEnvData
+initAppEnvData :: GameConfigs -> OutputHandles -> InputState -> Graphics -> StateType -> AppEnvData
 initAppEnvData = AppEnvData
 
 runAppEnv :: AppEnvData -> AppEnv a -> IO a

@@ -36,7 +36,7 @@ data AppEnvData = AppEnvData
     , appEnvDataOutputHandles :: !OutputHandles
     , appEnvDataInputState :: !InputState
     , appEnvDataGraphics :: !Graphics
-    , appEnvDataGameState :: !GameState
+    , appEnvDataGameState :: !StateType
     }
 
 
@@ -62,7 +62,7 @@ instance GraphicsRead AppEnv where
     readGraphics = gets appEnvDataGraphics
 
 instance GameStateRead AppEnv where
-    readGameState :: AppEnv GameState
+    readGameState :: AppEnv StateType
     readGameState = gets appEnvDataGameState
 
 instance InputRead AppEnv where
@@ -101,7 +101,15 @@ instance RenderAction AppEnv where
 
 instance GameStateStep AppEnv where
     getAction :: AppEnv Action
-    getAction = return $ Step NoChange
+    getAction = do
+        gt <- readGameState
+        case gt of
+            Old _ -> return $ Step NoChange
+            New gse -> do
+                cfgs <- readConfigs
+                inputs <- readInputState
+                return $ anyThink (gameStateE gse) cfgs inputs
+
 
     executeAction :: Action -> AppEnv (Maybe GameStep)
     executeAction (Exit _) = return Nothing
@@ -110,6 +118,14 @@ instance GameStateStep AppEnv where
 
     stepGame :: GameStep -> AppEnv ToRender
     stepGame _ = do
-        gs' <- updateGameState
-        modify $ \ae -> ae { appEnvDataGameState = gs' }
-        updateWindow
+        cfgs <- readConfigs
+        inputs <- readInputState
+        outs <- getOutputs
+        gr <- readGraphics
+        gt <- readGameState
+        case gt of
+            New _ -> undefined
+            Old gs -> do
+                gs' <- updateGameState cfgs inputs outs gr gs
+                modify $ \ae -> ae { appEnvDataGameState = Old gs' }
+                updateWindow

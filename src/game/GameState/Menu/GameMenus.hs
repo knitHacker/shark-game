@@ -16,6 +16,7 @@ module GameState.Menu.GameMenus
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import Data.Int (Int64)
 
 import Configs
 import SaveData
@@ -31,6 +32,7 @@ import OutputHandles.Util
 
 import GameState.Types
 import Graphics.Types
+import Graphics.NewTypes
 import Graphics.Menu
 import Graphics.TextUtil
 import Graphics.ImageUtil
@@ -41,8 +43,30 @@ import Util
 
 import Debug.Trace
 
+data SplashState = SplashState Int64
+
+instance GamePlayStateE SplashState where
+    think (SplashState start) cfgs inputs
+        | timestamp inputs - start < 100 = Step NoChange
+        | otherwise =
+            case lastSaveM (stateCfgs cfgs) of
+                Nothing -> Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing
+                Just fp -> LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState $ Just gd
+
+
+data MainMenuState = MainMenuState (Maybe GameData)
+
+instance GamePlayStateE MainMenuState where
+    think a cfgs inputs = Step NoChange
+
+    update gps@(MainMenuState gdM) cfgs inputs gr = Old $ GameState (AnyGamePlayState gps) mmv False
+        where
+            mmv = mainMenu gdM gr
+
+
 splash :: InputState -> GameView
 splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing
+
 
 updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
 updateWave gr fr (i, wave)

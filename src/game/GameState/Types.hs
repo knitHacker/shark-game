@@ -1,3 +1,5 @@
+{-# LANGUAGE ExistentialQuantification#-}
+
 module GameState.Types
     ( BlockDrawInfo(..)
     , CursorType(..)
@@ -10,7 +12,13 @@ module GameState.Types
     , GameStateStep(..)
     , GameStep(..)
     , Action(..)
+    , AnyGamePlayState(..)
+    , GamePlayStateE(..)
+    , GameSection(..)
+    , StateType(..)
+    , GameStateNew(..)
     , mergeGameViews
+    , anyThink
     ) where
 
 import qualified Data.Map.Strict as M
@@ -18,8 +26,12 @@ import Data.Int ( Int64 )
 import qualified Data.Text as T
 import Data.Maybe (isJust)
 
+
 import OutputHandles.Types
 import Graphics.Types
+import Graphics.NewTypes
+import Configs
+import InputState
 import SaveData
 import Shark.Types
 import Util
@@ -71,7 +83,7 @@ mergeGameViews gvInputUpdates gvNewDraw = GameView
 data GameStep =
       NoChange
     | Update
-    | Transition
+    | Transition AnyGamePlayState
 
 data Action =
       Step GameStep
@@ -82,7 +94,7 @@ data Action =
     | NewGame (GameData -> GameStep)
 
 data GamePlayState =
-      SplashScreen
+      SplashScreen Int64
     | MainMenu (Maybe GameData)
     | PauseMenu GameData GamePlayState
     | IntroWelcome (Maybe GameData)
@@ -120,12 +132,41 @@ data GamePlayState =
     | NewFundraiser GameData
     deriving (Eq, Show)
 
+data GameSection =
+      MainMenus
+    | TripMenus
+    | ReviewMenus
+    | LabMenus
+
 
 -- Class for reading game state from the top level monad
 class Monad m => GameStateRead m where
-    readGameState :: m GameState
+    readGameState :: m StateType
 
 class Monad m => GameStateStep m where
     getAction :: m Action
     executeAction :: Action -> m (Maybe GameStep)
     stepGame :: GameStep -> m ToRender
+
+
+class GamePlayStateE a where
+    think :: a -> GameConfigs -> InputState -> Action
+
+    update :: a -> GameConfigs -> InputState -> Graphics -> GameStateNew
+    update gps _ _ _ = New $ GameStateNew (AnyGamePlayState gps) (GView [])
+
+    {-# MINIMAL think #-}
+
+data AnyGamePlayState = forall a. GamePlayStateE a => AnyGamePlayState
+    { gameAState :: a
+    }
+
+data StateType = Old GameState | New GameStateNew
+
+data GameStateNew = GameStateNew
+    { gameStateE :: AnyGamePlayState
+    , gView :: GView AnyGamePlayState
+    }
+
+anyThink :: AnyGamePlayState -> GameConfigs -> InputState -> Action
+anyThink (AnyGamePlayState s) cfgs inputs = think s cfgs inputs

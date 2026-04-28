@@ -23,6 +23,7 @@ import Graphics.Animation
 import Graphics.TextUtil
 
 import qualified Data.Text as T
+import Data.Int (Int64)
 
 import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
@@ -31,8 +32,8 @@ import Control.Monad.IO.Class ( MonadIO(..) )
 import Debug.Trace
 import Data.Maybe (catMaybes)
 
-initGameState :: GameState
-initGameState = GameState SplashScreen (GameView vw Nothing [TimeoutData 0 10 $ TimeoutNext $ MainMenu Nothing] Nothing) False
+initGameState :: Int64 -> GameState
+initGameState ts = GameState (SplashScreen ts) (GameView vw Nothing [TimeoutData 0 10 $ TimeoutNext $ MainMenu Nothing] Nothing) False
     where
         vw = View [] [] [] [] Nothing
 
@@ -43,13 +44,8 @@ initGameState = GameState SplashScreen (GameView vw Nothing [TimeoutData 0 10 $ 
 --    case gameLastState gs of
 
 
-updateGameState :: (MonadIO m, GraphicsRead m, ConfigsRead m, GameStateRead m, InputRead m, OutputRead m) => m GameState
-updateGameState = do
-    cfgs <- readConfigs
-    inputs <- readInputState
-    gs <- readGameState
-    outs <- getOutputs
-    gr' <- readGraphics
+updateGameState :: (MonadIO m) => GameConfigs -> InputState -> OutputHandles -> Graphics -> GameState -> m GameState
+updateGameState cfgs inputs outs gr' gs = do
     let gsM = updateGameView gr' inputs $ gameView gs
     case (windowResized inputs, gsM) of
         (Just resize, _) ->
@@ -153,7 +149,7 @@ emptyGameView = GameView emptyView Nothing [] Nothing
 reDrawState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> GameState
 reDrawState gps cfgs inputs gr =
     case gps of
-        SplashScreen -> GameState gps (splash inputs) False
+        SplashScreen _ -> GameState gps (splash inputs) False
         GameExitState (Just gd) -> GameState gps emptyGameView True
         GameExitState Nothing -> GameState gps emptyGameView True
         MainMenu gdM -> GameState gps (mainMenu gdM gr) False
