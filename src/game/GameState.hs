@@ -23,6 +23,7 @@ import Graphics.NewTypes
 import Graphics.Menu
 import Graphics.Animation
 import Graphics.TextUtil
+import Graphics.Asset
 
 import qualified Data.Text as T
 import Data.Int (Int64)

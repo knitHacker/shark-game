@@ -39,6 +39,7 @@ import Graphics.Menu
 import Graphics.TextUtil
 import Graphics.ImageUtil
 import Graphics.Animation
+import Graphics.Asset
 
 import InputState
 import Util
@@ -66,11 +67,12 @@ instance GamePlayStateE MainMenuState where
 
     transition gps@(MainMenuState gdM) cfgs inputs gr = GameStateNew (AnyGamePlayState gps) assets
         where
-            assets = GView (words ++ []) []
+            assets = GView (words ++ [back]) []
             words = [ staticText "Shark" Gray 10 10 14 2
                     , staticText "Institute" Gray 100 200 12 2
+                    , centerText gr "Press ENTER to select" White 0 20 3 2
                     ]
-
+            back = backgroundAsset gr DarkBlue
 
 splash :: InputState -> GameView
 splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing

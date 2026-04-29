@@ -124,6 +124,7 @@ library shark-game-core
       GameState.Types
       Graphics
       Graphics.Animation
+      Graphics.Asset
       Graphics.Draw
       Graphics.ImageUtil
       Graphics.Menu

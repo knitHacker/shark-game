@@ -119,7 +119,9 @@ instance GameStateStep AppEnv where
             New gse -> do
                 cfgs <- readConfigs
                 inputs <- readInputState
-                return $ anyThink (gameStateE gse) cfgs inputs
+                if wasWindowResized inputs
+                    then return (Step ResizeWindow)
+                    else return $ anyThink (gameStateE gse) cfgs inputs
 
 
     executeAction :: Action -> AppEnv (Maybe GameStep)

@@ -5,9 +5,7 @@ module Graphics.NewTypes
     , AssetScroll(..)
     , AssetMenu(..)
     , AssetMenuItem(..)
-    , staticAsset
-    , staticText
-    , resizeGameView
+    , Overlay(..)
     ) where
 
 import Data.Int (Int64)
@@ -26,21 +24,9 @@ data GView a = GView
 
 data Overlay a = AOverlay
     { oAssets :: [Asset a]
-    , isActive :: Bool
+    , isOverlayActive :: Bool
     }
 
-resizeGameView :: a -> Graphics -> GView a -> GView a
-resizeGameView gps gr (GView ats ovs) = GView (doResize <$> ats) ((\(AOverlay o ia) -> AOverlay (doResize <$> o) ia) <$> ovs)
-    where
-        doResize asset = case assetResize asset of
-                            Nothing -> asset
-                            Just fn -> fn gps gr
-
-staticAsset :: AssetObj -> Int -> Int -> Double -> Int -> Asset a
-staticAsset o x y s l = Asset o x y s l True Nothing Nothing Nothing
-
-staticText :: T.Text -> Color -> Int -> Int -> Double -> Int -> Asset a
-staticText t c x y s l = Asset (AssetText t c) x y s l True Nothing Nothing Nothing
 
 data Asset a = Asset
     { object :: AssetObj
@@ -61,6 +47,7 @@ data AssetObj =
     | AssetScroll AssetScroll
     | AssetRect Int Int Color
     | AssetMenu AssetMenu
+    | AssetStacked [AssetObj] Int -- have the next y be the previous end y + space
 
 data AssetScroll = ScrollObj
     { scrollText :: [T.Text]
