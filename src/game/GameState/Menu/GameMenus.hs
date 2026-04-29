@@ -2,7 +2,9 @@
 {-# LANGUAGE TupleSections #-}
 
 module GameState.Menu.GameMenus
-    ( mainMenu
+    ( SplashState(..)
+    , initSplash
+    , mainMenu
     , researchCenterMenu
     , introWelcome
     , introMission
@@ -45,6 +47,9 @@ import Debug.Trace
 
 data SplashState = SplashState Int64
 
+initSplash :: InputState -> SplashState
+initSplash inputs = SplashState (timestamp inputs)
+
 instance GamePlayStateE SplashState where
     think (SplashState start) cfgs inputs
         | timestamp inputs - start < 100 = Step NoChange
@@ -59,9 +64,12 @@ data MainMenuState = MainMenuState (Maybe GameData)
 instance GamePlayStateE MainMenuState where
     think a cfgs inputs = Step NoChange
 
-    update gps@(MainMenuState gdM) cfgs inputs gr = Old $ GameState (AnyGamePlayState gps) mmv False
+    transition gps@(MainMenuState gdM) cfgs inputs gr = GameStateNew (AnyGamePlayState gps) assets
         where
-            mmv = mainMenu gdM gr
+            assets = GView (words ++ []) []
+            words = [ staticText "Shark" Gray 10 10 14 2
+                    , staticText "Institute" Gray 100 200 12 2
+                    ]
 
 
 splash :: InputState -> GameView

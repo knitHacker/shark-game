@@ -13,8 +13,10 @@ import OutputHandles.Types
 import InputState
 import GameState.Types
 import GameState.Draw
+import Graphics.NewDraw
 import GameState
 import Graphics.Types
+import SaveData
 
 -- import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad.State.Strict (StateT, MonadState, gets, modify)
@@ -78,6 +80,15 @@ instance InputUpdate AppEnv where
         modify $ \ae -> ae { appEnvDataInputState = new }
         return new
 
+instance GameDataStorage AppEnv where
+    newData = do
+        cfgs <- readConfigs
+        liftIO $ startNewGame cfgs
+
+    saveData gd = liftIO $ saveToFile gd
+
+    loadData fp = liftIO $ loadFromFile fp
+
 instance GraphicsUpdate AppEnv where
     updateWindowSize Nothing = return ()
     updateWindowSize (Just (w, h)) = do
@@ -114,17 +125,31 @@ instance GameStateStep AppEnv where
     executeAction :: Action -> AppEnv (Maybe GameStep)
     executeAction (Exit _) = return Nothing
     executeAction (Step step) = return $ Just step
-    executeAction _ = undefined
+    executeAction (LoadSave fp sf) = do
+        gdE <- loadData fp
+        case gdE of
+            Left err -> do
+                liftIO $ putStrLn ("Failed to load " ++ fp ++ " : " ++ show err)
+                return Nothing
+            Right gsd -> return $ Just $ sf gsd
+    executeAction (SaveData gd gs) = do
+        saveData gd
+        return $ Just gs
+    executeAction (NewGame sf) = (Just . sf) <$> newData
+    executeAction (SaveList sf) = undefined -- add later
 
     stepGame :: GameStep -> AppEnv ToRender
-    stepGame _ = do
+    stepGame step = do
         cfgs <- readConfigs
         inputs <- readInputState
         outs <- getOutputs
         gr <- readGraphics
         gt <- readGameState
         case gt of
-            New _ -> undefined
+            New gs -> do
+                let gsn' = stepGameState cfgs inputs gr gs step
+                modify $ \ae -> ae { appEnvDataGameState = New gsn' }
+                return $ drawAssets gr $ gView gsn'
             Old gs -> do
                 gs' <- updateGameState cfgs inputs outs gr gs
                 modify $ \ae -> ae { appEnvDataGameState = Old gs' }

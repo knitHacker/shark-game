@@ -4,6 +4,7 @@
 module GameState
     ( initGameState
     , updateGameState
+    , stepGameState
     ) where
 
 import Control.Monad ()
@@ -18,6 +19,7 @@ import SaveData
 import Configs
 import Graphics
 import Graphics.Types
+import Graphics.NewTypes
 import Graphics.Menu
 import Graphics.Animation
 import Graphics.TextUtil
@@ -32,17 +34,16 @@ import Control.Monad.IO.Class ( MonadIO(..) )
 import Debug.Trace
 import Data.Maybe (catMaybes)
 
-initGameState :: Int64 -> GameState
-initGameState ts = GameState (SplashScreen ts) (GameView vw Nothing [TimeoutData 0 10 $ TimeoutNext $ MainMenu Nothing] Nothing) False
-    where
-        vw = View [] [] [] [] Nothing
+initGameState :: GameConfigs -> InputState -> Graphics -> GameStateNew
+initGameState cfgs inputs gr = transition (initSplash inputs) cfgs inputs gr
 
 
---getAction :: (GameStateRead m) => m Action
---getAction = do
---    gs <- readGameState
---    case gameLastState gs of
-
+stepGameState :: GameConfigs -> InputState -> Graphics -> GameStateNew -> GameStep -> GameStateNew
+stepGameState cfgs inputs gr gsn step =
+    case step of
+        NoChange -> gsn
+        Transition (AnyGamePlayState gps) -> transition gps cfgs inputs gr
+        ResizeWindow -> gsn { gView = resizeGameView (gameStateE gsn) gr (gView gsn) }
 
 updateGameState :: (MonadIO m) => GameConfigs -> InputState -> OutputHandles -> Graphics -> GameState -> m GameState
 updateGameState cfgs inputs outs gr' gs = do

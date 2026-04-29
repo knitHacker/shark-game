@@ -6,9 +6,12 @@ module Graphics.NewTypes
     , AssetMenu(..)
     , AssetMenuItem(..)
     , staticAsset
+    , staticText
+    , resizeGameView
     ) where
 
 import Data.Int (Int64)
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
 import OutputHandles.Types
@@ -18,11 +21,26 @@ import InputState
 
 data GView a = GView
     { assets :: [Asset a]
+    , overlays :: [Overlay a]
     }
 
+data Overlay a = AOverlay
+    { oAssets :: [Asset a]
+    , isActive :: Bool
+    }
+
+resizeGameView :: a -> Graphics -> GView a -> GView a
+resizeGameView gps gr (GView ats ovs) = GView (doResize <$> ats) ((\(AOverlay o ia) -> AOverlay (doResize <$> o) ia) <$> ovs)
+    where
+        doResize asset = case assetResize asset of
+                            Nothing -> asset
+                            Just fn -> fn gps gr
 
 staticAsset :: AssetObj -> Int -> Int -> Double -> Int -> Asset a
-staticAsset o x y s l = Asset o x y s l Nothing Nothing Nothing
+staticAsset o x y s l = Asset o x y s l True Nothing Nothing Nothing
+
+staticText :: T.Text -> Color -> Int -> Int -> Double -> Int -> Asset a
+staticText t c x y s l = Asset (AssetText t c) x y s l True Nothing Nothing Nothing
 
 data Asset a = Asset
     { object :: AssetObj
@@ -30,6 +48,7 @@ data Asset a = Asset
     , assetY :: Int
     , assetScale :: Double
     , assetLayer :: Int
+    , isVisible :: Bool
     , assetResize :: Maybe (a -> Graphics -> Asset a)
     , assetAnimateStep :: Maybe (a -> Int64 -> Asset a)
     , assetInputUpdate :: Maybe (a -> InputState -> Asset a)
@@ -37,7 +56,7 @@ data Asset a = Asset
 
 data AssetObj =
       AssetImage Image
-    | AssetAnimation Image
+    | AssetAnimation Image Int Int
     | AssetText T.Text Color
     | AssetScroll AssetScroll
     | AssetRect Int Int Color
@@ -45,6 +64,7 @@ data AssetObj =
 
 data AssetScroll = ScrollObj
     { scrollText :: [T.Text]
+    , scrollColor :: Color
     , showTextScroll :: Bool
     , scrollLineSpace :: Int
     }

@@ -82,7 +82,9 @@ mergeGameViews gvInputUpdates gvNewDraw = GameView
 
 data GameStep =
       NoChange
-    | Update
+    | ResizeWindow -- pass in resize here?
+    | StepAnimation -- Todo: list of animations that need to be updated []
+    | InputUpdate -- Type for what input action? up / down?
     | Transition AnyGamePlayState
 
 data Action =
@@ -133,11 +135,11 @@ data GamePlayState =
     deriving (Eq, Show)
 
 data GameSection =
-      MainMenus
+      StartGame
+    | MainMenus
     | TripMenus
     | ReviewMenus
     | LabMenus
-
 
 -- Class for reading game state from the top level monad
 class Monad m => GameStateRead m where
@@ -152,8 +154,8 @@ class Monad m => GameStateStep m where
 class GamePlayStateE a where
     think :: a -> GameConfigs -> InputState -> Action
 
-    update :: a -> GameConfigs -> InputState -> Graphics -> GameStateNew
-    update gps _ _ _ = New $ GameStateNew (AnyGamePlayState gps) (GView [])
+    transition :: a -> GameConfigs -> InputState -> Graphics -> GameStateNew
+    transition gps _ _ _ = GameStateNew (AnyGamePlayState gps) (GView [] [])
 
     {-# MINIMAL think #-}
 

@@ -127,6 +127,7 @@ library shark-game-core
       Graphics.Draw
       Graphics.ImageUtil
       Graphics.Menu
+      Graphics.NewDraw
       Graphics.NewTypes
       Graphics.TextUtil
       Graphics.Types
