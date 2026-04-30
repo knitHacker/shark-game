@@ -121,7 +121,10 @@ instance GameStateStep AppEnv where
                 inputs <- readInputState
                 if wasWindowResized inputs
                     then return (Step ResizeWindow)
-                    else return $ anyThink (gameStateE gse) cfgs inputs
+                    else do
+                        let (gps, act) = anyThink (gameStateE gse) cfgs inputs
+                        modify $ \ae -> ae { appEnvDataGameState = New $ gse { gameStateE = gps } }
+                        return act
 
 
     executeAction :: Action -> AppEnv (Maybe GameStep)

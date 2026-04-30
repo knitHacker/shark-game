@@ -10,6 +10,8 @@ module OutputHandles.Images
     , getImageMinX
     , getImageMaxY
     , getImageMaxX
+    , getAnimMaxY
+    , getAnimMaxX
     ) where
 
 import OutputHandles.Types
@@ -37,6 +39,12 @@ getImageMaxY imgs = maximum $ map (\img -> fromIntegral (drawPosY img + drawHeig
 
 getImageMaxX :: [DrawTexture] -> Int
 getImageMaxX imgs = maximum $ map (\img -> fromIntegral (drawPosX img + drawWidth img)) imgs
+
+getAnimMaxY :: [DrawAnimFrame] -> Int
+getAnimMaxY anims = maximum $ map (\anim -> fromIntegral (drawPosAY anim + ceiling (fromIntegral (drawAHeight anim) * drawScale anim))) anims
+
+getAnimMaxX :: [DrawAnimFrame] -> Int
+getAnimMaxX anims = maximum $ map (\anim -> fromIntegral (drawPosAX anim + ceiling (fromIntegral (drawAWidth anim) * drawScale anim))) anims
 
 addRectangle :: ToRender -> Int -> Int -> DrawRectangle -> ToRender
 addRectangle rend depth priority dr = addDraw rend depth priority (DrawRectangle dr)

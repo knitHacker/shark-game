@@ -20,6 +20,7 @@ module InputState
     , iPressed
     , spacePressed
     , moveInputPressed
+    , moveInputJustPressed
     , inputQuit
     , wasWindowResized
     ) where
@@ -121,6 +122,9 @@ moveInputPressed :: InputState -> Bool
 moveInputPressed (InputState (Just (Keyboard _ (Just _) _ _)) _ _ _) = True
 moveInputPressed _ = False
 
+moveInputJustPressed :: InputState -> Bool
+moveInputJustPressed (InputState (Just (Keyboard _ (Just _) _ False)) _ _ _) = True
+moveInputJustPressed _ = False
 
 updateRepeat :: InputState -> Int64 -> InputState
 updateRepeat (InputState (Just (Keyboard sq sd c _)) _ _ _) ts = InputState (Just (Keyboard sq sd c True)) Nothing Nothing ts

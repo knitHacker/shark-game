@@ -5,6 +5,7 @@ module Graphics.NewTypes
     , AssetScroll(..)
     , AssetMenu(..)
     , AssetMenuItem(..)
+    , AssetStackItem(..)
     , Overlay(..)
     ) where
 
@@ -17,40 +18,44 @@ import Graphics.Types
 import Configs
 import InputState
 
-data GView a = GView
-    { assets :: [Asset a]
-    , overlays :: [Overlay a]
+data GView = GView
+    { assets :: [Asset]
+    , overlays :: [Overlay]
     }
 
-data Overlay a = AOverlay
-    { oAssets :: [Asset a]
+data Overlay = AOverlay
+    { oAssets :: [Asset]
     , isOverlayActive :: Bool
     }
 
 
-data Asset a = Asset
+data Asset = Asset
     { object :: AssetObj
     , assetX :: Int
     , assetY :: Int
-    , assetScale :: Double
     , assetLayer :: Int
     , isVisible :: Bool
-    , assetResize :: Maybe (a -> Graphics -> Asset a)
-    , assetAnimateStep :: Maybe (a -> Int64 -> Asset a)
-    , assetInputUpdate :: Maybe (a -> InputState -> Asset a)
+    , assetResize :: Maybe (Asset -> Graphics -> Asset)
+--    , assetAnimateStep :: Maybe (a -> Int64 -> Graphics -> Asset a)
     }
 
 data AssetObj =
-      AssetImage Image
-    | AssetAnimation Image Int Int
-    | AssetText T.Text Color
+      AssetImage Image Double
+    | AssetAnimation Image Int Int Double
+    | AssetText T.Text Color Int
     | AssetScroll AssetScroll
     | AssetRect Int Int Color
     | AssetMenu AssetMenu
-    | AssetStacked [AssetObj] Int -- have the next y be the previous end y + space
+    | AssetStacked [AssetStackItem] Int -- have the next y be the previous end y + space
+
+data AssetStackItem = StackItem
+    { stackItem :: AssetObj
+    , stackXOff :: Int
+    }
 
 data AssetScroll = ScrollObj
     { scrollText :: [T.Text]
+    , scrollTextSize :: Int
     , scrollColor :: Color
     , showTextScroll :: Bool
     , scrollLineSpace :: Int
@@ -65,6 +70,7 @@ data AssetMenu = MenuObj
 data AssetMenuItem = MenuItem
     { menuItemText :: T.Text
     , menuItemColor :: Color
-    , highlightedColor :: Color
-    , isHighlighted :: Bool
+    , menuItemFontSize :: Int
+    , highlightedColor :: Maybe Color
+    , cursorImg :: Maybe (Image, Double)
     }

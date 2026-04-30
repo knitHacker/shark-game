@@ -36,15 +36,16 @@ import Debug.Trace
 import Data.Maybe (catMaybes)
 
 initGameState :: GameConfigs -> InputState -> Graphics -> GameStateNew
-initGameState cfgs inputs gr = transition (initSplash inputs) cfgs inputs gr
+initGameState cfgs inputs gr = transition (initSplash inputs) cfgs gr
 
 
 stepGameState :: GameConfigs -> InputState -> Graphics -> GameStateNew -> GameStep -> GameStateNew
-stepGameState cfgs inputs gr gsn step =
+stepGameState cfgs inputs gr gsn@(GameStateNew (AnyGamePlayState gps) gV) step =
     case step of
         NoChange -> gsn
-        Transition (AnyGamePlayState gps) -> transition gps cfgs inputs gr
+        Transition (AnyGamePlayState gps) -> transition gps cfgs gr
         ResizeWindow -> gsn { gView = resizeGameView (gameStateE gsn) gr (gView gsn) }
+        InputUpdate -> update gps gV cfgs gr
 
 updateGameState :: (MonadIO m) => GameConfigs -> InputState -> OutputHandles -> Graphics -> GameState -> m GameState
 updateGameState cfgs inputs outs gr' gs = do

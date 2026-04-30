@@ -19,6 +19,7 @@ module GameState.Menu.GameMenus
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Data.Int (Int64)
+import Data.Maybe (isJust)
 
 import Configs
 import SaveData
@@ -52,27 +53,55 @@ initSplash :: InputState -> SplashState
 initSplash inputs = SplashState (timestamp inputs)
 
 instance GamePlayStateE SplashState where
-    think (SplashState start) cfgs inputs
-        | timestamp inputs - start < 100 = Step NoChange
+    think gps@(SplashState start) cfgs inputs
+        | timestamp inputs - start < 100 = (gps, Step NoChange)
         | otherwise =
             case lastSaveM (stateCfgs cfgs) of
-                Nothing -> Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing
-                Just fp -> LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState $ Just gd
+                Nothing -> (gps, Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing NewGameMain)
+                Just fp -> (gps, LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState (Just gd) ContinueMain)
 
 
-data MainMenuState = MainMenuState (Maybe GameData)
+data MainMenuOpt = ContinueMain | NewGameMain | ExitMain
+                  deriving (Enum, Ord, Eq, Show)
+
+data MainMenuState = MainMenuState (Maybe GameData) MainMenuOpt
 
 instance GamePlayStateE MainMenuState where
-    think a cfgs inputs = Step NoChange
+    think gps@(MainMenuState gdM mmo) cfgs inputs
+        | enterJustPressed inputs =
+            case mmo of
+                ContinueMain -> undefined
+                NewGameMain -> (undefined, NewGame (\gd -> Transition (AnyGamePlayState (IntroState gd IntroWelcomePage))))
+                ExitMain -> (gps, Exit Nothing)
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, gdM, mmo) of
+                (Just DUp, Just _, ContinueMain) -> (gps, Step NoChange)
+                (Just DUp, Nothing, NewGameMain) -> (gps, Step NoChange)
+                (Just DUp, _, _) -> (MainMenuState gdM (pred mmo), Step InputUpdate)
+                (Just DDown, _, ExitMain) -> (gps, Step NoChange)
+                (Just DDown, _, _) -> (MainMenuState gdM (succ mmo), Step InputUpdate)
+                _ -> (gps, Step NoChange)
+        | otherwise = (gps, Step NoChange)
 
-    transition gps@(MainMenuState gdM) cfgs inputs gr = GameStateNew (AnyGamePlayState gps) assets
+    transition gps@(MainMenuState gdM mmo) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
         where
-            assets = GView (words ++ [back]) []
-            words = [ staticText "Shark" Gray 10 10 14 2
-                    , staticText "Institute" Gray 100 200 12 2
-                    , centerText gr "Press ENTER to select" White 0 20 3 2
-                    ]
+            gview = GView assets []
+            assets = [ back
+                     , staticText "Shark" Gray 10 10 14 2
+                     , staticText "Institute" Gray 100 200 12 2
+                     , centerText gr "Press ENTER to select" White 0 20 3 2
+                     , menuAsset (midX gr - 40) (midY gr + 100)
+                     ]
             back = backgroundAsset gr DarkBlue
+            menuOpts = (if isJust gdM then [("Continue", ContinueMain)] else []) ++ [("New Game", NewGameMain), ("Exit", ExitMain)]
+            items = mkMenuItem menuOpts
+            cursor m = if m == mmo then Just ("green_arrow", 4) else Nothing
+            mkMenuItem [] = []
+            mkMenuItem ((i, sel):tl) = MenuItem i Blue 3 Nothing (cursor sel) : mkMenuItem tl
+            menuAsset x y = Asset (AssetMenu (MenuObj items False 2)) x y 2 True (Just resizeMenu)
+            midX gr' = graphicsWindowWidth gr' `div` 2
+            midY gr' = graphicsWindowHeight gr' `div` 2
+            resizeMenu asset' gr' = asset' { assetX = midX gr' - 40, assetY = midY gr' + 100 }
 
 splash :: InputState -> GameView
 splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing
@@ -124,6 +153,30 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
                 Nothing -> [newGame, exitOpt]
                 Just cg -> [continueGame cg, newGame, exitOpt]
         nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave gr frame <$> zip [1..] aps }
+
+data IntroPage = IntroWelcomePage | IntroMissionPage | IntroBoatPage | IntroEquipPage | IntroResearchPage | IntroFundsPage | IntroEndPage
+               deriving (Show, Enum, Eq, Ord)
+
+data IntroState = IntroState GameData IntroPage
+
+instance GamePlayStateE IntroState where
+    think is@(IntroState gd page) _ inputs
+        | enterJustPressed inputs && page < IntroEndPage = (IntroState gd (succ page), Step InputUpdate) -- maybe transition?
+        | otherwise = (is, Step NoChange)
+
+    transition is@(IntroState gd IntroWelcomePage) _ gr =
+        where
+            gview = GView assets []
+            assets = [ centerTextX gr "Welcome!" White 0 20 12 1
+                     , wrapTextAsset gr 70 White welcomeText 3 2 1 200
+                     , centerTextX gr "SHARKS!!!" White 300
+                     , centerTextX gr endText White 
+                     ]
+            welcomeText = "You and a group of shark enthusiasts / scientists want to learn more about sharks instead of \
+                        \those marine mammals that seem to dominate the marine biology departments. \
+                        \Together you decide to open a new research center dedicated entirely to"
+            endText = "And you have been appointed the new director of the center!"
+
 
 
 introWelcome :: GameData -> Graphics -> GameMenu
