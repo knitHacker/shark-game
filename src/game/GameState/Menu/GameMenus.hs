@@ -164,14 +164,12 @@ instance GamePlayStateE IntroState where
         | enterJustPressed inputs && page < IntroEndPage = (IntroState gd (succ page), Step InputUpdate) -- maybe transition?
         | otherwise = (is, Step NoChange)
 
-    transition is@(IntroState gd IntroWelcomePage) _ gr =
+    transition is@(IntroState gd IntroWelcomePage) _ gr = GameStateNew (AnyGamePlayState is) $ GView assets []
         where
-            gview = GView assets []
             assets = [ centerTextX gr "Welcome!" White 0 20 12 1
-                     , wrapTextAsset gr 70 White welcomeText 3 2 1 200
-                     , centerTextX gr "SHARKS!!!" White 300
-                     , centerTextX gr endText White 
+                     , appendAssetStackCenterX gr sharksAsset (AssetText endText Green 2)
                      ]
+            sharksAsset = appendAssetStackCenterX gr (wrapTextAsset gr 80 White welcomeText 3 2 1 200 True) (AssetText "SHARKS!!!" White 4)
             welcomeText = "You and a group of shark enthusiasts / scientists want to learn more about sharks instead of \
                         \those marine mammals that seem to dominate the marine biology departments. \
                         \Together you decide to open a new research center dedicated entirely to"
