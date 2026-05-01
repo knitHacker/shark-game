@@ -10,8 +10,13 @@ module Graphics.Asset
     , centerText
     , wrapTextAsset
     , appendAssetStackCenterX
+    , appendAssetStackWith
+    , appendAssetStack
     , assetObjWidth
     , assetObjHeight
+    , getCenterX
+    , mkResizeAsset
+    , nextMenu
     ) where
 
 import qualified Data.Text as T
@@ -29,7 +34,8 @@ assetObjWidth gr (AssetText txt _ sz) = floor $ fromIntegral (T.length txt) * fo
 assetObjWidth _  (AssetRect w _ _) = w
 assetObjWidth gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (imageSizeX i) * scale) (M.lookup img (graphicsStaticTextures gr))
 assetObjWidth gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeX i) * scale) (M.lookup img (graphicsAnimTextures gr))
-assetObjWidth gr (AssetStacked items _) = maximum $ assetObjWidth gr . stackItem <$> items
+assetObjWidth gr (AssetStacked StackVertical items _)   = maximum $ assetObjWidth gr . stackItem <$> items
+assetObjWidth gr (AssetStacked StackHorizontal items sp) = sum $ (\i -> assetObjWidth gr (stackItem i) + sp) <$> items
 assetObjWidth gr (AssetMenu m) = maximum $ (\i -> floor $ fromIntegral (T.length (menuItemText i)) * fontWidth gr * fromIntegral (menuItemFontSize i)) <$> menuItems m
 assetObjWidth gr (AssetScroll sc) = maximum $ (\t -> floor $ fromIntegral (T.length t) * fontWidth gr * fromIntegral (scrollTextSize sc)) <$> scrollText sc
 
@@ -39,13 +45,12 @@ assetObjHeight gr (AssetText _ _ sz) = ceiling $ fontHeight gr * fromIntegral sz
 assetObjHeight _  (AssetRect _ h _) = h
 assetObjHeight gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (imageSizeY i) * scale) (M.lookup img (graphicsStaticTextures gr))
 assetObjHeight gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeY i) * scale) (M.lookup img (graphicsAnimTextures gr))
-assetObjHeight gr (AssetStacked items sp) = sum $ (\i -> assetObjHeight gr (stackItem i) + sp) <$> items
+assetObjHeight gr (AssetStacked StackVertical items sp)   = sum $ (\i -> assetObjHeight gr (stackItem i) + sp) <$> items
+assetObjHeight gr (AssetStacked StackHorizontal items _) = maximum $ (\i -> stackYOff i + assetObjHeight gr (stackItem i)) <$> items
 assetObjHeight gr (AssetMenu m) = let itemH i = ceiling (fontHeight gr * fromIntegral (menuItemFontSize i)) + menuLineSpace m
                                   in sum $ itemH <$> menuItems m
 assetObjHeight gr (AssetScroll sc) = let lh = ceiling (fontHeight gr * fromIntegral (scrollTextSize sc)) + scrollLineSpace sc
                                      in length (scrollText sc) * lh
-
-
 
 
 resizeGameView :: a -> Graphics -> GView -> GView
@@ -60,6 +65,17 @@ staticAsset o x y l = Asset o x y l True Nothing
 
 staticText :: T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
 staticText t c x y s l = Asset (AssetText t c s) x y l True Nothing
+
+mkResizeAsset :: Graphics -> AssetObj -> Int -> Bool -> Resize -> Asset
+mkResizeAsset gr obj l vis rFn = rFn (Asset obj undefined undefined l vis (Just rFn)) gr
+
+nextMenu :: Graphics -> Int -> Asset
+nextMenu gr l = mkResizeAsset gr (AssetMenu (MenuObj [MenuItem txt Blue sz (Just White) Nothing] False 0)) 2 True menuResize
+    where
+        txt = "Next"
+        sz = 3
+        txtX gr' = midTextStart gr' txt (fromIntegral sz)
+        menuResize asset' gr' = asset' { assetX = txtX gr', assetY = graphicsWindowHeight gr' - 100 }
 
 centerTextX :: Graphics -> T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
 centerTextX gr txt c xOff y s l = asset $ xMid gr
@@ -113,25 +129,62 @@ makeLines txt maxChar = ls ++ [last]
 wrapTextAsset :: Graphics -> Int -> Color -> T.Text -> Int -> Int -> Int -> Int -> Bool -> Asset
 wrapTextAsset gr percentWide c fullTxt sz sp l startY centerLine = asset gr
     where
-        maxChar gr'   = floor $ fromIntegral (graphicsWindowWidth gr') * (fromIntegral percentWide / 100.0) / (fontWidth gr' * fromIntegral sz)
-        lines gr'     = makeLines fullTxt (maxChar gr')
-        stackW gr'    = floor $ fromIntegral (graphicsWindowWidth gr') * (fromIntegral percentWide / 100.0)
+        maxChar gr' = floor $ fromIntegral (graphicsWindowWidth gr') * (fromIntegral percentWide / 100.0) / (fontWidth gr' * fromIntegral sz)
+        lines gr' = makeLines fullTxt (maxChar gr')
+        stackW gr' = floor $ fromIntegral (graphicsWindowWidth gr') * (fromIntegral percentWide / 100.0)
         lineXOff gr' txt
             | centerLine = (stackW gr' - floor (fromIntegral (T.length txt) * fontWidth gr' * fromIntegral sz)) `div` 2
             | otherwise  = 0
-        stack gr'     = (\txt -> StackItem (AssetText txt c sz) (lineXOff gr' txt)) <$> lines gr'
-        xStart gr'    = floor $ fromIntegral (graphicsWindowWidth gr') * ((100.0 - fromIntegral percentWide) / 100.0 / 2.0)
-        asset gr'     = Asset (AssetStacked (stack gr') sp) (xStart gr') startY l True $ Just resize
-        resize _ gr'  = asset gr'
+        stack gr' = (\txt -> StackItem (AssetText txt c sz) (lineXOff gr' txt) 0) <$> lines gr'
+        xStart gr' = floor $ fromIntegral (graphicsWindowWidth gr') * ((100.0 - fromIntegral percentWide) / 100.0 / 2.0)
+        asset gr' = Asset (AssetStacked StackVertical (stack gr') sp) (xStart gr') startY l True $ Just resize
+        resize _ gr' = asset gr'
 
 
-appendAssetStackCenterX :: Graphics -> Asset -> AssetObj -> Asset
-appendAssetStackCenterX gr baseAsset newObj = appendItem gr baseAsset
+appendAssetStackCenterX :: Graphics -> StackDir -> Asset -> Int -> AssetObj -> Asset
+appendAssetStackCenterX gr dir baseAsset yOff newObj = appendItem gr baseAsset
     where
         xOff gr' parentX = midStartX gr' (assetObjWidth gr' newObj) - parentX
         appendItem gr' a =
             let stack' = case object a of
-                    AssetStacked stack sp -> AssetStacked (stack ++ [StackItem newObj (xOff gr' (assetX a))]) sp
-                    obj                   -> AssetStacked [StackItem obj 0, StackItem newObj (xOff gr' (assetX a))] 2
+                    AssetStacked dir' stack sp
+                        | dir' == dir -> AssetStacked dir' (stack ++ [StackItem newObj (xOff gr' (assetX a)) yOff]) sp
+                    obj -> AssetStacked dir [StackItem obj 0 0, StackItem newObj (xOff gr' (assetX a)) yOff] 2
             in a { object = stack', assetResize = newResize }
         newResize = fmap (\fn _ gr' -> appendItem gr' (fn baseAsset gr')) (assetResize baseAsset)
+
+
+appendAssetStack :: Graphics -> StackDir -> Asset -> Int -> Int -> AssetObj -> Asset
+appendAssetStack gr dir baseAsset x yOff newObj = appendItem baseAsset
+    where
+        appendItem a =
+            let xOff = x - assetX a
+                stack' = case object a of
+                    obj@(AssetStacked d stack sp)
+                        | d == dir  -> AssetStacked d (stack ++ [StackItem newObj xOff yOff]) sp
+                        | otherwise -> AssetStacked dir [StackItem obj 0 0, StackItem newObj xOff yOff] sp
+                    obj -> case dir of
+                            StackHorizontal -> AssetStacked dir [StackItem obj 0 0, StackItem newObj 0 yOff] xOff
+                            StackVertical -> AssetStacked dir [StackItem obj 0 0, StackItem newObj xOff 0] yOff
+            in a { object = stack', assetResize = combResize }
+        combResize = fmap (\fn _ gr' -> appendItem (fn baseAsset gr')) (assetResize baseAsset)
+
+
+appendAssetStackWith :: Graphics -> StackDir -> Asset -> (Int -> Int -> Graphics -> AssetObj) -> Asset
+appendAssetStackWith gr dir baseAsset newObjFn = appendItem gr baseAsset
+    where
+        appendItem gr' a =
+            let newObj = newObjFn (assetX a) (assetY a) gr'
+                stack' = case object a of
+                    AssetStacked d stack sp
+                        | d == dir  -> AssetStacked d (stack ++ [StackItem newObj 0 0]) sp
+                    obj -> AssetStacked dir [StackItem obj 0 0, StackItem newObj 0 0] 2
+            in a { object = stack', assetResize = combResize }
+        combResize = Just $ combResize' (assetResize baseAsset)
+        combResize' (Just fn) _ gr' = appendItem gr' $ fn baseAsset gr'
+        combResize' _ _ gr' = appendItem gr' baseAsset
+
+getCenterX :: Graphics -> Int -> Int -> Int
+getCenterX gr startX width = midStartX gr width - startX
+    where
+        windowW = graphicsWindowWidth gr

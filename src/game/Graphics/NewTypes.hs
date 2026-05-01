@@ -7,6 +7,8 @@ module Graphics.NewTypes
     , AssetMenuItem(..)
     , AssetStackItem(..)
     , Overlay(..)
+    , StackDir(..)
+    , Resize
     ) where
 
 import Data.Int (Int64)
@@ -28,6 +30,7 @@ data Overlay = AOverlay
     , isOverlayActive :: Bool
     }
 
+type Resize = Asset -> Graphics -> Asset
 
 data Asset = Asset
     { object :: AssetObj
@@ -35,9 +38,12 @@ data Asset = Asset
     , assetY :: Int
     , assetLayer :: Int
     , isVisible :: Bool
-    , assetResize :: Maybe (Asset -> Graphics -> Asset)
+    , assetResize :: Maybe Resize
 --    , assetAnimateStep :: Maybe (a -> Int64 -> Graphics -> Asset a)
     }
+
+data StackDir = StackHorizontal | StackVertical
+              deriving (Show, Eq)
 
 data AssetObj =
       AssetImage Image Double
@@ -46,11 +52,12 @@ data AssetObj =
     | AssetScroll AssetScroll
     | AssetRect Int Int Color
     | AssetMenu AssetMenu
-    | AssetStacked [AssetStackItem] Int -- have the next y be the previous end y + space
+    | AssetStacked StackDir [AssetStackItem] Int -- have the next y be the previous end y + space
 
 data AssetStackItem = StackItem
     { stackItem :: AssetObj
     , stackXOff :: Int
+    , stackYOff :: Int
     }
 
 data AssetScroll = ScrollObj

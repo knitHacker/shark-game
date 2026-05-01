@@ -6,8 +6,6 @@ module GameState.Menu.GameMenus
     , initSplash
     , mainMenu
     , researchCenterMenu
-    , introWelcome
-    , introMission
     , introFunds
     , introEquipment
     , introResearch
@@ -164,41 +162,40 @@ instance GamePlayStateE IntroState where
         | enterJustPressed inputs && page < IntroEndPage = (IntroState gd (succ page), Step InputUpdate) -- maybe transition?
         | otherwise = (is, Step NoChange)
 
-    transition is@(IntroState gd IntroWelcomePage) _ gr = GameStateNew (AnyGamePlayState is) $ GView assets []
+    transition is@(IntroState gd IntroWelcomePage) _ gr = introWelcome gd gr
+    transition is@(IntroState gd IntroMissionPage) _ gr = introMission gd gr
+    transition is _ gr = GameStateNew (AnyGamePlayState is) $ GView [ centerTextX gr "INTRO" White 0 20 12 1] []
+
+
+introWelcome :: GameData -> Graphics -> GameStateNew
+introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomePage)) $ GView assets []
         where
             assets = [ centerTextX gr "Welcome!" White 0 20 12 1
-                     , appendAssetStackCenterX gr sharksAsset (AssetText endText Green 2)
+                     , withRow
+                     , centerTextX gr endText Green 0 600 2 1
+                     , nextMenu gr 1
                      ]
-            sharksAsset = appendAssetStackCenterX gr (wrapTextAsset gr 80 White welcomeText 3 2 1 200 True) (AssetText "SHARKS!!!" White 4)
+            welcomeAsset = wrapTextAsset gr 90 White welcomeText 2 3 1 200 False
+            dolphImg = AssetImage "no_dolphin" 1.0
+            sharkTxt = AssetText "SHARKS!!!" White 4
+            sharkRow x _ gr' = AssetStacked StackHorizontal
+                                [ StackItem dolphImg  (150 - x) 20
+                                , StackItem sharkTxt (getCenterX gr' (x + assetObjWidth gr' dolphImg) (assetObjWidth gr' sharkTxt)) 80
+                                ] 0
+            withRow = appendAssetStackWith gr StackVertical welcomeAsset sharkRow
             welcomeText = "You and a group of shark enthusiasts / scientists want to learn more about sharks instead of \
                         \those marine mammals that seem to dominate the marine biology departments. \
                         \Together you decide to open a new research center dedicated entirely to"
             endText = "And you have been appointed the new director of the center!"
 
-
-
-introWelcome :: GameData -> Graphics -> GameMenu
-introWelcome gd gr = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
+introMission :: GameData -> Graphics -> GameStateNew
+introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionPage)) $ GView assets []
     where
-        welcomeText = "You and a group of shark enthusiasts / scientists want to learn more about sharks instead of \
-                      \those marine mammals that seem to dominate the marine biology departments. \
-                      \Together you decide to open a new research center dedicated entirely to"
-        endText = "And you have been appointed the new director of the center!"
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
-        (wrappedWelcome, yEnd) = wrapTextMiddleX gr welcomeText 50 200 3 2 White
-        words = [ fst $ textMiddleX gr "Welcome!" 20 12 White
-                ] ++ wrappedWelcome ++
-                [ fst $ textMiddleX gr "SHARKS!!!" (fromIntegral yEnd + 100) 4 White
-                , fst $ textMiddleX gr endText 600 2 Green
-                ]
-        imgs = [IPlace 150 (yEnd + 20) 1.0 "no_dolphin" 1]
-        opts = [ MenuAction "Next" Nothing $ Just $ IntroMission gd
-               ]
-
-introMission :: GameData -> Graphics -> GameMenu
-introMission gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
-    where
+        assets = [ staticText "Mission" White 50 20 9 0
+                 , staticText "Statement" White 150 150 9 0
+                 , wrapTextAsset gr 90 White howItWorksText 2 3 0 300 False
+                 , nextMenu gr 1
+                 ]
         howItWorksText = "As the director of the Shark Research Center, you will plan research trips \
                          \to find a variety of shark species in the wild, collect data about them, \
                          \and contribute to the scientific and the community's understanding of these \
@@ -206,14 +203,17 @@ introMission gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 o
                          \the institute will gain recognition and funding to continue its important work. \
                          \You will need to manage your resources, plan research expeditions, and publish the data collected \
                          \to contribute to the understanding of sharks."
-        (wrappedHowItWorks, yEnd) = wrapTextMiddleX gr howItWorksText 40 300 3 2 White
-        words = TextDisplay "Mission" 50 20 9 White Nothing
-              : TextDisplay "Statement" 150 150 9 White Nothing
-              : wrappedHowItWorks
-        opts = [ MenuAction "Next" Nothing $ Just $ IntroBoat gd
-               ]
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
+
+
+introBoat :: GameData -> GameConfigs -> Graphics -> GameMenu
+introBoat gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroBoatPage)) $ GView assets []
+    where
+        startBoatKey = gameActiveBoat $ gameDataEquipment gd
+        startBoat = boats (sharkCfgs cfg) M.! startBoatKey
+        assets = [
+                 ,
+                 ]
+
 
 introBoat :: GameData -> GameConfigs -> Graphics -> GameMenu
 introBoat gd cfg gr = GameMenu (View ((,0) <$> words) [img] [] [] Nothing) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)

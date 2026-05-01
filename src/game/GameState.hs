@@ -156,8 +156,6 @@ reDrawState gps cfgs inputs gr =
         GameExitState (Just gd) -> GameState gps emptyGameView True
         GameExitState Nothing -> GameState gps emptyGameView True
         MainMenu gdM -> GameState gps (mainMenu gdM gr) False
-        IntroWelcome (Just gd)-> menuWithPause gd $ introWelcome gd gr
-        IntroMission gd -> menuWithPause gd $ introMission gd gr
         IntroBoat gd -> menuWithPause gd $ introBoat gd cfgs gr
         IntroEquipment gd -> menuWithPause gd $ introEquipment gd cfgs gr
         IntroResearch gd -> menuWithPause gd $ introResearch gd gr
@@ -205,12 +203,6 @@ moveToNextState gps cfgs inputs gr =
                 Just gd -> saveGame gd cfgs
                 Nothing -> return ()
             return (GameState gps (mainMenu gdM gr) False)
-        IntroWelcome (Just gd) -> return $ menuWithPause gd $ introWelcome gd gr
-        IntroWelcome Nothing -> do
-            nGame <- startNewGame cfgs
-            let gps' = IntroWelcome (Just nGame)
-            return $ gameMenuPause gr gps' nGame $ introWelcome nGame gr
-        IntroMission gd -> return $ menuWithPause gd $ introMission gd gr
         IntroBoat gd -> return $ menuWithPause gd $ introBoat gd cfgs gr
         IntroEquipment gd -> return $ menuWithPause gd $ introEquipment gd cfgs gr
         IntroResearch gd -> return $ menuWithPause gd $ introResearch gd gr
@@ -281,8 +273,3 @@ pauseMenu gr gps gd = OverlayView False (textView words) (Overlay overlayX overl
                , MenuAction "Main Menu" Nothing $ Just $ MainMenu $ Just gd
                , MenuAction "Save & Exit" Nothing $ Just (GameExitState (Just gd))
                ]
-
-introWelcomeIO :: GameConfigs -> Graphics -> IO GameView
-introWelcomeIO cfgs gr = do
-    nGame <- startNewGame cfgs
-    return $ gameMenu $ introWelcome nGame gr

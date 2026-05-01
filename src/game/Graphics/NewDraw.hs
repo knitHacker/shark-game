@@ -8,6 +8,7 @@ import Data.Maybe (fromJust)
 
 import Graphics.Types
 import Graphics.NewTypes
+import Graphics.Asset
 import Graphics.TextUtil
 import OutputHandles.Types
 import OutputHandles.Images
@@ -19,6 +20,9 @@ drawAssets gr gv = baseView
         baseView = foldl (drawAsset gr 0) mempty (assets gv)
         --TODO: Add overlays
 
+getMax :: StackDir -> Graphics -> Int -> Int -> AssetObj -> Int
+getMax StackHorizontal gr x y asset = x + assetObjWidth gr asset
+getMax StackVertical gr x y asset = y + assetObjHeight gr asset
 
 getTexture :: Graphics -> Image -> Int -> Int -> Double -> DrawTexture
 getTexture gr img x y s = DTexture img (fromIntegral x) (fromIntegral y) w h Nothing
@@ -43,40 +47,41 @@ drawAsset gr d r (Asset o x y l isVis _)
                     AssetAnimation an fr dp s -> addAnimTexture r d l $ getAnimFrame gr an fr dp x y s
                     AssetText txt c s -> addText r d l $ TextDisplay txt (fromIntegral x) (fromIntegral y) s c Nothing
                     AssetRect w h c -> addRectangle r d l $ DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
-                    AssetStacked ais sp -> fst $ addStack gr d r l sp x y ais
+                    AssetStacked dir ais sp -> fst $ addStack dir gr d r l sp x y ais
                     AssetMenu menu -> fst $ drawMenu gr d r l x y menu
                     _ -> r
 
-addStack :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> [AssetStackItem] -> (ToRender, Int)
-addStack gr d r l sp x y [] = (r, y)
-addStack gr d r l sp x y (h:tl) =
-    let (r', endY) = drawStack gr d r l sp x y h
-    in addStack gr d r' l sp x endY tl
+addStack :: StackDir -> Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> [AssetStackItem] -> (ToRender, Int)
+addStack StackHorizontal gr d r l sp x y [] = (r, x)
+addStack StackVertical gr d r l sp x y [] = (r, y)
+addStack dir gr d r l sp x y (h:tl) =
+    let (r', end) = drawStack dir gr d r l sp x y h
+    in case dir of
+        StackHorizontal -> addStack dir gr d r' l sp end y tl
+        StackVertical -> addStack dir gr d r' l sp x end tl
 
-drawStack :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> AssetStackItem -> (ToRender, Int)
-drawStack gr d r l sp x y (StackItem item xOff) =
+drawStack :: StackDir -> Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> AssetStackItem -> (ToRender, Int)
+drawStack dir gr d r l sp x y (StackItem item xOff yOff) =
     case item of
         AssetImage img s ->
-            let draw = getTexture gr img (x + xOff) y s
-                endY = getImageMaxY [draw]
-            in (addTexture r d l draw, endY + sp)
+            let draw = getTexture gr img (x + xOff) (y + yOff) s
+            in (addTexture r d l draw, end + sp)
         AssetAnimation an fr dp s ->
-            let draw = getAnimFrame gr an fr dp x y s
-                endY = getAnimMaxY [draw]
-            in (addAnimTexture r d l draw, endY + sp)
+            let draw = getAnimFrame gr an fr dp x (y + yOff) s
+            in (addAnimTexture r d l draw, end + sp)
         AssetText txt c s ->
-            let draw = TextDisplay txt (fromIntegral (x + xOff)) (fromIntegral y) s c Nothing
-                endY = fromJust $ getTextMaxY (graphicsFontSize gr) [draw]
-            in (addText r d l draw, endY + sp)
+            let draw = TextDisplay txt (fromIntegral (x + xOff)) (fromIntegral (y + yOff)) s c Nothing
+            in (addText r d l draw, end + sp)
         AssetRect w h c ->
-            let draw = DRectangle c (fromIntegral (x + xOff)) (fromIntegral y) (fromIntegral w) (fromIntegral h)
-                endY = getRectMaxY [draw]
-            in (addRectangle r d l draw, endY + sp)
+            let draw = DRectangle c (fromIntegral (x + xOff)) (fromIntegral (y + yOff)) (fromIntegral w) (fromIntegral h)
+            in (addRectangle r d l draw, end + sp)
         AssetScroll scroll -> undefined
-        AssetStacked stack sp' ->
-            let (r', endY) = addStack gr d r l sp' x y stack
-            in (r', endY + sp)
-        AssetMenu menu -> drawMenu gr d r l x y menu
+        AssetStacked dir' stack sp' ->
+            let (r', _) = addStack dir' gr d r l sp' (x + xOff) (y + yOff) stack
+            in (r', end + sp)
+        AssetMenu menu -> drawMenu gr d r l x (y + yOff) menu
+    where
+        end = getMax dir gr x y item
 
 -- TODO: Add the scroll bar draw logic
 -- probably needs start, end, bar start, bar end
@@ -118,14 +123,14 @@ getCursor gr img iS x y sz = DTexture img x' y' (floor curW) (floor curH) Nothin
 
 
 drawMenuItem :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> AssetMenuItem -> (ToRender, Int)
-drawMenuItem gr d r l sp x y (MenuItem txt c sz hlM csrM) = (addText r'' d l draw, maxY + sp)
+drawMenuItem gr d r l sp x y (MenuItem txt c sz hlM csrM) = (addText r'' d (l + 1) draw, maxY + sp)
     where
         r' = case hlM of
                 Nothing -> r
                 Just rc -> addRectangle r d l $ getTextRectangle gr rc (T.length txt) x y sz sp
         r'' = case csrM of
                 Nothing -> r'
-                Just (csr, iS) -> addTexture r d l $ getCursor gr csr iS x y sz
+                Just (csr, iS) -> addTexture r' d l $ getCursor gr csr iS x y sz
         draw = TextDisplay txt (fromIntegral x) (fromIntegral y) sz c Nothing
         maxY = fromJust $ getTextMaxY (graphicsFontSize gr) [draw]
 
