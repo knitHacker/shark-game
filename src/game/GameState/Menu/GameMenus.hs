@@ -164,15 +164,16 @@ instance GamePlayStateE IntroState where
 
     transition is@(IntroState gd IntroWelcomePage) _ gr = introWelcome gd gr
     transition is@(IntroState gd IntroMissionPage) _ gr = introMission gd gr
-    transition is _ gr = GameStateNew (AnyGamePlayState is) $ GView [ centerTextX gr "INTRO" White 0 20 12 1] []
+    transition is@(IntroState gd IntroBoatPage) cfgs gr = introBoat gd cfgs gr
+    transition is _ gr = GameStateNew (AnyGamePlayState is) $ GView [ centerTextX gr "INTRO" White 12 0 20 1] []
 
 
 introWelcome :: GameData -> Graphics -> GameStateNew
 introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomePage)) $ GView assets []
         where
-            assets = [ centerTextX gr "Welcome!" White 0 20 12 1
+            assets = [ centerTextX gr "Welcome!" White 12 0 20 1
                      , withRow
-                     , centerTextX gr endText Green 0 600 2 1
+                     , centerTextX gr endText Green 2 0 600 1
                      , nextMenu gr 1
                      ]
             welcomeAsset = wrapTextAsset gr 90 White welcomeText 2 3 1 200 False
@@ -204,33 +205,21 @@ introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionP
                          \You will need to manage your resources, plan research expeditions, and publish the data collected \
                          \to contribute to the understanding of sharks."
 
-
-introBoat :: GameData -> GameConfigs -> Graphics -> GameMenu
+introBoat :: GameData -> GameConfigs -> Graphics -> GameStateNew
 introBoat gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroBoatPage)) $ GView assets []
     where
         startBoatKey = gameActiveBoat $ gameDataEquipment gd
         startBoat = boats (sharkCfgs cfg) M.! startBoatKey
-        assets = [
-                 ,
+        assets = [ staticText "A Kind" White 40 20 8 0
+                 , staticText "Neighbor" White 100 130 9 0
+                 , wrapTextAsset gr 85 White boatText 2 3 0 320 False
+                 , centerAssetX gr (AssetImage (boatImage startBoat) 2.0) 100 400 0
+                 , nextMenu gr 1
                  ]
-
-
-introBoat :: GameData -> GameConfigs -> Graphics -> GameMenu
-introBoat gd cfg gr = GameMenu (View ((,0) <$> words) [img] [] [] Nothing) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
-    where
-        startBoatKey = gameActiveBoat $ gameDataEquipment gd
-        startBoat = boats (sharkCfgs cfg) M.! startBoatKey
-        img = IPlace 500 400 2.0 (boatImage startBoat) 1
         boatText = "Luckily a retiring fisherman has decided to donate his skiff to your cause, \
                    \so you have a way to conduct your research trips. It might be old and small and smelly \
                    \but it floats (most of the time). Maybe in the future we can get another boat..."
-        (wrappedBoat, yEnd) = wrapTextMiddleX gr boatText 75 320 3 2 White
-        words = TextDisplay "A Kind" 40 20 8 White Nothing
-              : TextDisplay "Neighbor" 100 130 9 White Nothing
-              : wrappedBoat
-        opts = [ MenuAction "Next" Nothing $ Just $ IntroEquipment gd ]
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
+
 
 introEquipment :: GameData -> GameConfigs -> Graphics -> GameMenu
 introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)

@@ -5,6 +5,7 @@ module Graphics.Asset
     , staticAsset
     , staticText
     , backgroundAsset
+    , centerAssetX
     , centerTextX
     , centerTextY
     , centerText
@@ -66,6 +67,7 @@ staticAsset o x y l = Asset o x y l True Nothing
 staticText :: T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
 staticText t c x y s l = Asset (AssetText t c s) x y l True Nothing
 
+-- assumes resize overwrites x and y
 mkResizeAsset :: Graphics -> AssetObj -> Int -> Bool -> Resize -> Asset
 mkResizeAsset gr obj l vis rFn = rFn (Asset obj undefined undefined l vis (Just rFn)) gr
 
@@ -77,14 +79,16 @@ nextMenu gr l = mkResizeAsset gr (AssetMenu (MenuObj [MenuItem txt Blue sz (Just
         txtX gr' = midTextStart gr' txt (fromIntegral sz)
         menuResize asset' gr' = asset' { assetX = txtX gr', assetY = graphicsWindowHeight gr' - 100 }
 
-centerTextX :: Graphics -> T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
-centerTextX gr txt c xOff y s l = asset $ xMid gr
+centerAssetX :: Graphics -> AssetObj -> Int -> Int -> Int -> Asset
+centerAssetX gr obj xOff y l = mkResizeAsset gr obj l True resize
     where
-        asset x = Asset (AssetText txt c s) (x + xOff) y l True (Just resize)
-        resize asset' gr' = asset' { assetX = xMid gr' }
-        letterWidth gr' = fontWidth gr' * fromIntegral s
-        textWidth gr' = fromIntegral (T.length txt) * letterWidth gr'
-        xMid gr' = (graphicsWindowWidth gr' - (floor (textWidth gr'))) `div` 2
+        resize asset' gr' = asset' { assetX = xMid gr' + xOff, assetY = y }
+        xMid gr' = (graphicsWindowWidth gr' - assetObjWidth gr' obj) `div` 2
+
+
+centerTextX :: Graphics -> T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
+centerTextX gr txt c s xOff y l = centerAssetX gr (AssetText txt c s) xOff y l
+
 
 centerTextY :: Graphics -> T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
 centerTextY gr txt c x yOff s l = asset $ yMid gr

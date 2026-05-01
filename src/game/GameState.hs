@@ -156,7 +156,6 @@ reDrawState gps cfgs inputs gr =
         GameExitState (Just gd) -> GameState gps emptyGameView True
         GameExitState Nothing -> GameState gps emptyGameView True
         MainMenu gdM -> GameState gps (mainMenu gdM gr) False
-        IntroBoat gd -> menuWithPause gd $ introBoat gd cfgs gr
         IntroEquipment gd -> menuWithPause gd $ introEquipment gd cfgs gr
         IntroResearch gd -> menuWithPause gd $ introResearch gd gr
         IntroFunds gd -> menuWithPause gd $ introFunds gd gr
@@ -203,7 +202,6 @@ moveToNextState gps cfgs inputs gr =
                 Just gd -> saveGame gd cfgs
                 Nothing -> return ()
             return (GameState gps (mainMenu gdM gr) False)
-        IntroBoat gd -> return $ menuWithPause gd $ introBoat gd cfgs gr
         IntroEquipment gd -> return $ menuWithPause gd $ introEquipment gd cfgs gr
         IntroResearch gd -> return $ menuWithPause gd $ introResearch gd gr
         IntroFunds gd -> return $ menuWithPause gd $ introFunds gd gr

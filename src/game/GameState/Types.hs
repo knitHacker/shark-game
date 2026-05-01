@@ -100,8 +100,6 @@ data GamePlayState =
     | MainMenu (Maybe GameData)
     | PauseMenu GameData GamePlayState
     | IntroWelcome (Maybe GameData)
-    | IntroMission GameData
-    | IntroBoat GameData
     | IntroEquipment GameData
     | IntroResearch GameData
     | IntroFunds GameData
