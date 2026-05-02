@@ -9,7 +9,6 @@ import Env
 import Env.Types
 import InputState
 import GameState
-import GameState.Draw
 import GameState.Types
 import SaveData
 import Configs

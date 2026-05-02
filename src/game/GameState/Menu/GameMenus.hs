@@ -47,11 +47,11 @@ initSplash inputs = SplashState (timestamp inputs)
 
 instance GamePlayStateE SplashState where
     think gps@(SplashState start) cfgs inputs
-        | timestamp inputs - start < 100 = (gps, Step NoChange)
+        | timestamp inputs - start < 100 = Step NoChange
         | otherwise =
             case lastSaveM (stateCfgs cfgs) of
-                Nothing -> (gps, Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing NewGameMain)
-                Just fp -> (gps, LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState (Just gd) ContinueMain)
+                Nothing -> Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing NewGameMain
+                Just fp -> LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState (Just gd) ContinueMain
 
 
 data MainMenuOpt = ContinueMain | NewGameMain | ExitMain
@@ -68,8 +68,8 @@ instance GamePlayStateE MainMenuState where
                 ExitMain -> (gps, Exit Nothing)
         | moveInputJustPressed inputs =
             case (inputDirection inputs, gdM, mmo) of
-                (Just DUp, Just _, ContinueMain) -> (gps, Step NoChange)
-                (Just DUp, Nothing, NewGameMain) -> (gps, Step NoChange)
+                (Just DUp, Just _, ContinueMain) -> Step NoChange
+                (Just DUp, Nothing, NewGameMain) -> Step NoChange
                 (Just DUp, _, _) -> (MainMenuState gdM (pred mmo), Step InputUpdate)
                 (Just DDown, _, ExitMain) -> (gps, Step NoChange)
                 (Just DDown, _, _) -> (MainMenuState gdM (succ mmo), Step InputUpdate)
@@ -155,6 +155,7 @@ data IntroState = IntroState GameData IntroPage
 instance GamePlayStateE IntroState where
     think is@(IntroState gd page) _ inputs
         | enterJustPressed inputs && page < IntroEndPage = (IntroState gd (succ page), Step InputUpdate) -- maybe transition?
+        | enterJustPressed inputs && page == maxBound = (is, Step (Transition (initResearchCenter gd)))
         | otherwise = (is, Step NoChange)
 
     transition is@(IntroState gd IntroWelcomePage) _ gr = introWelcome gd gr
@@ -287,18 +288,31 @@ introEnd gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEndPage)) $ 
         endText = "With everything in place, you are now ready to begin your research expeditions. \
                   \Good luck, and may your studies contribute significantly to the understanding and conservation of sharks!"
 
-{-
-introEnd :: GameData -> Graphics -> GameMenu
-introEnd gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
-    where
-        endText = "With everything in place, you are now ready to begin your research expeditions. \
-                  \Good luck, and may your studies contribute significantly to the understanding and conservation of sharks!"
-        (wrappedEnd, yEnd) = wrapTextMiddleX gr endText 100 300 3 2 White
-        words = TextDisplay "Good Luck!" 100 50 12 White Nothing : wrappedEnd
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
-        opts = [ MenuAction "Begin Research" Nothing $ Just $ ResearchCenter gd ]
--}
+data RCMenu = PlanTripMenu | ReviewDataMenu | LabManagementMenu
+             deriving (Show, Eq, Ord, Enum)
+
+data ResearchCenterState = ResearchCenterState
+    { rcGameData :: GameData
+    , rcMenuSelect :: RCMenu
+    }
+
+initResearchCenter :: GameData -> ResearchCenterState
+initResearchCenter gd = ResearchCenterState gd minBound
+
+instance GamePlayStateE ResearchCenterState where
+    think rcs@(ResearchCenterState gd mSel) _ inputs
+        | enterJustPressed inputs =
+            case mSel of
+                PlanTripMenu -> 
+                ReviewDataMenu ->
+                LabManagementMenu -> 
+        | otherwise =(rcs, Step NoChange)
+
+    transition rcs@(ResearchCenterState gd) _ gr = GameStateNew rcs $ GView assets []
+        where
+            assets = [ staticText "Research" White 50 10 7 0
+                     , staticText "Center" White 200 140 7 0
+                     ]
 
 researchCenterMenu :: GameData -> Graphics -> GameView
 researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m

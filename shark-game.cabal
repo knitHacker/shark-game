@@ -116,7 +116,6 @@ library shark-game-core
       Env.Types
       Game
       GameState
-      GameState.Draw
       GameState.Menu.DataReviewMenu
       GameState.Menu.GameMenus
       GameState.Menu.LabMenus

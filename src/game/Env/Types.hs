@@ -12,7 +12,6 @@ import OutputHandles
 import OutputHandles.Types
 import InputState
 import GameState.Types
-import GameState.Draw
 import Graphics.NewDraw
 import GameState
 import Graphics.Types

@@ -83,7 +83,7 @@ data GameStep =
       NoChange
     | ResizeWindow -- pass in resize here?
     | StepAnimation -- Todo: list of animations that need to be updated []
-    | InputUpdate -- Type for what input action? up / down?
+    | InputUpdate GameStateNew-- Type for what input action? up / down?
     | Transition AnyGamePlayState
 
 data Action =
@@ -98,11 +98,6 @@ data GamePlayState =
       SplashScreen Int64
     | MainMenu (Maybe GameData)
     | PauseMenu GameData GamePlayState
-    | IntroWelcome (Maybe GameData)
-    | IntroEquipment GameData
-    | IntroResearch GameData
-    | IntroFunds GameData
-    | IntroEnd GameData
     | ResearchCenter GameData
     | TripDestinationSelect GameData Int
     | TripEquipmentSelect GameData (Int, T.Text) [T.Text] Int
@@ -149,13 +144,13 @@ class Monad m => GameStateStep m where
 
 
 class GamePlayStateE a where
-    think :: a -> GameConfigs -> InputState -> (a, Action)
+    think :: a -> GameConfigs -> InputState -> Action
 
     transition :: a -> GameConfigs -> Graphics -> GameStateNew
     transition gps _ _ = GameStateNew (AnyGamePlayState gps) (GView [] [])
 
-    update :: a -> GView -> GameConfigs -> Graphics -> GameStateNew
-    update gps _ cfgs gr = transition gps cfgs gr
+    --update :: a -> GView -> GameConfigs -> Graphics -> GameStateNew
+    --update gps _ cfgs gr = transition gps cfgs gr
 
     {-# MINIMAL think #-}
 
@@ -168,7 +163,5 @@ data GameStateNew = GameStateNew
     , gView :: GView
     }
 
-anyThink :: AnyGamePlayState -> GameConfigs -> InputState -> (AnyGamePlayState, Action)
-anyThink (AnyGamePlayState s) cfgs inputs = (AnyGamePlayState gps, action)
-    where
-        (gps, action) = think s cfgs inputs
+anyThink :: AnyGamePlayState -> GameConfigs -> InputState -> Action
+anyThink (AnyGamePlayState s) cfgs inputs = think s cfgs inputs
