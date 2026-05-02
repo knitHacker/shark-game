@@ -18,6 +18,7 @@ module Graphics.Asset
     , getCenterX
     , mkResizeAsset
     , nextMenu
+    , singleMenu
     ) where
 
 import qualified Data.Text as T
@@ -71,13 +72,16 @@ staticText t c x y s l = Asset (AssetText t c s) x y l True Nothing
 mkResizeAsset :: Graphics -> AssetObj -> Int -> Bool -> Resize -> Asset
 mkResizeAsset gr obj l vis rFn = rFn (Asset obj undefined undefined l vis (Just rFn)) gr
 
-nextMenu :: Graphics -> Int -> Asset
-nextMenu gr l = mkResizeAsset gr (AssetMenu (MenuObj [MenuItem txt Blue sz (Just White) Nothing] False 0)) 2 True menuResize
+
+singleMenu :: Graphics -> T.Text -> Int -> Asset
+singleMenu gr txt l = mkResizeAsset gr (AssetMenu (MenuObj [MenuItem txt Blue sz (Just White) Nothing] False 0)) 2 True menuResize
     where
-        txt = "Next"
         sz = 3
         txtX gr' = midTextStart gr' txt (fromIntegral sz)
         menuResize asset' gr' = asset' { assetX = txtX gr', assetY = graphicsWindowHeight gr' - 100 }
+
+nextMenu :: Graphics -> Int -> Asset
+nextMenu gr l = singleMenu gr "Next" l
 
 centerAssetX :: Graphics -> AssetObj -> Int -> Int -> Int -> Asset
 centerAssetX gr obj xOff y l = mkResizeAsset gr obj l True resize
@@ -145,15 +149,15 @@ wrapTextAsset gr percentWide c fullTxt sz sp l startY centerLine = asset gr
         resize _ gr' = asset gr'
 
 
-appendAssetStackCenterX :: Graphics -> StackDir -> Asset -> Int -> AssetObj -> Asset
-appendAssetStackCenterX gr dir baseAsset yOff newObj = appendItem gr baseAsset
+appendAssetStackCenterX :: Graphics -> StackDir -> Asset -> Int -> Int -> AssetObj -> Asset
+appendAssetStackCenterX gr dir baseAsset xOff yOff newObj = appendItem gr baseAsset
     where
-        xOff gr' parentX = midStartX gr' (assetObjWidth gr' newObj) - parentX
+        xOffFn gr' parentX = midStartX gr' (assetObjWidth gr' newObj) - parentX + xOff
         appendItem gr' a =
             let stack' = case object a of
                     AssetStacked dir' stack sp
-                        | dir' == dir -> AssetStacked dir' (stack ++ [StackItem newObj (xOff gr' (assetX a)) yOff]) sp
-                    obj -> AssetStacked dir [StackItem obj 0 0, StackItem newObj (xOff gr' (assetX a)) yOff] 2
+                        | dir' == dir -> AssetStacked dir' (stack ++ [StackItem newObj (xOffFn gr' (assetX a)) yOff]) sp
+                    obj -> AssetStacked dir [StackItem obj 0 0, StackItem newObj (xOffFn gr' (assetX a)) yOff] 2
             in a { object = stack', assetResize = newResize }
         newResize = fmap (\fn _ gr' -> appendItem gr' (fn baseAsset gr')) (assetResize baseAsset)
 

@@ -6,9 +6,6 @@ module GameState.Menu.GameMenus
     , initSplash
     , mainMenu
     , researchCenterMenu
-    , introFunds
-    , introResearch
-    , introEnd
     , splash
     ) where
 
@@ -165,7 +162,8 @@ instance GamePlayStateE IntroState where
     transition is@(IntroState gd IntroBoatPage) cfgs gr = introBoat gd cfgs gr
     transition is@(IntroState gd IntroEquipPage) cfgs gr = introEquip gd cfgs gr
     transition is@(IntroState gd IntroResearchPage) _ gr = introResearch gd gr
-    transition is _ gr = GameStateNew (AnyGamePlayState is) $ GView [ centerTextX gr "INTRO" White 12 0 20 1] []
+    transition is@(IntroState gd IntroFundsPage) _ gr = introFunds gd gr
+    transition is@(IntroState gd IntroEndPage) _ gr = introEnd gd gr
 
 
 introWelcome :: GameData -> Graphics -> GameStateNew
@@ -261,26 +259,35 @@ introResearch gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroResearc
                  , nextMenu gr 1
                  ]
 
-
-introFunds :: GameData -> Graphics -> GameMenu
-introFunds gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
+introFunds :: GameData -> Graphics -> GameStateNew
+introFunds gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroFundsPage)) $ GView assets []
     where
+        assets = [ staticText "Funds" White 50 30 10 0
+                 , withStartMoney
+                 , nextMenu gr 1
+                 ]
         welcomeText = "All together we were able to raise initial funds to \
                       \support our research initiatives. These funds will help \
                       \cover the costs of equipment, travel, and other essential expenses. \
                       \Don't forget to check for new boats and equipment under the lab management menu!"
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
         grantText = "Initial Funds: "
-        startMoney = gameDataFunds gd
-        gd' = gd { gameDataFunds = startMoney }
-        (wrappedWelcome, yEnd) = wrapTextMiddleX gr welcomeText 50 250 3 2 White
-        words = TextDisplay "Funds" 50 30 10 White Nothing
-                : TextDisplay grantText 300 (fromIntegral yEnd + 100) 4 White Nothing
-                : TextDisplay (showMoney startMoney) 500 600 3 Green Nothing
-                : wrappedWelcome
-        opts = [ MenuAction "Next" Nothing $ Just $ IntroEnd gd' ]
+        startMoney = showMoney $ gameDataFunds gd
+        textAsset = wrapTextAsset gr 85 White welcomeText 2 3 0 250 False
+        withGrantText = appendAssetStackCenterX gr StackVertical textAsset (-50) 100 $ AssetText grantText White 4
+        withStartMoney = appendAssetStackCenterX gr StackVertical withGrantText (-5) 50 $ AssetText startMoney Green 3
 
+
+introEnd :: GameData -> Graphics -> GameStateNew
+introEnd gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEndPage)) $ GView assets []
+    where
+        assets = [ staticText "Good Luck!" White 100 50 12 0
+                 , wrapTextAsset gr 80  White endText 2 3 0 300 False
+                 , singleMenu gr "Begin Research" 1
+                 ]
+        endText = "With everything in place, you are now ready to begin your research expeditions. \
+                  \Good luck, and may your studies contribute significantly to the understanding and conservation of sharks!"
+
+{-
 introEnd :: GameData -> Graphics -> GameMenu
 introEnd gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
     where
@@ -291,6 +298,7 @@ introEnd gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts 
         optX = div (graphicsWindowWidth gr) 2
         optY = graphicsWindowHeight gr - 100
         opts = [ MenuAction "Begin Research" Nothing $ Just $ ResearchCenter gd ]
+-}
 
 researchCenterMenu :: GameData -> Graphics -> GameView
 researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m

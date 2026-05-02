@@ -79,9 +79,9 @@ drawStack dir gr d r l sp x y (StackItem item xOff yOff) =
         AssetStacked dir' stack sp' ->
             let (r', _) = addStack dir' gr d r l sp' (x + xOff) (y + yOff) stack
             in (r', end + sp)
-        AssetMenu menu -> drawMenu gr d r l x (y + yOff) menu
+        AssetMenu menu -> drawMenu gr d r l (x + xOff) (y + yOff) menu
     where
-        end = getMax dir gr x y item
+        end = getMax dir gr (x + xOff) (y + yOff) item
 
 -- TODO: Add the scroll bar draw logic
 -- probably needs start, end, bar start, bar end

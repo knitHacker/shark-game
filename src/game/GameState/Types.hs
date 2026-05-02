@@ -15,7 +15,6 @@ module GameState.Types
     , AnyGamePlayState(..)
     , GamePlayStateE(..)
     , GameSection(..)
-    , StateType(..)
     , GameStateNew(..)
     , mergeGameViews
     , anyThink
@@ -163,8 +162,6 @@ class GamePlayStateE a where
 data AnyGamePlayState = forall a. GamePlayStateE a => AnyGamePlayState
     { gameAState :: a
     }
-
-data StateType = Old GameState | New GameStateNew
 
 data GameStateNew = GameStateNew
     { gameStateE :: AnyGamePlayState
