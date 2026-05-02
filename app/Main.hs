@@ -19,4 +19,4 @@ main = do
     outs <- initOutputHandles tm configs
     gr <- initGraphics tm outs
     inputs <- initInputState
-    runAppEnv (initAppEnvData configs outs inputs gr $ New $ initGameState configs inputs gr) runGame
+    runAppEnv (initAppEnvData configs outs inputs gr $ initGameState configs inputs gr) runGame

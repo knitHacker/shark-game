@@ -3,7 +3,6 @@
 
 module GameState
     ( initGameState
-    , updateGameState
     , stepGameState
     ) where
 
@@ -46,19 +45,6 @@ stepGameState cfgs inputs gr gsn@(GameStateNew (AnyGamePlayState gps) gV) step =
         Transition (AnyGamePlayState gps) -> transition gps cfgs gr
         ResizeWindow -> gsn { gView = resizeGameView (gameStateE gsn) gr (gView gsn) }
         InputUpdate -> update gps gV cfgs gr
-
-updateGameState :: (MonadIO m) => GameConfigs -> InputState -> OutputHandles -> Graphics -> GameState -> m GameState
-updateGameState cfgs inputs outs gr' gs = do
-    let gsM = updateGameView gr' inputs $ gameView gs
-    case (windowResized inputs, gsM) of
-        (Just resize, _) ->
-            let gs' = reDrawState (gameState gs) cfgs inputs gr'
-            in if exiting gs' then return gs' else return $ gs { gameView = (mergeGameViews (gameView gs) (gameView gs')) }
-        (Nothing, Nothing) -> return gs
-        (_, Just (Left gv)) -> return $ GameState (gameState gs) gv False
-        (_, Just (Right gps)) -> do
-            gs' <- liftIO $ moveToNextState gps cfgs inputs gr'
-            return $ gs'
 
 
 updateGameView :: Graphics -> InputState -> GameView -> Maybe (Either GameView GamePlayState)
@@ -148,92 +134,6 @@ gameMenuPause gr gps gd (GameMenu v m) = GameState gps (withPause gr gps gd $ Ga
 
 emptyGameView :: GameView
 emptyGameView = GameView emptyView Nothing [] Nothing
-
-reDrawState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> GameState
-reDrawState gps cfgs inputs gr =
-    case gps of
-        SplashScreen _ -> GameState gps (splash inputs) False
-        GameExitState (Just gd) -> GameState gps emptyGameView True
-        GameExitState Nothing -> GameState gps emptyGameView True
-        MainMenu gdM -> GameState gps (mainMenu gdM gr) False
-        IntroEquipment gd -> menuWithPause gd $ introEquipment gd cfgs gr
-        IntroResearch gd -> menuWithPause gd $ introResearch gd gr
-        IntroFunds gd -> menuWithPause gd $ introFunds gd gr
-        IntroEnd gd -> menuWithPause gd $ introEnd gd gr
-        ResearchCenter gd -> GameState gps (withPause gr gps gd $ researchCenterMenu gd gr) False
-        TripDestinationSelect gd idx -> menuWithPause gd $ mapMenu gd idx gr cfgs
-        TripEquipmentSelect gd loc eqs cp -> menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
-        TripReview gd loc eqs -> menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
-        TripProgress gd tp -> GameState gps (withPause gr gps gd $ tripProgressMenu gd tp cfgs inputs gr) False
-        SharkFound gd sf tp -> gameMenuPause gr gps gd $ sharkFoundMenu gd sf tp cfgs gr
-        TripResults gd tp -> gameMenuPause gr gps gd $ tripResultsMenu gd tp cfgs gr
-        DataReviewTop gd -> menuWithPause gd $ topReviewMenu gd cfgs
-        SharkReviewTop gd mP -> menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr
-        SharkReview gd se -> menuWithPause gd $ sharkReviewMenu gd se cfgs gr
-        ResearchReviewTop gd -> menuWithPause gd $ topLabMenu gd cfgs
-        OpenResearchMenu gd -> menuWithPause gd $ openResearchMenu gd cfgs gr
-        CompletedResearchMenu gd -> menuWithPause gd $ completedResearchMenu gd cfgs gr
-        InvestigateResearchMenu gd rd -> menuWithPause gd $ investigateResearchMenu gd rd cfgs gr
-        AwardGrantMenu gd rd -> menuWithPause gd $ awardGrantMenu gd rd cfgs gr
-        CompletedResearchReviewMenu gd rd -> menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
-        LabManagement gd -> menuWithPause gd $ labTopMenu gd gr
-        FundraiserTop gd -> menuWithPause gd $ fundraiserTopMenu gd cfgs gr
-        FleetManagement gd -> GameState gps (withPause gr gps gd $ fleetManagementTopMenu gd cfgs inputs gr) False
-        EquipmentManagement gd -> menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
-        EquipmentStore popup gd -> menuWithPause gd $ equipmentStoreMenu popup gd cfgs gr
-        BoatStore popup gd -> menuWithPause gd $ boatStoreMenu popup gd cfgs gr
-        ChooseBoat gd -> menuWithPause gd $ chooseActiveBoatMenu gd cfgs
-        ViewDonors gd -> menuWithPause gd $ donorList gd gr
-        NewFundraiser gd -> menuWithPause gd $ fundraisingMenu gd cfgs gr
-    where
-        menuWithPause = gameMenuPause gr gps
-
-
-
-moveToNextState :: GamePlayState -> GameConfigs -> InputState -> Graphics -> IO GameState
-moveToNextState gps cfgs inputs gr =
-    case gps of
-        GameExitState (Just gd) -> do
-            saveGame gd cfgs
-            return $ (GameState gps emptyGameView True)
-        GameExitState Nothing -> return (GameState gps emptyGameView True)
-        MainMenu gdM -> do
-            case gdM of
-                Just gd -> saveGame gd cfgs
-                Nothing -> return ()
-            return (GameState gps (mainMenu gdM gr) False)
-        IntroEquipment gd -> return $ menuWithPause gd $ introEquipment gd cfgs gr
-        IntroResearch gd -> return $ menuWithPause gd $ introResearch gd gr
-        IntroFunds gd -> return $ menuWithPause gd $ introFunds gd gr
-        IntroEnd gd -> return $ menuWithPause gd $ introEnd gd gr
-        ResearchCenter gd -> return $ GameState gps (withPause gr gps gd $ researchCenterMenu gd gr) False
-        TripDestinationSelect gd idx -> return $ menuWithPause gd $ mapMenu gd idx gr cfgs
-        TripEquipmentSelect gd loc eqs cp -> return $ menuWithPause gd $ equipmentPickMenu gd loc eqs cp cfgs
-        TripReview gd loc eqs -> return $ menuWithPause gd $ reviewTripMenu gd loc eqs cfgs
-        TripProgress gd tp -> return $ GameState gps (withPause gr gps gd $ tripProgressMenu gd tp cfgs inputs gr) False
-        SharkFound gd sf tp -> return $ gameMenuPause gr gps gd $ sharkFoundMenu gd sf tp cfgs gr
-        TripResults gd tp -> return $ gameMenuPause gr gps gd $ tripResultsMenu gd tp cfgs gr
-        DataReviewTop gd -> return $ menuWithPause gd $ topReviewMenu gd cfgs
-        SharkReviewTop gd mP -> return $ menuWithPause gd $ topReviewSharksMenu gd mP cfgs gr
-        SharkReview gd se -> return $ menuWithPause gd $ sharkReviewMenu gd se cfgs gr
-        ResearchReviewTop gd -> return $ menuWithPause gd $ topLabMenu gd cfgs
-        OpenResearchMenu gd -> return $ menuWithPause gd $ openResearchMenu gd cfgs gr
-        CompletedResearchMenu gd -> return $ menuWithPause gd $ completedResearchMenu gd cfgs gr
-        InvestigateResearchMenu gd rd -> return $ menuWithPause gd $ investigateResearchMenu gd rd cfgs gr
-        AwardGrantMenu gd rd -> return $ menuWithPause gd $ awardGrantMenu gd rd cfgs gr
-        CompletedResearchReviewMenu gd rd -> return $ menuWithPause gd $ completedResearchReviewMenu gd rd cfgs gr
-        LabManagement gd -> return $ menuWithPause gd $ labTopMenu gd gr
-        FundraiserTop gd -> return $ menuWithPause gd $ fundraiserTopMenu gd cfgs gr
-        FleetManagement gd -> return $ GameState gps (withPause gr gps gd $ fleetManagementTopMenu gd cfgs inputs gr) False
-        EquipmentManagement gd -> return $ menuWithPause gd $ equipmentManagementTopMenu gd cfgs gr
-        EquipmentStore popup gd -> return $ menuWithPause gd $ equipmentStoreMenu popup gd cfgs gr
-        BoatStore popup gd -> return $ menuWithPause gd $ boatStoreMenu popup gd cfgs gr
-        ChooseBoat gd -> return $ menuWithPause gd $ chooseActiveBoatMenu gd cfgs
-        ViewDonors gd -> return $ menuWithPause gd $ donorList gd gr
-        NewFundraiser gd -> return $ menuWithPause gd $ fundraisingMenu gd cfgs gr
-    where
-        menuWithPause = gameMenuPause gr gps
-
 
 saveGame :: GameData -> GameConfigs -> IO ()
 saveGame gd cfgs = do

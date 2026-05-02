@@ -29,9 +29,7 @@ updateWindow = do
     cfgs <- readConfigs
     gs <- readGameState
     gr <- readGraphics
-    case gs of
-        Old gs' -> return $ updateWindow' gr (gameView gs')
-        _ -> undefined
+    return renderEmpty
 
 
 updateWindow' :: Graphics -> GameView -> ToRender

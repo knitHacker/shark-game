@@ -7,9 +7,7 @@ module GameState.Menu.GameMenus
     , mainMenu
     , researchCenterMenu
     , introFunds
-    , introEquipment
     , introResearch
-    , introBoat
     , introEnd
     , splash
     ) where
@@ -165,6 +163,8 @@ instance GamePlayStateE IntroState where
     transition is@(IntroState gd IntroWelcomePage) _ gr = introWelcome gd gr
     transition is@(IntroState gd IntroMissionPage) _ gr = introMission gd gr
     transition is@(IntroState gd IntroBoatPage) cfgs gr = introBoat gd cfgs gr
+    transition is@(IntroState gd IntroEquipPage) cfgs gr = introEquip gd cfgs gr
+    transition is@(IntroState gd IntroResearchPage) _ gr = introResearch gd gr
     transition is _ gr = GameStateNew (AnyGamePlayState is) $ GView [ centerTextX gr "INTRO" White 12 0 20 1] []
 
 
@@ -220,9 +220,8 @@ introBoat gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroBoatPag
                    \so you have a way to conduct your research trips. It might be old and small and smelly \
                    \but it floats (most of the time). Maybe in the future we can get another boat..."
 
-
-introEquipment :: GameData -> GameConfigs -> Graphics -> GameMenu
-introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
+introEquip :: GameData -> GameConfigs -> Graphics -> GameStateNew
+introEquip gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEquipPage)) $ GView assets []
     where
         eqKeys = gameOwnedEquipment $ gameDataEquipment gd
         eqs = map (\k -> equipment (sharkCfgs cfg) M.! k) eqKeys
@@ -231,23 +230,23 @@ introEquipment gd cfg gr = GameMenu (View words imgs [] rects Nothing) (Menu (se
         equipmentText = "With the initial funds you were also able to purchase some basic research equipment \
                         \to get your center up and running. It's not much, but it's a start. \
                         \Hopefully as you make progress in your research you can acquire more advanced gear."
-        (wrappedEquip, yEnd) = wrapTextMiddleX gr equipmentText 70 500 3 2 White
-        words = (TextDisplay "Equipment" 30 20 9 White Nothing, 0)
-              : (TextDisplay "Catch" (fromIntegral rectStartX + 40) (fromIntegral rectStartY + 10) 3 Blue Nothing, 2)
-              : (TextDisplay "Observe" (fromIntegral rectStartX + 340) (fromIntegral rectStartY + 10) 3 Blue Nothing, 2)
-              : ((,0) <$> wrappedEquip)
-        opts = [ MenuAction "Next" Nothing $ Just $ IntroResearch gd ]
-        imgs = [ IPlace (rectStartX + 10) (rectStartY + 50) 4.0 (equipImage eqCatch) 2
-               , IPlace (rectStartX + 345) (rectStartY + 50) 4.0 (equipImage eqObs) 2
-               ]
-        rectStartX = midStartX gr 600
         rectStartY = 180
-        rects = [ RPlace LightGray rectStartX rectStartY 600 300 1]
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
+        assets = [ staticText "Equipment" White 30 20 9 0
+                 , centerAssetX gr (AssetRect 600 300 LightGray) 0 rectStartY 0
+                 , mkResizeAsset gr (AssetText "Catch" Blue 3) 1 True resizeCatch
+                 , mkResizeAsset gr (AssetText "Observe" Blue 3) 1 True resizeObserve
+                 , mkResizeAsset gr (AssetImage (equipImage eqCatch) 4.0) 1 True resizeCatchImg
+                 , mkResizeAsset gr (AssetImage (equipImage eqObs) 4.0) 1 True resizeObserveImg
+                 , wrapTextAsset gr 95 White equipmentText 2 3 0 500 False
+                 , nextMenu gr 1
+                 ]
+        resizeCatch asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) - 260, assetY = rectStartY + 10 }
+        resizeObserve asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) + 40, assetY = rectStartY + 10 }
+        resizeCatchImg asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) - 290, assetY = rectStartY + 50 }
+        resizeObserveImg asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) + 45, assetY = rectStartY + 50 }
 
-introResearch :: GameData -> Graphics -> GameMenu
-introResearch gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)
+introResearch :: GameData -> Graphics -> GameStateNew
+introResearch gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroResearchPage)) $ GView assets []
     where
         researchText = "The type of data you gather from each shark will depend on the type of equipment you used to \
                        \collect it. Using catch equipment will allow you to gather physical data such as size, weight, \
@@ -256,13 +255,12 @@ introResearch gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 
                        \and publish more papers you will be inspired to start working on new research topics. Check back \
                        \at the research center to see what data you will need to collect to finish these new studies. \
                        \Once your next paper is published you are sure to be rolling in the grant money!"
-        (wrappedResearch, yEnd) = wrapTextMiddleX gr researchText 50 300 4 2 White
-        words = TextDisplay "Publishing" 30 20 9 White Nothing
-              : TextDisplay "Your Findings" 80 150 8 White Nothing
-              : wrappedResearch
-        opts = [ MenuAction "Next" Nothing $ Just $ IntroFunds gd ]
-        optX = div (graphicsWindowWidth gr) 2
-        optY = graphicsWindowHeight gr - 100
+        assets = [ staticText "Publishing" White 30 20 9 0
+                 , staticText "Your Findings" White 80 150 8 0
+                 , wrapTextAsset gr 95 White researchText 2 3 0 300 False
+                 , nextMenu gr 1
+                 ]
+
 
 introFunds :: GameData -> Graphics -> GameMenu
 introFunds gd gr = GameMenu (textView words) (Menu (selOneOpts optX optY 3 2 opts Nothing (CursorRect White) 0) Nothing)

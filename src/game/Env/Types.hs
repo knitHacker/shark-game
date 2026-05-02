@@ -38,7 +38,7 @@ data AppEnvData = AppEnvData
     , appEnvDataOutputHandles :: !OutputHandles
     , appEnvDataInputState :: !InputState
     , appEnvDataGraphics :: !Graphics
-    , appEnvDataGameState :: !StateType
+    , appEnvDataGameState :: !GameStateNew
     }
 
 
@@ -64,7 +64,7 @@ instance GraphicsRead AppEnv where
     readGraphics = gets appEnvDataGraphics
 
 instance GameStateRead AppEnv where
-    readGameState :: AppEnv StateType
+    readGameState :: AppEnv GameStateNew
     readGameState = gets appEnvDataGameState
 
 instance InputRead AppEnv where
@@ -113,18 +113,15 @@ instance RenderAction AppEnv where
 instance GameStateStep AppEnv where
     getAction :: AppEnv Action
     getAction = do
-        gt <- readGameState
-        case gt of
-            Old _ -> return $ Step NoChange
-            New gse -> do
-                cfgs <- readConfigs
-                inputs <- readInputState
-                if wasWindowResized inputs
-                    then return (Step ResizeWindow)
-                    else do
-                        let (gps, act) = anyThink (gameStateE gse) cfgs inputs
-                        modify $ \ae -> ae { appEnvDataGameState = New $ gse { gameStateE = gps } }
-                        return act
+        gse <- readGameState
+        cfgs <- readConfigs
+        inputs <- readInputState
+        if wasWindowResized inputs
+            then return (Step ResizeWindow)
+            else do
+                let (gps, act) = anyThink (gameStateE gse) cfgs inputs
+                modify $ \ae -> ae { appEnvDataGameState = gse { gameStateE = gps } }
+                return act
 
 
     executeAction :: Action -> AppEnv (Maybe GameStep)
@@ -149,13 +146,7 @@ instance GameStateStep AppEnv where
         inputs <- readInputState
         outs <- getOutputs
         gr <- readGraphics
-        gt <- readGameState
-        case gt of
-            New gs -> do
-                let gsn' = stepGameState cfgs inputs gr gs step
-                modify $ \ae -> ae { appEnvDataGameState = New gsn' }
-                return $ drawAssets gr $ gView gsn'
-            Old gs -> do
-                gs' <- updateGameState cfgs inputs outs gr gs
-                modify $ \ae -> ae { appEnvDataGameState = Old gs' }
-                updateWindow
+        gs <- readGameState
+        let gsn' = stepGameState cfgs inputs gr gs step
+        modify $ \ae -> ae { appEnvDataGameState = gsn' }
+        return $ drawAssets gr $ gView gsn'

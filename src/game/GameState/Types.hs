@@ -141,7 +141,7 @@ data GameSection =
 
 -- Class for reading game state from the top level monad
 class Monad m => GameStateRead m where
-    readGameState :: m StateType
+    readGameState :: m GameStateNew
 
 class Monad m => GameStateStep m where
     getAction :: m Action
