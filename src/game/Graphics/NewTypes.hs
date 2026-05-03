@@ -3,12 +3,13 @@ module Graphics.NewTypes
     , Asset(..)
     , AssetObj(..)
     , AssetScroll(..)
-    , AssetMenu(..)
+    , MenuAsset(..)
     , AssetMenuItem(..)
     , AssetStackItem(..)
     , Overlay(..)
     , StackDir(..)
     , Resize
+    , AssetId
     ) where
 
 import Data.Int (Int64)
@@ -20,13 +21,21 @@ import Graphics.Types
 import Configs
 import InputState
 
+type AssetId = Int
+
+--data MenuState a = MState
+--    { curr :: a
+--    }
+
 data GView = GView
-    { assets :: [Asset]
-    , overlays :: [Overlay]
+    { assets :: M.Map AssetId Asset
+    , overlays :: M.Map Int Overlay
+    , activeOverlays :: [Int]
+    , menuAsset :: Maybe MenuAsset
     }
 
 data Overlay = AOverlay
-    { oAssets :: [Asset]
+    { oAssets :: M.Map Int Asset
     , isOverlayActive :: Bool
     }
 
@@ -51,7 +60,6 @@ data AssetObj =
     | AssetText T.Text Color Int
     | AssetScroll AssetScroll
     | AssetRect Int Int Color
-    | AssetMenu AssetMenu
     | AssetStacked StackDir [AssetStackItem] Int -- have the next y be the previous end y + space
 
 data AssetStackItem = StackItem
@@ -68,16 +76,23 @@ data AssetScroll = ScrollObj
     , scrollLineSpace :: Int
     }
 
-data AssetMenu = MenuObj
-    { menuItems :: [AssetMenuItem]
+data MenuAsset = MenuAsset
+    { menuXBase :: Int
+    , menuYBase :: Int
+    , menuLayer :: Int
+    , menuVisible :: Bool
+    , menuResize :: Maybe (MenuAsset -> Graphics -> MenuAsset)
     , showScroll :: Bool
     , menuLineSpace :: Int
+    , menuItems :: [AssetMenuItem]
     }
 
 data AssetMenuItem = MenuItem
     { menuItemText :: T.Text
     , menuItemColor :: Color
     , menuItemFontSize :: Int
+    , menuItemXOff :: Int
+    , menuItemYOff :: Int
     , highlightedColor :: Maybe Color
     , cursorImg :: Maybe (Image, Double)
     }

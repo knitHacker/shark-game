@@ -62,29 +62,31 @@ data MainMenuState = MainMenuState (Maybe GameData) MainMenuOpt
 instance GamePlayStateE MainMenuState where
     think gps@(MainMenuState gdM mmo) cfgs inputs
         | enterJustPressed inputs =
-            case mmo of
-                ContinueMain -> undefined
-                NewGameMain -> (undefined, NewGame (\gd -> Transition (AnyGamePlayState (IntroState gd IntroWelcomePage))))
-                ExitMain -> (gps, Exit Nothing)
+            case (gdM, mmo) of
+                (Just gd, ContinueMain) -> Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
+                (_, NewGameMain) -> NewGame (\gd -> Transition (AnyGamePlayState (IntroState gd IntroWelcomePage)))
+                (_, ExitMain) -> Exit Nothing
+                _ -> error "Can't continue non-existant game. What did I do?"
         | moveInputJustPressed inputs =
             case (inputDirection inputs, gdM, mmo) of
                 (Just DUp, Just _, ContinueMain) -> Step NoChange
                 (Just DUp, Nothing, NewGameMain) -> Step NoChange
-                (Just DUp, _, _) -> (MainMenuState gdM (pred mmo), Step InputUpdate)
-                (Just DDown, _, ExitMain) -> (gps, Step NoChange)
-                (Just DDown, _, _) -> (MainMenuState gdM (succ mmo), Step InputUpdate)
-                _ -> (gps, Step NoChange)
-        | otherwise = (gps, Step NoChange)
+                (Just DUp, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM $ pred mmo
+                (Just DDown, _, ExitMain) -> Step NoChange
+                (Just DDown, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM $ succ mmo
+                _ -> Step NoChange
+        | otherwise = Step NoChange
 
     transition gps@(MainMenuState gdM mmo) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
         where
-            gview = GView assets []
-            assets = [ back
-                     , staticText "Shark" Gray 10 10 14 2
-                     , staticText "Institute" Gray 100 200 12 2
-                     , centerText gr "Press ENTER to select" White 0 20 3 2
-                     , menuAsset (midX gr - 40) (midY gr + 100)
-                     ]
+            gview = GView (M.fromList assets) []
+            assets = zip [0..]
+                        [ back
+                        , staticText "Shark" Gray 10 10 14 2
+                        , staticText "Institute" Gray 100 200 12 2
+                        , centerText gr "Press ENTER to select" White 0 20 3 2
+                        , menuAsset (midX gr - 40) (midY gr + 100)
+                        ]
             back = backgroundAsset gr DarkBlue
             menuOpts = (if isJust gdM then [("Continue", ContinueMain)] else []) ++ [("New Game", NewGameMain), ("Exit", ExitMain)]
             items = mkMenuItem menuOpts
@@ -138,7 +140,7 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
         waveAnim4 = APlace 700 200 7.0 animKey 5 0 1 True
         waveAnim5 = APlace 1100 150 5.5 animKey 2 0 1 True
         waveMoveTO = TimeoutData 0 120 $ TimeoutAnimation $ startAnimation 15 nextFrame
-        newGame = MenuAction "New Game" Nothing $ Just $ IntroWelcome Nothing
+        newGame = MenuAction "New Game" Nothing $ Just undefined
         continueGame cg = MenuAction "Continue" Nothing $ Just $ ResearchCenter cg
         exitOpt = MenuAction "Exit" Nothing $ Just $ GameExitState gdM
         menuOpts =
@@ -148,15 +150,15 @@ mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
         nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave gr frame <$> zip [1..] aps }
 
 data IntroPage = IntroWelcomePage | IntroMissionPage | IntroBoatPage | IntroEquipPage | IntroResearchPage | IntroFundsPage | IntroEndPage
-               deriving (Show, Enum, Eq, Ord)
+               deriving (Show, Enum, Eq, Ord, Bounded)
 
 data IntroState = IntroState GameData IntroPage
 
 instance GamePlayStateE IntroState where
     think is@(IntroState gd page) _ inputs
-        | enterJustPressed inputs && page < IntroEndPage = (IntroState gd (succ page), Step InputUpdate) -- maybe transition?
-        | enterJustPressed inputs && page == maxBound = (is, Step (Transition (initResearchCenter gd)))
-        | otherwise = (is, Step NoChange)
+        | enterJustPressed inputs && page < IntroEndPage = Step $ InputUpdate $ AnyGamePlayState $ IntroState gd $ succ page -- maybe transition?
+        | enterJustPressed inputs && page == maxBound = Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
+        | otherwise = Step NoChange
 
     transition is@(IntroState gd IntroWelcomePage) _ gr = introWelcome gd gr
     transition is@(IntroState gd IntroMissionPage) _ gr = introMission gd gr
@@ -168,13 +170,14 @@ instance GamePlayStateE IntroState where
 
 
 introWelcome :: GameData -> Graphics -> GameStateNew
-introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomePage)) $ GView assets []
+introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomePage)) $ GView (M.fromList assets) []
         where
-            assets = [ centerTextX gr "Welcome!" White 12 0 20 1
-                     , withRow
-                     , centerTextX gr endText Green 2 0 600 1
-                     , nextMenu gr 1
-                     ]
+            assets = zip [0..]
+                         [ centerTextX gr "Welcome!" White 12 0 20 1
+                         , withRow
+                         , centerTextX gr endText Green 2 0 600 1
+                         , nextMenu gr 1
+                         ]
             welcomeAsset = wrapTextAsset gr 90 White welcomeText 2 3 1 200 False
             dolphImg = AssetImage "no_dolphin" 1.0
             sharkTxt = AssetText "SHARKS!!!" White 4
@@ -189,7 +192,7 @@ introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomeP
             endText = "And you have been appointed the new director of the center!"
 
 introMission :: GameData -> Graphics -> GameStateNew
-introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionPage)) $ GView assets []
+introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionPage)) $ GView (M.fromList assets) []
     where
         assets = [ staticText "Mission" White 50 20 9 0
                  , staticText "Statement" White 150 150 9 0
@@ -289,7 +292,7 @@ introEnd gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEndPage)) $ 
                   \Good luck, and may your studies contribute significantly to the understanding and conservation of sharks!"
 
 data RCMenu = PlanTripMenu | ReviewDataMenu | LabManagementMenu
-             deriving (Show, Eq, Ord, Enum)
+             deriving (Show, Eq, Ord, Enum, Bounded)
 
 data ResearchCenterState = ResearchCenterState
     { rcGameData :: GameData
@@ -303,14 +306,14 @@ instance GamePlayStateE ResearchCenterState where
     think rcs@(ResearchCenterState gd mSel) _ inputs
         | enterJustPressed inputs =
             case mSel of
-                PlanTripMenu -> 
-                ReviewDataMenu ->
-                LabManagementMenu -> 
-        | otherwise =(rcs, Step NoChange)
+                PlanTripMenu -> undefined
+                ReviewDataMenu -> undefined
+                LabManagementMenu -> undefined
+        | otherwise = Step NoChange
 
-    transition rcs@(ResearchCenterState gd) _ gr = GameStateNew rcs $ GView assets []
+    transition rcs@(ResearchCenterState gd mSel) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) []
         where
-            assets = [ staticText "Research" White 50 10 7 0
+            assets = zip [0..] [ staticText "Research" White 50 10 7 0
                      , staticText "Center" White 200 140 7 0
                      ]
 

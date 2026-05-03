@@ -31,6 +31,7 @@ import Graphics.NewTypes
 
 import OutputHandles.Types
 
+
 assetObjWidth :: Graphics -> AssetObj -> Int
 assetObjWidth gr (AssetText txt _ sz) = floor $ fromIntegral (T.length txt) * fontWidth gr * fromIntegral sz
 assetObjWidth _  (AssetRect w _ _) = w
@@ -38,7 +39,6 @@ assetObjWidth gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (i
 assetObjWidth gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeX i) * scale) (M.lookup img (graphicsAnimTextures gr))
 assetObjWidth gr (AssetStacked StackVertical items _)   = maximum $ assetObjWidth gr . stackItem <$> items
 assetObjWidth gr (AssetStacked StackHorizontal items sp) = sum $ (\i -> assetObjWidth gr (stackItem i) + sp) <$> items
-assetObjWidth gr (AssetMenu m) = maximum $ (\i -> floor $ fromIntegral (T.length (menuItemText i)) * fontWidth gr * fromIntegral (menuItemFontSize i)) <$> menuItems m
 assetObjWidth gr (AssetScroll sc) = maximum $ (\t -> floor $ fromIntegral (T.length t) * fontWidth gr * fromIntegral (scrollTextSize sc)) <$> scrollText sc
 
 
@@ -49,15 +49,17 @@ assetObjHeight gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (
 assetObjHeight gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeY i) * scale) (M.lookup img (graphicsAnimTextures gr))
 assetObjHeight gr (AssetStacked StackVertical items sp)   = sum $ (\i -> assetObjHeight gr (stackItem i) + sp) <$> items
 assetObjHeight gr (AssetStacked StackHorizontal items _) = maximum $ (\i -> stackYOff i + assetObjHeight gr (stackItem i)) <$> items
-assetObjHeight gr (AssetMenu m) = let itemH i = ceiling (fontHeight gr * fromIntegral (menuItemFontSize i)) + menuLineSpace m
-                                  in sum $ itemH <$> menuItems m
 assetObjHeight gr (AssetScroll sc) = let lh = ceiling (fontHeight gr * fromIntegral (scrollTextSize sc)) + scrollLineSpace sc
                                      in length (scrollText sc) * lh
 
 
 resizeGameView :: a -> Graphics -> GView -> GView
-resizeGameView gps gr (GView ats ovs) = GView (doResize <$> ats) ((\(AOverlay o ia) -> AOverlay (doResize <$> o) ia) <$> ovs)
+resizeGameView gps gr gv@(GView ats ovs _ menuAsset) = GView (doResize <$> ats) ((\(AOverlay o ia) -> AOverlay (doResize <$> o) ia) <$> ovs)
     where
+        mResize m = do
+            menu <- m
+            rFn <- menuResize menu
+            return $ rFn menu gr
         doResize asset = case assetResize asset of
                             Nothing -> asset
                             Just fn -> fn asset gr

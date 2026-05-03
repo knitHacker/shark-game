@@ -17,7 +17,6 @@ module GameState.Types
     , GameSection(..)
     , GameStateNew(..)
     , mergeGameViews
-    , anyThink
     ) where
 
 import qualified Data.Map.Strict as M
@@ -29,6 +28,7 @@ import Data.Maybe (isJust)
 import OutputHandles.Types
 import Graphics.Types
 import Graphics.NewTypes
+import Graphics.Asset
 import Configs
 import InputState
 import SaveData
@@ -83,7 +83,7 @@ data GameStep =
       NoChange
     | ResizeWindow -- pass in resize here?
     | StepAnimation -- Todo: list of animations that need to be updated []
-    | InputUpdate GameStateNew-- Type for what input action? up / down?
+    | InputUpdate AnyGamePlayState -- Type for what input action? up / down?
     | Transition AnyGamePlayState
 
 data Action =
@@ -147,10 +147,10 @@ class GamePlayStateE a where
     think :: a -> GameConfigs -> InputState -> Action
 
     transition :: a -> GameConfigs -> Graphics -> GameStateNew
-    transition gps _ _ = GameStateNew (AnyGamePlayState gps) (GView [] [])
+    transition gps _ _ = GameStateNew (AnyGamePlayState gps) (GView mempty [])
 
-    --update :: a -> GView -> GameConfigs -> Graphics -> GameStateNew
-    --update gps _ cfgs gr = transition gps cfgs gr
+    update :: a -> GameStateNew -> GameConfigs -> Graphics -> GameStateNew
+    update gps _ cfgs gr = transition gps cfgs gr
 
     {-# MINIMAL think #-}
 
@@ -162,6 +162,3 @@ data GameStateNew = GameStateNew
     { gameStateE :: AnyGamePlayState
     , gView :: GView
     }
-
-anyThink :: AnyGamePlayState -> GameConfigs -> InputState -> Action
-anyThink (AnyGamePlayState s) cfgs inputs = think s cfgs inputs

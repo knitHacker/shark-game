@@ -1,5 +1,7 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ExistentialQuantification#-}
+
 
 module GameState
     ( initGameState
@@ -37,15 +39,13 @@ import Data.Maybe (catMaybes)
 initGameState :: GameConfigs -> InputState -> Graphics -> GameStateNew
 initGameState cfgs inputs gr = transition (initSplash inputs) cfgs gr
 
-
-stepGameState :: GameConfigs -> InputState -> Graphics -> GameStateNew -> GameStep -> GameStateNew
-stepGameState cfgs inputs gr gsn@(GameStateNew (AnyGamePlayState gps) gV) step =
+stepGameState :: GameStep -> GameStateNew -> GameConfigs -> Graphics -> GameStateNew
+stepGameState step gsn cfgs gr =
     case step of
         NoChange -> gsn
-        Transition (AnyGamePlayState gps) -> transition gps cfgs gr
         ResizeWindow -> gsn { gView = resizeGameView (gameStateE gsn) gr (gView gsn) }
-        InputUpdate -> update gps gV cfgs gr
-
+        (InputUpdate (AnyGamePlayState nGps)) -> update nGps gsn cfgs gr
+        (Transition (AnyGamePlayState gps)) -> transition gps cfgs gr
 
 updateGameView :: Graphics -> InputState -> GameView -> Maybe (Either GameView GamePlayState)
 updateGameView gr inputs gv@(GameView vl oM tL mM) = if null outs then Nothing else Just (head outs)
