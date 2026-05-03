@@ -19,6 +19,8 @@ module Graphics.Asset
     , mkResizeAsset
     , nextMenu
     , singleMenu
+    , changeHighlight
+    , changeCursor
     ) where
 
 import qualified Data.Text as T
@@ -30,6 +32,21 @@ import Graphics.Types
 import Graphics.NewTypes
 
 import OutputHandles.Types
+
+changeHighlight :: MenuAsset -> Int -> Color -> MenuAsset
+changeHighlight ma idx c = ma { menuItems = updateItems <$> zip [0..] (menuItems ma) }
+    where
+        updateItems (i, mi)
+            | i == idx = mi { highlightedColor = Just c }
+            | otherwise = mi { highlightedColor = Nothing }
+
+
+changeCursor :: MenuAsset -> Int -> Image -> Double -> MenuAsset
+changeCursor ma idx img s = ma { menuItems = updateItems <$> zip [0..] (menuItems ma) }
+    where
+        updateItems (i, mi)
+            | i == idx = mi { cursorImg = Just (img, s) }
+            | otherwise = mi { cursorImg = Nothing }
 
 
 assetObjWidth :: Graphics -> AssetObj -> Int

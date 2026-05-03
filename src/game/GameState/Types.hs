@@ -61,7 +61,6 @@ data GameView = GameView
     , viewMenu :: Maybe (Menu GamePlayState)
     }
 
-
 data GameStep =
       NoChange
     | ResizeWindow -- pass in resize here?

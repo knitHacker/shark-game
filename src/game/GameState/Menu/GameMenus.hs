@@ -97,6 +97,14 @@ instance GamePlayStateE MainMenuState where
             midY gr' = graphicsWindowHeight gr' `div` 2
             resizeMenu asset' gr' = asset' { menuXBase = midX gr' - 40, menuYBase = midY gr' + 100 }
 
+    update gps@(MainMenuState gdM mmo) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
+        where
+            nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn) }
+            updateM menuA = changeCursor menuA ((fromEnum mmo) + cntOff) "green_arrow" 4.0
+            gdCnt Nothing = 1
+            gdCnt (Just _) = 0
+            cntOff = gdCnt gdM
+
 splash :: InputState -> GameView
 splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing
 
@@ -275,8 +283,8 @@ introFunds gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroFundsPage)
         grantText = "Initial Funds: "
         startMoney = showMoney $ gameDataFunds gd
         textAsset = wrapTextAsset gr 85 White welcomeText 2 3 0 250 False
-        withGrantText = appendAssetStackCenterX gr StackVertical textAsset (-50) 100 $ AssetText grantText White 4
-        withStartMoney = appendAssetStackCenterX gr StackVertical withGrantText (-5) 40 $ AssetText startMoney Green 3
+        withGrantText = appendAssetStackCenterX gr StackVertical textAsset (-50) 90 $ AssetText grantText White 4
+        withStartMoney = appendAssetStackCenterX gr StackVertical withGrantText (-5) 30 $ AssetText startMoney Green 3
 
 
 introEnd :: GameData -> Graphics -> GameStateNew
