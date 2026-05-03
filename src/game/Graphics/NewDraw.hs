@@ -15,9 +15,12 @@ import OutputHandles.Images
 import OutputHandles.Text
 
 drawAssets :: Graphics -> GView -> ToRender
-drawAssets gr gv = baseView
+drawAssets gr gv = appendMenu baseView $ menuAsset gv
     where
         baseView = foldl (drawAsset gr 0) mempty (assets gv)
+
+        appendMenu r Nothing = r
+        appendMenu r (Just mAss) = fst $ drawMenu gr 0 r mAss
         --TODO: Add overlays
 
 getMax :: StackDir -> Graphics -> Int -> Int -> AssetObj -> Int
@@ -48,7 +51,6 @@ drawAsset gr d r (Asset o x y l isVis _)
                     AssetText txt c s -> addText r d l $ TextDisplay txt (fromIntegral x) (fromIntegral y) s c Nothing
                     AssetRect w h c -> addRectangle r d l $ DRectangle c (fromIntegral x) (fromIntegral y) (fromIntegral w) (fromIntegral h)
                     AssetStacked dir ais sp -> fst $ addStack dir gr d r l sp x y ais
-                    AssetMenu menu -> fst $ drawMenu gr d r l x y menu
                     _ -> r
 
 addStack :: StackDir -> Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> [AssetStackItem] -> (ToRender, Int)
@@ -79,7 +81,6 @@ drawStack dir gr d r l sp x y (StackItem item xOff yOff) =
         AssetStacked dir' stack sp' ->
             let (r', _) = addStack dir' gr d r l sp' (x + xOff) (y + yOff) stack
             in (r', end + sp)
-        AssetMenu menu -> drawMenu gr d r l (x + xOff) (y + yOff) menu
     where
         end = getMax dir gr (x + xOff) (y + yOff) item
 
@@ -88,8 +89,8 @@ drawStack dir gr d r l sp x y (StackItem item xOff yOff) =
 drawScrollBar :: ToRender -> ToRender
 drawScrollBar r = r
 
-drawMenu :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> AssetMenu -> (ToRender, Int)
-drawMenu gr d r l x y (MenuObj items scrollB sp) = foldl foldItem (r', y) items
+drawMenu :: Graphics -> Int -> ToRender -> MenuAsset -> (ToRender, Int)
+drawMenu gr d r (MenuAsset x y l isVis _ scrollB sp items) = foldl foldItem (r', y) items
     where
         r' = if scrollB then drawScrollBar r else r
         foldItem (rNew, y') menuItem = drawMenuItem gr d rNew l sp x y' menuItem
@@ -119,19 +120,21 @@ getCursor gr img iS x y sz = DTexture img x' y' (floor curW) (floor curH) Nothin
         curW = (fromIntegral (imageSizeX iInfo)) * iS
         curH = (fromIntegral (imageSizeY iInfo)) * iS
         x' = floor $ (fromIntegral x) - curW - fw
-        y' = floor $ yMid - (curH / 2.0)
+        y' = floor $ yMid - (curH / 2.0) - 5
 
 
 drawMenuItem :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> AssetMenuItem -> (ToRender, Int)
-drawMenuItem gr d r l sp x y (MenuItem txt c sz hlM csrM) = (addText r'' d (l + 1) draw, maxY + sp)
+drawMenuItem gr d r l sp x y (MenuItem txt c sz xOff yOff hlM csrM) = (addText r'' d (l + 1) draw, maxY + sp)
     where
+        x' = x + xOff
+        y' = y + yOff
         r' = case hlM of
                 Nothing -> r
-                Just rc -> addRectangle r d l $ getTextRectangle gr rc (T.length txt) x y sz sp
+                Just rc -> addRectangle r d l $ getTextRectangle gr rc (T.length txt) x' y' sz sp
         r'' = case csrM of
                 Nothing -> r'
-                Just (csr, iS) -> addTexture r' d l $ getCursor gr csr iS x y sz
-        draw = TextDisplay txt (fromIntegral x) (fromIntegral y) sz c Nothing
+                Just (csr, iS) -> addTexture r' d l $ getCursor gr csr iS x' y' sz
+        draw = TextDisplay txt (fromIntegral x') (fromIntegral y') sz c Nothing
         maxY = fromJust $ getTextMaxY (graphicsFontSize gr) [draw]
 
 

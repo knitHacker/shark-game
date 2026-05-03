@@ -79,24 +79,23 @@ instance GamePlayStateE MainMenuState where
 
     transition gps@(MainMenuState gdM mmo) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
         where
-            gview = GView (M.fromList assets) []
+            gview = GView (M.fromList assets) mempty [] $ Just $ menuAsset (midX gr - 40) (midY gr + 100)
             assets = zip [0..]
                         [ back
                         , staticText "Shark" Gray 10 10 14 2
                         , staticText "Institute" Gray 100 200 12 2
                         , centerText gr "Press ENTER to select" White 0 20 3 2
-                        , menuAsset (midX gr - 40) (midY gr + 100)
                         ]
             back = backgroundAsset gr DarkBlue
             menuOpts = (if isJust gdM then [("Continue", ContinueMain)] else []) ++ [("New Game", NewGameMain), ("Exit", ExitMain)]
             items = mkMenuItem menuOpts
             cursor m = if m == mmo then Just ("green_arrow", 4) else Nothing
             mkMenuItem [] = []
-            mkMenuItem ((i, sel):tl) = MenuItem i Blue 3 Nothing (cursor sel) : mkMenuItem tl
-            menuAsset x y = Asset (AssetMenu (MenuObj items False 2)) x y 2 True (Just resizeMenu)
+            mkMenuItem ((i, sel):tl) = MenuItem i Blue 3 0 0 Nothing (cursor sel) : mkMenuItem tl
+            menuAsset x y = MenuAsset x y 2 True (Just resizeMenu) False 2 items
             midX gr' = graphicsWindowWidth gr' `div` 2
             midY gr' = graphicsWindowHeight gr' `div` 2
-            resizeMenu asset' gr' = asset' { assetX = midX gr' - 40, assetY = midY gr' + 100 }
+            resizeMenu asset' gr' = asset' { menuXBase = midX gr' - 40, menuYBase = midY gr' + 100 }
 
 splash :: InputState -> GameView
 splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing
@@ -170,13 +169,12 @@ instance GamePlayStateE IntroState where
 
 
 introWelcome :: GameData -> Graphics -> GameStateNew
-introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomePage)) $ GView (M.fromList assets) []
+introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomePage)) $ GView (M.fromList assets) mempty [] $ Just $ nextMenu gr 1
         where
             assets = zip [0..]
                          [ centerTextX gr "Welcome!" White 12 0 20 1
                          , withRow
                          , centerTextX gr endText Green 2 0 600 1
-                         , nextMenu gr 1
                          ]
             welcomeAsset = wrapTextAsset gr 90 White welcomeText 2 3 1 200 False
             dolphImg = AssetImage "no_dolphin" 1.0
@@ -192,13 +190,13 @@ introWelcome gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroWelcomeP
             endText = "And you have been appointed the new director of the center!"
 
 introMission :: GameData -> Graphics -> GameStateNew
-introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionPage)) $ GView (M.fromList assets) []
+introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionPage)) $ GView (M.fromList assets) mempty [] $ Just $ nextMenu gr 1
     where
-        assets = [ staticText "Mission" White 50 20 9 0
-                 , staticText "Statement" White 150 150 9 0
-                 , wrapTextAsset gr 90 White howItWorksText 2 3 0 300 False
-                 , nextMenu gr 1
-                 ]
+        assets = zip [0..]
+                     [ staticText "Mission" White 50 20 9 0
+                     , staticText "Statement" White 150 150 9 0
+                     , wrapTextAsset gr 90 White howItWorksText 2 3 0 300 False
+                     ]
         howItWorksText = "As the director of the Shark Research Center, you will plan research trips \
                          \to find a variety of shark species in the wild, collect data about them, \
                          \and contribute to the scientific and the community's understanding of these \
@@ -208,22 +206,22 @@ introMission gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroMissionP
                          \to contribute to the understanding of sharks."
 
 introBoat :: GameData -> GameConfigs -> Graphics -> GameStateNew
-introBoat gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroBoatPage)) $ GView assets []
+introBoat gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroBoatPage)) $ GView (M.fromList assets) mempty [] $ Just $ nextMenu gr 1
     where
         startBoatKey = gameActiveBoat $ gameDataEquipment gd
         startBoat = boats (sharkCfgs cfg) M.! startBoatKey
-        assets = [ staticText "A Kind" White 40 20 8 0
-                 , staticText "Neighbor" White 100 130 9 0
-                 , wrapTextAsset gr 85 White boatText 2 3 0 320 False
-                 , centerAssetX gr (AssetImage (boatImage startBoat) 2.0) 100 400 0
-                 , nextMenu gr 1
-                 ]
+        assets = zip [0..]
+                     [ staticText "A Kind" White 40 20 8 0
+                     , staticText "Neighbor" White 100 130 9 0
+                     , wrapTextAsset gr 85 White boatText 2 3 0 320 False
+                     , centerAssetX gr (AssetImage (boatImage startBoat) 2.0) 100 400 0
+                     ]
         boatText = "Luckily a retiring fisherman has decided to donate his skiff to your cause, \
                    \so you have a way to conduct your research trips. It might be old and small and smelly \
                    \but it floats (most of the time). Maybe in the future we can get another boat..."
 
 introEquip :: GameData -> GameConfigs -> Graphics -> GameStateNew
-introEquip gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEquipPage)) $ GView assets []
+introEquip gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEquipPage)) $ GView (M.fromList assets) mempty [] $ Just $ nextMenu gr 1
     where
         eqKeys = gameOwnedEquipment $ gameDataEquipment gd
         eqs = map (\k -> equipment (sharkCfgs cfg) M.! k) eqKeys
@@ -233,22 +231,22 @@ introEquip gd cfg gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEquipP
                         \to get your center up and running. It's not much, but it's a start. \
                         \Hopefully as you make progress in your research you can acquire more advanced gear."
         rectStartY = 180
-        assets = [ staticText "Equipment" White 30 20 9 0
-                 , centerAssetX gr (AssetRect 600 300 LightGray) 0 rectStartY 0
-                 , mkResizeAsset gr (AssetText "Catch" Blue 3) 1 True resizeCatch
-                 , mkResizeAsset gr (AssetText "Observe" Blue 3) 1 True resizeObserve
-                 , mkResizeAsset gr (AssetImage (equipImage eqCatch) 4.0) 1 True resizeCatchImg
-                 , mkResizeAsset gr (AssetImage (equipImage eqObs) 4.0) 1 True resizeObserveImg
-                 , wrapTextAsset gr 95 White equipmentText 2 3 0 500 False
-                 , nextMenu gr 1
-                 ]
+        assets = zip [0..]
+                     [ staticText "Equipment" White 30 20 9 0
+                     , centerAssetX gr (AssetRect 600 300 LightGray) 0 rectStartY 0
+                     , mkResizeAsset gr (AssetText "Catch" Blue 3) 1 True resizeCatch
+                     , mkResizeAsset gr (AssetText "Observe" Blue 3) 1 True resizeObserve
+                     , mkResizeAsset gr (AssetImage (equipImage eqCatch) 4.0) 1 True resizeCatchImg
+                     , mkResizeAsset gr (AssetImage (equipImage eqObs) 4.0) 1 True resizeObserveImg
+                     , wrapTextAsset gr 95 White equipmentText 2 3 0 500 False
+                     ]
         resizeCatch asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) - 260, assetY = rectStartY + 10 }
         resizeObserve asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) + 40, assetY = rectStartY + 10 }
         resizeCatchImg asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) - 290, assetY = rectStartY + 50 }
         resizeObserveImg asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) + 45, assetY = rectStartY + 50 }
 
 introResearch :: GameData -> Graphics -> GameStateNew
-introResearch gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroResearchPage)) $ GView assets []
+introResearch gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroResearchPage)) $ GView (M.fromList assets) mempty [] $ Just $ nextMenu gr 1
     where
         researchText = "The type of data you gather from each shark will depend on the type of equipment you used to \
                        \collect it. Using catch equipment will allow you to gather physical data such as size, weight, \
@@ -257,19 +255,19 @@ introResearch gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroResearc
                        \and publish more papers you will be inspired to start working on new research topics. Check back \
                        \at the research center to see what data you will need to collect to finish these new studies. \
                        \Once your next paper is published you are sure to be rolling in the grant money!"
-        assets = [ staticText "Publishing" White 30 20 9 0
-                 , staticText "Your Findings" White 80 150 8 0
-                 , wrapTextAsset gr 95 White researchText 2 3 0 300 False
-                 , nextMenu gr 1
-                 ]
+        assets = zip [0..]
+                     [ staticText "Publishing" White 30 20 9 0
+                     , staticText "Your Findings" White 80 150 8 0
+                     , wrapTextAsset gr 95 White researchText 2 3 0 300 False
+                     ]
 
 introFunds :: GameData -> Graphics -> GameStateNew
-introFunds gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroFundsPage)) $ GView assets []
+introFunds gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroFundsPage)) $ GView (M.fromList assets) mempty [] $ Just $ nextMenu gr 1
     where
-        assets = [ staticText "Funds" White 50 30 10 0
-                 , withStartMoney
-                 , nextMenu gr 1
-                 ]
+        assets = zip [0..]
+                     [ staticText "Funds" White 50 30 10 0
+                     , withStartMoney
+                     ]
         welcomeText = "All together we were able to raise initial funds to \
                       \support our research initiatives. These funds will help \
                       \cover the costs of equipment, travel, and other essential expenses. \
@@ -278,16 +276,16 @@ introFunds gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroFundsPage)
         startMoney = showMoney $ gameDataFunds gd
         textAsset = wrapTextAsset gr 85 White welcomeText 2 3 0 250 False
         withGrantText = appendAssetStackCenterX gr StackVertical textAsset (-50) 100 $ AssetText grantText White 4
-        withStartMoney = appendAssetStackCenterX gr StackVertical withGrantText (-5) 50 $ AssetText startMoney Green 3
+        withStartMoney = appendAssetStackCenterX gr StackVertical withGrantText (-5) 40 $ AssetText startMoney Green 3
 
 
 introEnd :: GameData -> Graphics -> GameStateNew
-introEnd gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEndPage)) $ GView assets []
+introEnd gd gr = GameStateNew (AnyGamePlayState (IntroState gd IntroEndPage)) $ GView (M.fromList assets) mempty [] $ Just $ singleMenu gr "Begin Research" 1
     where
-        assets = [ staticText "Good Luck!" White 100 50 12 0
-                 , wrapTextAsset gr 80  White endText 2 3 0 300 False
-                 , singleMenu gr "Begin Research" 1
-                 ]
+        assets = zip [0..]
+                     [ staticText "Good Luck!" White 100 50 12 0
+                     , wrapTextAsset gr 80  White endText 2 3 0 300 False
+                     ]
         endText = "With everything in place, you are now ready to begin your research expeditions. \
                   \Good luck, and may your studies contribute significantly to the understanding and conservation of sharks!"
 
@@ -311,7 +309,7 @@ instance GamePlayStateE ResearchCenterState where
                 LabManagementMenu -> undefined
         | otherwise = Step NoChange
 
-    transition rcs@(ResearchCenterState gd mSel) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) []
+    transition rcs@(ResearchCenterState gd mSel) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) mempty [] Nothing
         where
             assets = zip [0..] [ staticText "Research" White 50 10 7 0
                      , staticText "Center" White 200 140 7 0

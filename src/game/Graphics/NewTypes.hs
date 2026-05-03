@@ -36,6 +36,7 @@ data GView = GView
 
 data Overlay = AOverlay
     { oAssets :: M.Map Int Asset
+    , oMenu :: Maybe MenuAsset -- Does this need to not be maybe?
     , isOverlayActive :: Bool
     }
 

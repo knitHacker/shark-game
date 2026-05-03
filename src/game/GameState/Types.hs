@@ -16,7 +16,6 @@ module GameState.Types
     , GamePlayStateE(..)
     , GameSection(..)
     , GameStateNew(..)
-    , mergeGameViews
     ) where
 
 import qualified Data.Map.Strict as M
@@ -62,22 +61,6 @@ data GameView = GameView
     , viewMenu :: Maybe (Menu GamePlayState)
     }
 
-
-mergeGameViews :: GameView -> GameView -> GameView
-mergeGameViews gvInputUpdates gvNewDraw = GameView
-    { viewLayer = updateView (viewLayer gvInputUpdates) (viewLayer gvNewDraw)
-    , viewOverlay = case (viewOverlay gvInputUpdates, viewOverlay gvNewDraw) of
-        (Just ov1, Just ov2) -> Just $ OverlayView
-            { isActive = isActive ov2
-            , overlayView = updateView (overlayView ov1) (overlayView ov2)
-            , overlayMenu = mergeOverlayMenu (overlayMenu ov1) (overlayMenu ov2)
-            }
-        (_, ov2M) -> ov2M
-    , viewTimeouts = updateTimeoutData (viewTimeouts gvInputUpdates) (viewTimeouts gvNewDraw)
-    , viewMenu = case (viewMenu gvInputUpdates, viewMenu gvNewDraw) of
-        (Just m1, Just m2) -> Just $ updateMenu m1 m2
-        (_, m2M) -> m2M
-    }
 
 data GameStep =
       NoChange
@@ -147,7 +130,7 @@ class GamePlayStateE a where
     think :: a -> GameConfigs -> InputState -> Action
 
     transition :: a -> GameConfigs -> Graphics -> GameStateNew
-    transition gps _ _ = GameStateNew (AnyGamePlayState gps) (GView mempty [])
+    transition gps _ _ = GameStateNew (AnyGamePlayState gps) (GView mempty mempty [] Nothing)
 
     update :: a -> GameStateNew -> GameConfigs -> Graphics -> GameStateNew
     update gps _ cfgs gr = transition gps cfgs gr

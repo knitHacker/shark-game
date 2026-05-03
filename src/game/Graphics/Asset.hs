@@ -54,12 +54,13 @@ assetObjHeight gr (AssetScroll sc) = let lh = ceiling (fontHeight gr * fromInteg
 
 
 resizeGameView :: a -> Graphics -> GView -> GView
-resizeGameView gps gr gv@(GView ats ovs _ menuAsset) = GView (doResize <$> ats) ((\(AOverlay o ia) -> AOverlay (doResize <$> o) ia) <$> ovs)
+resizeGameView gps gr gv@(GView ats ovs _ menuAsset) = gv { assets = doResize <$> ats, overlays = doOResize <$> ovs, menuAsset = mResize menuAsset}
     where
         mResize m = do
             menu <- m
             rFn <- menuResize menu
             return $ rFn menu gr
+        doOResize (AOverlay a om ia) = AOverlay (doResize <$> a) (mResize om) ia
         doResize asset = case assetResize asset of
                             Nothing -> asset
                             Just fn -> fn asset gr
@@ -75,14 +76,14 @@ mkResizeAsset :: Graphics -> AssetObj -> Int -> Bool -> Resize -> Asset
 mkResizeAsset gr obj l vis rFn = rFn (Asset obj undefined undefined l vis (Just rFn)) gr
 
 
-singleMenu :: Graphics -> T.Text -> Int -> Asset
-singleMenu gr txt l = mkResizeAsset gr (AssetMenu (MenuObj [MenuItem txt Blue sz (Just White) Nothing] False 0)) 2 True menuResize
+singleMenu :: Graphics -> T.Text -> Int -> MenuAsset
+singleMenu gr txt l = MenuAsset (txtX gr) (graphicsWindowHeight gr - 100) l True (Just menuResize) False 0 [MenuItem txt Blue sz 0 0 (Just White) Nothing]
     where
         sz = 3
         txtX gr' = midTextStart gr' txt (fromIntegral sz)
-        menuResize asset' gr' = asset' { assetX = txtX gr', assetY = graphicsWindowHeight gr' - 100 }
+        menuResize asset' gr' = asset' { menuXBase = txtX gr', menuYBase = graphicsWindowHeight gr' - 100 }
 
-nextMenu :: Graphics -> Int -> Asset
+nextMenu :: Graphics -> Int -> MenuAsset
 nextMenu gr l = singleMenu gr "Next" l
 
 centerAssetX :: Graphics -> AssetObj -> Int -> Int -> Int -> Asset
