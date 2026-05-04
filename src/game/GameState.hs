@@ -46,6 +46,10 @@ stepGameState step gsn cfgs gr =
         ResizeWindow -> gsn { gView = resizeGameView (gameStateE gsn) gr (gView gsn) }
         (InputUpdate (AnyGamePlayState nGps)) -> update nGps gsn cfgs gr
         (Transition (AnyGamePlayState gps)) -> transition gps cfgs gr
+        (StepAnimation currTS anims) ->
+            let gv' = foldl (applyAnimationState currTS gr) (gView gsn) anims
+            in case gameStateE gsn of
+                        (AnyGamePlayState gpse) -> gsn { gameStateE = AnyGamePlayState (updateAnims gpse anims), gView = gv' }
 
 updateGameView :: Graphics -> InputState -> GameView -> Maybe (Either GameView GamePlayState)
 updateGameView gr inputs gv@(GameView vl oM tL mM) = if null outs then Nothing else Just (head outs)
@@ -125,35 +129,6 @@ updateGameMenu inputs m
     where
         selected = enterJustPressed inputs
         backSelected = backJustPressed inputs
-
-gameMenu :: GameMenu -> GameView
-gameMenu (GameMenu v m) = GameView v Nothing [] (Just m)
-
-gameMenuPause :: Graphics -> GamePlayState -> GameData -> GameMenu -> GameState
-gameMenuPause gr gps gd (GameMenu v m) = GameState gps (withPause gr gps gd $ GameView v Nothing [] (Just m)) False
-
-emptyGameView :: GameView
-emptyGameView = GameView emptyView Nothing [] Nothing
-
-saveGame :: GameData -> GameConfigs -> IO ()
-saveGame gd cfgs = do
-    saveToFile gd
-    updateStateConfigs sc
-    where
-        sc = (stateCfgs cfgs) { lastSaveM = Just (gameDataSaveFile gd) }
-
-mainMenuView :: GameConfigs -> OutputHandles -> Graphics -> InputState -> IO GameState
-mainMenuView cfgs outs gr inputs = do
-    gdM <- case lastSaveM (stateCfgs cfgs) of
-                Nothing -> return Nothing
-                Just sf -> do
-                    gdE <- loadFromFile sf
-                    case gdE of
-                        Left err -> do
-                            putStrLn $ T.unpack err
-                            return Nothing
-                        Right gd -> return $ Just gd
-    return $ GameState (MainMenu gdM) (mainMenu gdM gr) False
 
 
 withPause :: Graphics -> GamePlayState -> GameData -> GameView -> GameView

@@ -21,17 +21,27 @@ module Graphics.Asset
     , singleMenu
     , changeHighlight
     , changeCursor
+    , applyAnimationState
     ) where
 
 import qualified Data.Text as T
 
 import qualified Data.Map.Strict as M
+import Data.Int (Int64)
 
 import Graphics.TextUtil
 import Graphics.Types
 import Graphics.NewTypes
 
 import OutputHandles.Types
+
+applyAnimationState :: Int64 -> Graphics -> GView -> AnimationState -> GView
+applyAnimationState ts gr gv (AnimState aTs _ assetIds update)
+    | ts == aTs = gv { assets = assets' }
+    | otherwise = gv
+    where
+        assets' = foldl fn (assets gv) assetIds
+        fn assetMap id = M.adjust (\a -> update a gr) id assetMap
 
 changeHighlight :: MenuAsset -> Int -> Color -> MenuAsset
 changeHighlight ma idx c = ma { menuItems = updateItems <$> zip [0..] (menuItems ma) }

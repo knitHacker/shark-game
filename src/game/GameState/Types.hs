@@ -64,7 +64,7 @@ data GameView = GameView
 data GameStep =
       NoChange
     | ResizeWindow -- pass in resize here?
-    | StepAnimation -- Todo: list of animations that need to be updated []
+    | StepAnimation Int64 [AnimationState]
     | InputUpdate AnyGamePlayState -- Type for what input action? up / down?
     | Transition AnyGamePlayState
 
@@ -133,6 +133,9 @@ class GamePlayStateE a where
 
     update :: a -> GameStateNew -> GameConfigs -> Graphics -> GameStateNew
     update gps _ cfgs gr = transition gps cfgs gr
+
+    updateAnims :: a -> [AnimationState] -> a
+    updateAnims a _ = a
 
     {-# MINIMAL think #-}
 

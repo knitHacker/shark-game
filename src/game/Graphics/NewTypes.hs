@@ -10,6 +10,7 @@ module Graphics.NewTypes
     , StackDir(..)
     , Resize
     , AssetId
+    , AnimationState(..)
     ) where
 
 import Data.Int (Int64)
@@ -26,6 +27,13 @@ type AssetId = Int
 --data MenuState a = MState
 --    { curr :: a
 --    }
+
+data AnimationState = AnimState
+    { lastAnimTS :: Int64
+    , updateInterval :: Int
+    , animationAssets :: [AssetId]
+    , animationUpdate :: (Asset -> Graphics -> Asset)
+    }
 
 data GView = GView
     { assets :: M.Map AssetId Asset
@@ -49,8 +57,8 @@ data Asset = Asset
     , assetLayer :: Int
     , isVisible :: Bool
     , assetResize :: Maybe Resize
---    , assetAnimateStep :: Maybe (a -> Int64 -> Graphics -> Asset a)
     }
+
 
 data StackDir = StackHorizontal | StackVertical
               deriving (Show, Eq)

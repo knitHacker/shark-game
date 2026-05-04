@@ -4,9 +4,7 @@
 module GameState.Menu.GameMenus
     ( SplashState(..)
     , initSplash
-    , mainMenu
     , researchCenterMenu
-    , splash
     ) where
 
 import qualified Data.Map.Strict as M
@@ -42,25 +40,38 @@ import Debug.Trace
 
 data SplashState = SplashState Int64
 
+shouldAnimationStep :: InputState -> AnimationState -> Bool
+shouldAnimationStep inputs as@(AnimState lastTs interval _ _) = timestamp inputs - lastTs > fromIntegral interval
+
+getAnimationStep :: InputState -> [AnimationState] -> GameStep
+getAnimationStep inputs animStates = if not shouldStep then NoChange else StepAnimation ts updatedAnims
+    where
+        ts = timestamp inputs
+        (updatedAnims, shouldStep) = foldl foldFn ([], False) animStates
+        foldFn (anims, should) animState
+            | shouldAnimationStep inputs animState = (anims ++ [animState { lastAnimTS = ts }], True)
+            | otherwise = (anims ++ [animState], should)
+
 initSplash :: InputState -> SplashState
 initSplash inputs = SplashState (timestamp inputs)
+
 
 instance GamePlayStateE SplashState where
     think gps@(SplashState start) cfgs inputs
         | timestamp inputs - start < 100 = Step NoChange
         | otherwise =
             case lastSaveM (stateCfgs cfgs) of
-                Nothing -> Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing NewGameMain
-                Just fp -> LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState (Just gd) ContinueMain
+                Nothing -> Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing NewGameMain []
+                Just fp -> LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState (Just gd) ContinueMain []
 
 
 data MainMenuOpt = ContinueMain | NewGameMain | ExitMain
                   deriving (Enum, Ord, Eq, Show)
 
-data MainMenuState = MainMenuState (Maybe GameData) MainMenuOpt
+data MainMenuState = MainMenuState (Maybe GameData) MainMenuOpt [AnimationState]
 
 instance GamePlayStateE MainMenuState where
-    think gps@(MainMenuState gdM mmo) cfgs inputs
+    think gps@(MainMenuState gdM mmo animS) cfgs inputs
         | enterJustPressed inputs =
             case (gdM, mmo) of
                 (Just gd, ContinueMain) -> Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
@@ -71,21 +82,21 @@ instance GamePlayStateE MainMenuState where
             case (inputDirection inputs, gdM, mmo) of
                 (Just DUp, Just _, ContinueMain) -> Step NoChange
                 (Just DUp, Nothing, NewGameMain) -> Step NoChange
-                (Just DUp, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM $ pred mmo
+                (Just DUp, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM (pred mmo) animS
                 (Just DDown, _, ExitMain) -> Step NoChange
-                (Just DDown, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM $ succ mmo
+                (Just DDown, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM (succ mmo) animS
                 _ -> Step NoChange
-        | otherwise = Step NoChange
+        | otherwise = Step $ getAnimationStep inputs animS
 
-    transition gps@(MainMenuState gdM mmo) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
+    transition gps@(MainMenuState gdM mmo _) cfgs gr = GameStateNew (AnyGamePlayState (MainMenuState gdM mmo wAnimStates)) gview
         where
             gview = GView (M.fromList assets) mempty [] $ Just $ menuAsset (midX gr - 40) (midY gr + 100)
-            assets = zip [0..]
-                        [ back
-                        , staticText "Shark" Gray 10 10 14 2
-                        , staticText "Institute" Gray 100 200 12 2
-                        , centerText gr "Press ENTER to select" White 0 20 3 2
-                        ]
+            assets = (zip [(length waveAssets)..]
+                          [ back
+                          , staticText "Shark" Gray 10 10 14 2
+                          , staticText "Institute" Gray 100 200 12 2
+                          , centerText gr "Press ENTER to select" White 0 20 3 2
+                          ]) ++ waveAssets
             back = backgroundAsset gr DarkBlue
             menuOpts = (if isJust gdM then [("Continue", ContinueMain)] else []) ++ [("New Game", NewGameMain), ("Exit", ExitMain)]
             items = mkMenuItem menuOpts
@@ -96,8 +107,20 @@ instance GamePlayStateE MainMenuState where
             midX gr' = graphicsWindowWidth gr' `div` 2
             midY gr' = graphicsWindowHeight gr' `div` 2
             resizeMenu asset' gr' = asset' { menuXBase = midX gr' - 40, menuYBase = midY gr' + 100 }
+            animKey = "wave"
+            rsFnM = Just waveResize
+            waveResize asset gr = asset { assetY = assetY asset `mod` max 1 (graphicsWindowHeight gr - 100) }
+            waveAnim = Asset (AssetAnimation animKey 0 0 10.0) 340 400 1 False rsFnM
+            waveAnim2 = Asset (AssetAnimation animKey 4 0 8.0) 500 900 1 True rsFnM
+            waveAnim3 = Asset (AssetAnimation animKey 7 0 6.0) 100 750 1 True rsFnM
+            waveAnim4 = Asset (AssetAnimation animKey 5 0 7.0) 700 200 1 True rsFnM
+            waveAnim5 = Asset (AssetAnimation animKey 2 0 5.5) 1100 150 1 True rsFnM
+            waveAssets = zip [0..] [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5]
+            wAnimStates = animState <$> waveAssets
+            animState (idx, wave) = AnimState 0 120 [idx] $ animFn idx
+            animFn idx pWave gr = updateWaveAsset (idx + 1) pWave gr
 
-    update gps@(MainMenuState gdM mmo) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
+    update gps@(MainMenuState gdM mmo _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
         where
             nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn) }
             updateM menuA = changeCursor menuA ((fromEnum mmo) + cntOff) "green_arrow" 4.0
@@ -105,56 +128,26 @@ instance GamePlayStateE MainMenuState where
             gdCnt (Just _) = 0
             cntOff = gdCnt gdM
 
-splash :: InputState -> GameView
-splash (InputState _ _ _ ts) = GameView (View [] [] [] [] Nothing) Nothing [TimeoutData ts 10 $ TimeoutNext $ MainMenu Nothing] Nothing
+    updateAnims (MainMenuState gdM mmo _) newAnims = MainMenuState gdM mmo newAnims
 
-
-updateWave :: Graphics -> Int -> (Int, AnimPlacement) -> AnimPlacement
-updateWave gr fr (i, wave)
-    | newX < graphicsWindowWidth gr = wave { animPosX = newX, animShow = show, animFrame = nextFrame }
-    | mod (fr + nextFrame) 3 == 0 = wave { animShow = False }
-    | otherwise = wave { animPosX = xMod + fr, animPosY = newY, animShow = True, animFrame = 1 }
+updateWaveAsset :: Int -> Asset -> Graphics -> Asset
+updateWaveAsset i an@(Asset _ _ _ _ _ rsM) gr = updateWaveAsset' $ maybe an (\rFn -> rFn an gr) rsM
     where
-        maxWaveFrame = animFrameCount $ graphicsAnimTextures gr M.! animTexture wave
-        nextFrame = (animFrame wave + 1) `mod` maxWaveFrame
-        xMod = i * 2 + round (2 * animScale wave)
-        newX = if animShow wave then animPosX wave + 30 + xMod else animPosX wave + (xMod * 4) + 100
-        newY = max (100 + fr * 10) $ (animPosY wave + 50) `mod` (graphicsWindowHeight gr - 100)
-        show
-            | nextFrame == 0 && animShow wave = False
-            | nextFrame == 0 && fr `mod` 3 == 0 = False
-            | otherwise = True
+        updateWaveAsset' anAss@(Asset wa@(AssetAnimation wave f d s) x y l isVis _)
+            | newX < graphicsWindowWidth gr = anAss { assetX = newX, isVisible = show, object = (AssetAnimation wave nextFrame d s) }
+            | mod (f + nextFrame) 3 == 0 = anAss { isVisible = False, object = (AssetAnimation wave nextFrame d s) }
+            | otherwise = anAss { assetX = xMod + f, assetY = newY, isVisible = True, object = (AssetAnimation wave 1 d s) }
+            where
+                maxWaveFrame = animFrameCount $ graphicsAnimTextures gr M.! wave
+                nextFrame = (f + 1) `mod` maxWaveFrame
+                xMod = i * 2 + round (2 * s)
+                newX = if isVis then x + 30 + xMod else x + (xMod * 4) + 100
+                newY = max (100 + f * 10) $ (y + 50) `mod` (graphicsWindowHeight gr - 100)
+                show
+                    | nextFrame == 0 && isVis = False
+                    | nextFrame == 0 && f `mod` 3 == 0 = False
+                    | otherwise = True
 
-mainMenu :: Maybe GameData -> Graphics -> GameView
-mainMenu gdM gr = GameView v Nothing [waveMoveTO] (Just $ Menu optEntry Nothing)
-    where
-        v = View words [] [waveAnim, waveAnim2, waveAnim3, waveAnim4, waveAnim5] [rect] Nothing
-        rect = RPlace DarkBlue 0 0 (graphicsWindowWidth gr) (graphicsWindowHeight gr) 0
-        midY = div (graphicsWindowHeight gr) 2
-        xPos = midTextStart gr instTxt 3
-        instTxt = "Press Enter to select"
-        optEntry = selOneOpts (xPos + 100) (midY + 100) 3 2 menuOpts Nothing cursor 0
-        cursor = CursorPointer "green_arrow"
-        (instr, _) = textMiddleX gr instTxt (midY + 20) 3 White
-        words = [ (TextDisplay "Shark" 10 10 14 Gray Nothing, 2)
-                , (TextDisplay "Institute" 100 200 12 Gray Nothing, 2)
-                , (instr, 2)
-                ]
-        animKey = "wave"
-        waveAnim = APlace 340 400 10.0 animKey 0 0 1 False
-        waveAnim2 = APlace 500 900 8.0 animKey 4 0 1 True
-        waveAnim3 = APlace 100 750 6.0 animKey 7 0 1 True
-        waveAnim4 = APlace 700 200 7.0 animKey 5 0 1 True
-        waveAnim5 = APlace 1100 150 5.5 animKey 2 0 1 True
-        waveMoveTO = TimeoutData 0 120 $ TimeoutAnimation $ startAnimation 15 nextFrame
-        newGame = MenuAction "New Game" Nothing $ Just undefined
-        continueGame cg = MenuAction "Continue" Nothing $ Just $ ResearchCenter cg
-        exitOpt = MenuAction "Exit" Nothing $ Just $ GameExitState gdM
-        menuOpts =
-            case gdM of
-                Nothing -> [newGame, exitOpt]
-                Just cg -> [continueGame cg, newGame, exitOpt]
-        nextFrame pv@(View _ _ aps _ _) frame = pv { animations = updateWave gr frame <$> zip [1..] aps }
 
 data IntroPage = IntroWelcomePage | IntroMissionPage | IntroBoatPage | IntroEquipPage | IntroResearchPage | IntroFundsPage | IntroEndPage
                deriving (Show, Enum, Eq, Ord, Bounded)
