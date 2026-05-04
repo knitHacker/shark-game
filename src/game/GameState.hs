@@ -50,6 +50,7 @@ stepGameState step gsn cfgs gr =
             let gv' = foldl (applyAnimationState currTS gr) (gView gsn) anims
             in case gameStateE gsn of
                         (AnyGamePlayState gpse) -> gsn { gameStateE = AnyGamePlayState (updateAnims gpse anims), gView = gv' }
+        (TopTransition sec gd) -> topTransition sec gd cfgs gr
 
 updateGameView :: Graphics -> InputState -> GameView -> Maybe (Either GameView GamePlayState)
 updateGameView gr inputs gv@(GameView vl oM tL mM) = if null outs then Nothing else Just (head outs)
@@ -146,3 +147,9 @@ pauseMenu gr gps gd = OverlayView False (textView words) (Overlay overlayX overl
                , MenuAction "Main Menu" Nothing $ Just $ MainMenu $ Just gd
                , MenuAction "Save & Exit" Nothing $ Just (GameExitState (Just gd))
                ]
+
+topTransition :: GameSection -> GameData -> GameConfigs -> Graphics -> GameStateNew
+topTransition sec gd cfgs gr =
+    case sec of
+        MainMenus -> transition (initResearchCenter gd) cfgs gr
+        -- TripMenus -> transition ()

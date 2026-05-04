@@ -232,8 +232,11 @@ executable preview
   ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , mtl
     , shark-game-core
     , shark-game-tools
+    , text
+    , transformers
   default-language: Haskell2010
   if os(windows)
     ghc-options: -optl-mwindows

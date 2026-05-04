@@ -45,7 +45,12 @@ data GView = GView
 data Overlay = AOverlay
     { oAssets :: M.Map Int Asset
     , oMenu :: Maybe MenuAsset -- Does this need to not be maybe?
-    , isOverlayActive :: Bool
+    , overlayX :: Int
+    , overlayY :: Int
+    , overlayW :: Int
+    , overlayH :: Int
+    , overlayColor :: Color
+    , resizeOverlay :: Maybe (Overlay -> Graphics -> Overlay)
     }
 
 type Resize = Asset -> Graphics -> Asset
@@ -58,7 +63,6 @@ data Asset = Asset
     , isVisible :: Bool
     , assetResize :: Maybe Resize
     }
-
 
 data StackDir = StackHorizontal | StackVertical
               deriving (Show, Eq)
@@ -89,7 +93,6 @@ data MenuAsset = MenuAsset
     { menuXBase :: Int
     , menuYBase :: Int
     , menuLayer :: Int
-    , menuVisible :: Bool
     , menuResize :: Maybe (MenuAsset -> Graphics -> MenuAsset)
     , showScroll :: Bool
     , menuLineSpace :: Int

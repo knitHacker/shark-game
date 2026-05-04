@@ -90,7 +90,7 @@ drawScrollBar :: ToRender -> ToRender
 drawScrollBar r = r
 
 drawMenu :: Graphics -> Int -> ToRender -> MenuAsset -> (ToRender, Int)
-drawMenu gr d r (MenuAsset x y l isVis _ scrollB sp items) = foldl foldItem (r', y) items
+drawMenu gr d r (MenuAsset x y l _ scrollB sp items) = foldl foldItem (r', y) items
     where
         r' = if scrollB then drawScrollBar r else r
         foldItem (rNew, y') menuItem = drawMenuItem gr d rNew l sp x y' menuItem

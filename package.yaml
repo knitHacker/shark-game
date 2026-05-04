@@ -95,6 +95,9 @@ executables:
     dependencies:
     - shark-game-core
     - shark-game-tools
+    - transformers
+    - text
+    - mtl
 
   generate-save:
     main:                Main.hs

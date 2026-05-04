@@ -115,10 +115,8 @@ instance GameStateStep AppEnv where
         gse <- readGameState
         cfgs <- readConfigs
         inputs <- readInputState
-        if wasWindowResized inputs
-            then return (Step ResizeWindow)
-            else case gameStateE gse of
-                    AnyGamePlayState gps -> return $ think gps cfgs inputs
+        case gameStateE gse of
+            AnyGamePlayState gps -> return $ think gps cfgs inputs
 
     executeAction :: Action -> AppEnv (Maybe GameStep)
     executeAction (Exit _) = return Nothing

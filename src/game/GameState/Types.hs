@@ -33,6 +33,7 @@ import InputState
 import SaveData
 import Shark.Types
 import Util
+import Data.Typeable (Typeable, typeOf)
 import Data.IntMap.Merge.Lazy (merge)
 
 
@@ -126,7 +127,7 @@ class Monad m => GameStateStep m where
     stepGame :: GameStep -> m ToRender
 
 
-class GamePlayStateE a where
+class Typeable a => GamePlayStateE a where
     think :: a -> GameConfigs -> InputState -> Action
 
     transition :: a -> GameConfigs -> Graphics -> GameStateNew
@@ -143,6 +144,9 @@ class GamePlayStateE a where
 data AnyGamePlayState = forall a. GamePlayStateE a => AnyGamePlayState
     { gameAState :: a
     }
+
+instance Show AnyGamePlayState where
+    show (AnyGamePlayState gps) = show (typeOf gps)
 
 data GameStateNew = GameStateNew
     { gameStateE :: AnyGamePlayState

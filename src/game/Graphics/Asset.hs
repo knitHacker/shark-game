@@ -22,6 +22,9 @@ module Graphics.Asset
     , changeHighlight
     , changeCursor
     , applyAnimationState
+    , oneLineText
+    , resizeAssets
+    , resizeMenu
     ) where
 
 import qualified Data.Text as T
@@ -81,16 +84,23 @@ assetObjHeight gr (AssetScroll sc) = let lh = ceiling (fontHeight gr * fromInteg
 
 
 resizeGameView :: a -> Graphics -> GView -> GView
-resizeGameView gps gr gv@(GView ats ovs _ menuAsset) = gv { assets = doResize <$> ats, overlays = doOResize <$> ovs, menuAsset = mResize menuAsset}
+resizeGameView gps gr gv@(GView ats ovs _ menuAsset) = gv { assets = resizeAssets ats gr, overlays = doOResize <$> ovs, menuAsset = resizeMenu menuAsset gr}
     where
-        mResize m = do
-            menu <- m
-            rFn <- menuResize menu
-            return $ rFn menu gr
-        doOResize (AOverlay a om ia) = AOverlay (doResize <$> a) (mResize om) ia
+        doOResize over = maybe over (\rsFn -> rsFn over gr) (resizeOverlay over)
+
+resizeMenu :: Maybe MenuAsset -> Graphics -> Maybe MenuAsset
+resizeMenu mM gr = do
+    menu <- mM
+    rFn <- menuResize menu
+    return $ rFn menu gr
+
+resizeAssets :: M.Map AssetId Asset -> Graphics -> M.Map AssetId Asset
+resizeAssets assets gr = doResize <$> assets
+    where
         doResize asset = case assetResize asset of
                             Nothing -> asset
                             Just fn -> fn asset gr
+
 
 staticAsset :: AssetObj -> Int -> Int -> Int -> Asset
 staticAsset o x y l = Asset o x y l True Nothing
@@ -98,13 +108,19 @@ staticAsset o x y l = Asset o x y l True Nothing
 staticText :: T.Text -> Color -> Int -> Int -> Int -> Int -> Asset
 staticText t c x y s l = Asset (AssetText t c s) x y l True Nothing
 
+oneLineText :: [(T.Text, Color, Int)] -> Int -> Int -> Int -> Int -> Asset
+oneLineText tInfo sp x y l = Asset stack x y l True Nothing
+    where
+        stack = AssetStacked StackHorizontal (mkTxtAsset <$> tInfo) sp
+        mkTxtAsset (txt, c, sz) = StackItem (AssetText txt c sz) 0 0
+
 -- assumes resize overwrites x and y
 mkResizeAsset :: Graphics -> AssetObj -> Int -> Bool -> Resize -> Asset
 mkResizeAsset gr obj l vis rFn = rFn (Asset obj undefined undefined l vis (Just rFn)) gr
 
 
 singleMenu :: Graphics -> T.Text -> Int -> MenuAsset
-singleMenu gr txt l = MenuAsset (txtX gr) (graphicsWindowHeight gr - 100) l True (Just menuResize) False 0 [MenuItem txt Blue sz 0 0 (Just White) Nothing]
+singleMenu gr txt l = MenuAsset (txtX gr) (graphicsWindowHeight gr - 100) l (Just menuResize) False 0 [MenuItem txt Blue sz 0 0 (Just White) Nothing]
     where
         sz = 3
         txtX gr' = midTextStart gr' txt (fromIntegral sz)

@@ -3,6 +3,8 @@
 
 module GameState.Menu.GameMenus
     ( SplashState(..)
+    , MainMenuState(..)
+    , MainMenuOpt(..)
     , initSplash
     , initResearchCenter
     , researchCenterMenu
@@ -49,6 +51,7 @@ initSplash inputs = SplashState (timestamp inputs)
 
 instance GamePlayStateE SplashState where
     think gps@(SplashState start) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
         | timestamp inputs - start < 100 = Step NoChange
         | otherwise =
             case lastSaveM (stateCfgs cfgs) of
@@ -63,6 +66,7 @@ data MainMenuState = MainMenuState (Maybe GameData) MainMenuOpt [AnimationState]
 
 instance GamePlayStateE MainMenuState where
     think gps@(MainMenuState gdM mmo animS) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
         | enterJustPressed inputs =
             case (gdM, mmo) of
                 (Just gd, ContinueMain) -> Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
@@ -94,7 +98,7 @@ instance GamePlayStateE MainMenuState where
             cursor m = if m == mmo then Just ("green_arrow", 4) else Nothing
             mkMenuItem [] = []
             mkMenuItem ((i, sel):tl) = MenuItem i Blue 3 0 0 Nothing (cursor sel) : mkMenuItem tl
-            menuAsset x y = MenuAsset x y 2 True (Just resizeMenu) False 2 items
+            menuAsset x y = MenuAsset x y 2 (Just resizeMenu) False 2 items
             midX gr' = graphicsWindowWidth gr' `div` 2
             midY gr' = graphicsWindowHeight gr' `div` 2
             resizeMenu asset' gr' = asset' { menuXBase = midX gr' - 40, menuYBase = midY gr' + 100 }
@@ -147,6 +151,7 @@ data IntroState = IntroState GameData IntroPage
 
 instance GamePlayStateE IntroState where
     think is@(IntroState gd page) _ inputs
+        | wasWindowResized inputs = Step ResizeWindow
         | enterJustPressed inputs && page < IntroEndPage = Step $ InputUpdate $ AnyGamePlayState $ IntroState gd $ succ page -- maybe transition?
         | enterJustPressed inputs && page == maxBound = Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
         | otherwise = Step NoChange
@@ -287,13 +292,15 @@ data RCMenu = PlanTripMenu | ReviewDataMenu | LabManagementMenu
 data ResearchCenterState = ResearchCenterState
     { rcGameData :: GameData
     , rcMenuSelect :: RCMenu
+    , rcAnimations :: [AnimationState]
     }
 
 initResearchCenter :: GameData -> ResearchCenterState
-initResearchCenter gd = ResearchCenterState gd minBound
+initResearchCenter gd = ResearchCenterState gd minBound []
 
 instance GamePlayStateE ResearchCenterState where
-    think rcs@(ResearchCenterState gd mSel) _ inputs
+    think rcs@(ResearchCenterState gd mSel _) _ inputs
+        | wasWindowResized inputs = Step ResizeWindow
         | enterJustPressed inputs =
             case mSel of
                 PlanTripMenu -> Step $ TopTransition TripMenus gd
@@ -301,15 +308,23 @@ instance GamePlayStateE ResearchCenterState where
                 LabManagementMenu -> Step $ TopTransition LabMenus gd
         | otherwise = Step NoChange
 
-    transition rcs@(ResearchCenterState gd mSel) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) mempty [] Nothing
+    transition rcs@(ResearchCenterState gd mSel _) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) mempty [] Nothing
         where
             assets = zip [0..]
                          [ staticText "Research" White 50 10 7 0
                          , staticText "Center" White 200 140 7 0
-                         , staticText "Current Funds: " White 630 100 3 0
-                         , staticText (showMoney funds) Green 670 100 3 0
+                         , oneLineText [("Current Funds: ", White, 3), (showMoney funds, Green, 3)] 2 630 100 0
                          ]
             funds = gameDataFunds gd
+            --imgAsset = Asset (AssetImage "institute" )
+            --rsImg as gr' = as { object = AssetImage "institute" (), assetX = , assetY = )
+
+    update gps@(ResearchCenterState gd mSel _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
+        where
+            nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn) }
+            updateM menuA = changeHighlight menuA (fromEnum mSel) White
+
+    updateAnims gps anims = gps { rcAnimations = anims }
 
 researchCenterMenu :: GameData -> Graphics -> GameView
 researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
