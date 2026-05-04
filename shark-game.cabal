@@ -121,6 +121,7 @@ library shark-game-core
       GameState.Menu.LabMenus
       GameState.Menu.TripMenus
       GameState.Types
+      GameState.Util
       Graphics
       Graphics.Animation
       Graphics.Asset

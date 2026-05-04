@@ -4,6 +4,7 @@
 module GameState.Menu.GameMenus
     ( SplashState(..)
     , initSplash
+    , initResearchCenter
     , researchCenterMenu
     ) where
 
@@ -25,6 +26,7 @@ import OutputHandles.Types
 import OutputHandles.Util
 
 import GameState.Types
+import GameState.Util
 import Graphics.Types
 import Graphics.NewTypes
 import Graphics.Menu
@@ -40,17 +42,6 @@ import Debug.Trace
 
 data SplashState = SplashState Int64
 
-shouldAnimationStep :: InputState -> AnimationState -> Bool
-shouldAnimationStep inputs as@(AnimState lastTs interval _ _) = timestamp inputs - lastTs > fromIntegral interval
-
-getAnimationStep :: InputState -> [AnimationState] -> GameStep
-getAnimationStep inputs animStates = if not shouldStep then NoChange else StepAnimation ts updatedAnims
-    where
-        ts = timestamp inputs
-        (updatedAnims, shouldStep) = foldl foldFn ([], False) animStates
-        foldFn (anims, should) animState
-            | shouldAnimationStep inputs animState = (anims ++ [animState { lastAnimTS = ts }], True)
-            | otherwise = (anims ++ [animState], should)
 
 initSplash :: InputState -> SplashState
 initSplash inputs = SplashState (timestamp inputs)
@@ -305,16 +296,20 @@ instance GamePlayStateE ResearchCenterState where
     think rcs@(ResearchCenterState gd mSel) _ inputs
         | enterJustPressed inputs =
             case mSel of
-                PlanTripMenu -> undefined
-                ReviewDataMenu -> undefined
-                LabManagementMenu -> undefined
+                PlanTripMenu -> Step $ TopTransition TripMenus gd
+                ReviewDataMenu -> Step $ TopTransition ReviewMenus gd
+                LabManagementMenu -> Step $ TopTransition LabMenus gd
         | otherwise = Step NoChange
 
     transition rcs@(ResearchCenterState gd mSel) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) mempty [] Nothing
         where
-            assets = zip [0..] [ staticText "Research" White 50 10 7 0
-                     , staticText "Center" White 200 140 7 0
-                     ]
+            assets = zip [0..]
+                         [ staticText "Research" White 50 10 7 0
+                         , staticText "Center" White 200 140 7 0
+                         , staticText "Current Funds: " White 630 100 3 0
+                         , staticText (showMoney funds) Green 670 100 3 0
+                         ]
+            funds = gameDataFunds gd
 
 researchCenterMenu :: GameData -> Graphics -> GameView
 researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m

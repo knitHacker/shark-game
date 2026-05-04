@@ -67,6 +67,7 @@ data GameStep =
     | StepAnimation Int64 [AnimationState]
     | InputUpdate AnyGamePlayState -- Type for what input action? up / down?
     | Transition AnyGamePlayState
+    | TopTransition GameSection GameData
 
 data Action =
       Step GameStep
@@ -109,8 +110,8 @@ data GamePlayState =
     deriving (Eq, Show)
 
 data GameSection =
-      StartGame
-    | MainMenus
+      --StartGame
+      MainMenus
     | TripMenus
     | ReviewMenus
     | LabMenus
