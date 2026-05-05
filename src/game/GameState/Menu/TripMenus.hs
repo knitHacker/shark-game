@@ -23,15 +23,53 @@ import Shark.Util
 import Data.Map ((!))
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Data.Maybe (isJust, fromJust)
+import Data.Maybe (isJust, fromJust, isNothing)
 
 import Graphics.Types
 import Graphics.Menu
 import Graphics.TextUtil
 import Graphics.ImageUtil
 import Graphics.Animation
+import Graphics.NewTypes
+import Graphics.Asset
+import GameState.Util
 
 import Debug.Trace
+
+data TripMapState = TripMapState GameData Int (Maybe PauseOpt)
+
+instance GamePlayStateE TripMapState where
+    think tms@(TripMapState gd locIdx pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | enterJustPressed inputs && isNothing pSelM = Step NoChange -- $ Transition $ AnyGamePlayState $ 
+        | enterJustPressed inputs =
+            case pSelM of
+                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ TripMapState gd locIdx Nothing
+                _ -> error "Shouldn't get here: map menu"
+        | moveInputJustPressed inputs && isJust pSelM =
+            case (inputDirection inputs, pSelM) of
+                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ \po -> AnyGamePlayState $ TripMapState gd locIdx (Just po)
+                _ -> error "Shouldn't get here: map menu: pause"
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, locIdx) of
+                (Just DUp, 0) -> Step NoChange
+                (Just DUp, n) -> Step $ InputUpdate $ AnyGamePlayState $ TripMapState gd (locIdx + 1) pSelM
+                (Just DDown, n) | n == locNum - 1 -> Step NoChange
+                (Just DDown, n) -> Step $ InputUpdate $ AnyGamePlayState $ TripMapState gd (locIdx - 1) pSelM
+                _ -> Step NoChange
+        | otherwise = Step $ NoChange
+        where
+            region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
+            allLocs = M.assocs (getData region siteLocations)
+            locNum = length allLocs
+
+    transition tms@(TripMapState gd locIdx pSelM) cfgs gr = GameStateNew (AnyGamePlayState (TripMapState gd locIdx pSelM)) gview
+        where
+            gview = GView (M.fromList assets) mempty [] Nothing
+            assets = zip [0..]
+                         [ staticText "Select Trip" White 40 40 7 0
+                         , staticText "Destination" White 80 160 8 0
+                         ]
 
 mapMenu :: GameData -> Int -> Graphics -> GameConfigs -> GameMenu
 mapMenu gd chsn gr cfgs = GameMenu (textView words) (Menu options Nothing)

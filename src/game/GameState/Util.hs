@@ -4,6 +4,8 @@ module GameState.Util
     (shouldAnimationStep
     , getAnimationStep
     , pauseOverlay
+    , getPauseEnterAction
+    , getPauseMoveAction
     , PauseOpt(..)
     ) where
 
@@ -16,6 +18,8 @@ import Graphics.Asset
 import GameState.Types
 import Graphics.TextUtil
 import OutputHandles.Types
+import SaveData
+
 
 shouldAnimationStep :: InputState -> AnimationState -> Bool
 shouldAnimationStep inputs as@(AnimState lastTs interval _ _) = timestamp inputs - lastTs > fromIntegral interval
@@ -52,3 +56,17 @@ pauseOverlay gr mPSel = AOverlay assets (Just overMenu) (ox gr) (oy gr) ow oh Da
                  , MenuItem "Main Menu" Blue 4 0 0 (getHl MainMenuPause) Nothing
                  , MenuItem "Save & Exit" Blue 4 0 0 (getHl ExitPause) Nothing
                  ]
+
+getPauseEnterAction :: PauseOpt -> GameData -> AnyGamePlayState -> Action
+getPauseEnterAction ContinuePause _ closedGPS = Step $ InputUpdate $ closedGPS
+getPauseEnterAction MainMenuPause gd _ = Step $ TopTransition TopMainMenu gd
+getPauseEnterAction ExitPause gd _ = Exit $ Just gd
+
+getPauseMoveAction :: Direction -> PauseOpt -> (PauseOpt -> AnyGamePlayState) -> Action
+getPauseMoveAction dir po update =
+    case (dir, po) of
+        (DUp, ContinuePause) -> Step NoChange
+        (DUp, pSel) -> Step $ InputUpdate $ update $ pred pSel
+        (DDown, ExitPause) -> Step NoChange
+        (DDown, pSel) -> Step $ InputUpdate $ update $ succ pSel
+        _ -> Step NoChange

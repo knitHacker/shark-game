@@ -10,7 +10,6 @@ module GameState.Menu.GameMenus
     , initSplash
     , initMainMenu
     , initResearchCenter
-    , researchCenterMenu
     ) where
 
 import qualified Data.Map.Strict as M
@@ -315,9 +314,7 @@ instance GamePlayStateE ResearchCenterState where
                 LabManagementMenu -> Step $ TopTransition LabMenus gd
         | enterJustPressed inputs =
             case pSelM of
-                Just ContinuePause -> Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Nothing }
-                Just MainMenuPause -> Step $ Transition $ AnyGamePlayState $ initMainMenu $ Just gd
-                Just ExitPause -> Exit $ Just gd
+                Just po -> getPauseEnterAction po gd $ AnyGamePlayState (rcs { rcPauseSelect = Nothing })
                 _ -> error "Shouldn't be able to have Nothing for pause menu opt"
         | escapeJustPressed inputs && isNothing pSelM = Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Just minBound }
         | escapeJustPressed inputs = Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Nothing }
@@ -381,28 +378,3 @@ instance GamePlayStateE ResearchCenterState where
             nGV = (gView gsn) { overlays = M.adjust overlayUpdate 0 (overlays (gView gsn)), activeOverlays = [0] }
 
     updateAnims gps anims = gps { rcAnimations = anims }
-
-researchCenterMenu :: GameData -> Graphics -> GameView
-researchCenterMenu gd gr = GameView v Nothing [animTo] $ Just m
-    where
-        v = View ((,0) <$> (words ++ fundWords)) [image] [flagAnim] [] Nothing
-        m = Menu (selOneOpts 100 400 3 15 opts Nothing mc 0) Nothing
-        funds = gameDataFunds gd
-        mc = CursorRect White
-        xEnd = 620
-        iY = 250
-        (image, iX, scale) = scalingRecenterImage gr xEnd iY 40 40 2.0 "institute"
-        -- scale the offset of the start of the flag animation to put it in the right place
-        flagOffsetX = round (21 * scale)
-        flagOffsetY = round (132 * scale)
-        flagAnim = APlace (iX + flagOffsetX) (iY + flagOffsetY) scale "flag_with_shadow" 0 0 2 True
-        animTo = TimeoutData 0 170 $ TimeoutAnimation $ startTextAnim gr
-        fundTxts = [("Current Funds: ", White, 3), (showMoney funds, Green, 3)]
-        words = [ TextDisplay "Research" 50 10 7 White Nothing
-                , TextDisplay "Center" 200 140 7 White Nothing
-                ]
-        fundWords = oneLine gr fundTxts 630 100 2
-        opts = [ MenuAction "Plan Research Trip" Nothing $ Just $ TripDestinationSelect gd 0
-               , MenuAction "Review Data" Nothing $ Just $ DataReviewTop gd
-               , MenuAction "Lab Management" Nothing $ Just $ LabManagement gd
-               ]
