@@ -35,7 +35,7 @@ packages:
     git: https://github.com/knitHacker/sdl2-ttf.git
 snapshots:
 - completed:
-    sha256: 5a59b2a405b3aba3c00188453be172b85893cab8ebc352b1ef58b0eae5d248a2
-    size: 650475
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/20/26.yaml
-  original: lts-20.26
+    sha256: 9444fadfa30b67a93080254d53872478c087592ad64443e47c546cdcd13149ae
+    size: 678857
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/0.yaml
+  original: lts-23.0

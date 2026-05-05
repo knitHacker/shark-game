@@ -120,9 +120,9 @@ instance GamePlayStateE MainMenuState where
             animState (idx, wave) = AnimState 0 120 [idx] $ animFn idx
             animFn idx pWave gr = updateWaveAsset (idx + 1) pWave gr
 
-    update gps@(MainMenuState gdM mmo _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
+    update gps@(MainMenuState gdM mmo _) gsn cfgs gr = simpleUpdate gps nGV gsn
         where
-            nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn) }
+            nGV gv = gv { menuAsset = updateM <$> menuAsset (gView gsn) }
             updateM menuA = changeCursor menuA ((fromEnum mmo) + cntOff) "green_arrow" 4.0
             gdCnt Nothing = 1
             gdCnt (Just _) = 0
@@ -368,13 +368,7 @@ instance GamePlayStateE ResearchCenterState where
                     newF = mod (f + 1) $ animFrameCount $ graphicsAnimTextures gr' M.! img
                 in as' { object = AssetAnimation img newF d scale}
 
-    update gps@(ResearchCenterState gd mSel Nothing _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
-        where
-            nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn), activeOverlays = [] }
-            updateM menuA = changeHighlight menuA (fromEnum mSel) White
-    update gps@(ResearchCenterState gd _ (Just pSel) _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
-        where
-            overlayUpdate ov = ov { oMenu = (\ma -> changeHighlight ma (fromEnum pSel) White) <$> oMenu ov }
-            nGV = (gView gsn) { overlays = M.adjust overlayUpdate 0 (overlays (gView gsn)), activeOverlays = [0] }
+    update gps@(ResearchCenterState _ mSel pSelM _) gsn _ _ =
+        withPauseUpdate gps pSelM (updateMenuHighlight (fromEnum mSel) White) gsn
 
     updateAnims gps anims = gps { rcAnimations = anims }

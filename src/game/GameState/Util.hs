@@ -7,6 +7,11 @@ module GameState.Util
     , getPauseEnterAction
     , getPauseMoveAction
     , PauseOpt(..)
+    , simpleUpdate
+    , updateMenuHighlight
+    , updateMenuCursor
+    , withPauseUpdate
+    , updateOverlayHighlight
     ) where
 
 import qualified Data.Map.Strict as M
@@ -20,6 +25,14 @@ import Graphics.TextUtil
 import OutputHandles.Types
 import SaveData
 
+simpleUpdate :: GamePlayStateE a => a -> (GView -> GView) -> GameStateNew -> GameStateNew
+simpleUpdate gps f gsn = gsn { gameStateE = AnyGamePlayState gps, gView = f (gView gsn) }
+
+updateMenuHighlight :: Int -> Color -> GView -> GView
+updateMenuHighlight idx c gv = gv { menuAsset = (\ma -> changeHighlight ma idx c) <$> menuAsset gv }
+
+updateMenuCursor :: Int -> Image -> Double -> GView -> GView
+updateMenuCursor idx img scale gv = gv { menuAsset = (\ma -> changeCursor ma idx img scale) <$> menuAsset gv }
 
 shouldAnimationStep :: InputState -> AnimationState -> Bool
 shouldAnimationStep inputs as@(AnimState lastTs interval _ _) = timestamp inputs - lastTs > fromIntegral interval
@@ -70,3 +83,12 @@ getPauseMoveAction dir po update =
         (DDown, ExitPause) -> Step NoChange
         (DDown, pSel) -> Step $ InputUpdate $ update $ succ pSel
         _ -> Step NoChange
+
+withPauseUpdate :: GamePlayStateE a => a -> Maybe PauseOpt -> (GView -> GView) -> GameStateNew -> GameStateNew
+withPauseUpdate gps Nothing extraF gsn = simpleUpdate gps (extraF . \gv -> gv { activeOverlays = filter (/= 0) (activeOverlays gv) }) gsn
+withPauseUpdate gps (Just pSel) extraF gsn = simpleUpdate gps (extraF . updateOverlayHighlight 0 (fromEnum pSel) White) gsn
+
+updateOverlayHighlight :: Int -> Int -> Color -> GView -> GView
+updateOverlayHighlight overlayIdx menuIdx c gv = gv { overlays = M.adjust updateOv overlayIdx (overlays gv), activeOverlays = [overlayIdx] }
+    where
+        updateOv ov = ov { oMenu = (\ma -> changeHighlight ma menuIdx c) <$> oMenu ov }

@@ -74,6 +74,7 @@ data AssetObj =
     | AssetScroll AssetScroll
     | AssetRect Int Int Color
     | AssetStacked StackDir [AssetStackItem] Int -- have the next y be the previous end y + space
+    | AssetEmpty
 
 data AssetStackItem = StackItem
     { stackItem :: AssetObj

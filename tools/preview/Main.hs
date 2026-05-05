@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -152,4 +153,5 @@ buildInitialState "intro-funds"     cfgs gr gd = Just $ transition (IntroState g
 buildInitialState "intro-end"       cfgs gr gd = Just $ transition (IntroState gd IntroEndPage) cfgs gr
 buildInitialState "research-center" cfgs gr gd = Just $ transition (initResearchCenter gd) cfgs gr
 buildInitialState "trip-map"        cfgs gr gd = Just $ transition (initTripMapState gd) cfgs gr
+buildInitialState "trip-equip"      cfgs gr gd = Just $ transition (initEquipPickState gd 1 "estuary") cfgs gr
 buildInitialState _                 _    _  _  = Nothing

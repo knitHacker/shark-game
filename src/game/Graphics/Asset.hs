@@ -25,6 +25,7 @@ module Graphics.Asset
     , oneLineText
     , resizeAssets
     , resizeMenu
+    , wrapTextStack
     ) where
 
 import qualified Data.Text as T
@@ -178,6 +179,12 @@ makeLines txt maxChar = ls ++ [last]
             | T.length curr + T.length w <= maxChar = (ls, T.concat [curr, " ", w])
             | otherwise = (ls ++ [curr], w)
 
+wrapTextStack :: Graphics -> Int -> Color -> T.Text -> Int -> Int -> AssetObj
+wrapTextStack gr width c txt sz sp = AssetStacked StackVertical items sp
+    where
+        maxChar = floor $ fromIntegral width / (fontWidth gr * fromIntegral sz)
+        lines = makeLines txt maxChar
+        items = (\t -> StackItem (AssetText t c sz) 0 0) <$> lines
 
 wrapTextAsset :: Graphics -> Int -> Color -> T.Text -> Int -> Int -> Int -> Int -> Bool -> Asset
 wrapTextAsset gr percentWide c fullTxt sz sp l startY centerLine = asset gr

@@ -153,4 +153,4 @@ topTransition sec gd cfgs gr =
     case sec of
         TopMainMenu -> transition (initMainMenu (Just gd)) cfgs gr
         ResearchCenterMenu -> transition (initResearchCenter gd) cfgs gr
-        -- TripMenus -> transition ()
+        TripMenus -> transition (initTripMapState gd) cfgs gr
