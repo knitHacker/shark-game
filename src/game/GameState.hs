@@ -151,5 +151,6 @@ pauseMenu gr gps gd = OverlayView False (textView words) (Overlay overlayX overl
 topTransition :: GameSection -> GameData -> GameConfigs -> Graphics -> GameStateNew
 topTransition sec gd cfgs gr =
     case sec of
-        MainMenus -> transition (initResearchCenter gd) cfgs gr
+        TopMainMenu -> transition (initMainMenu (Just gd)) cfgs gr
+        ResearchCenterMenu -> transition (initResearchCenter gd) cfgs gr
         -- TripMenus -> transition ()

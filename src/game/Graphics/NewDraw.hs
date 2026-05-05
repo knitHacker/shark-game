@@ -15,13 +15,23 @@ import OutputHandles.Images
 import OutputHandles.Text
 
 drawAssets :: Graphics -> GView -> ToRender
-drawAssets gr gv = appendMenu baseView $ menuAsset gv
+drawAssets gr gv = r''
     where
         baseView = foldl (drawAsset gr 0) mempty (assets gv)
 
         appendMenu r Nothing = r
         appendMenu r (Just mAss) = fst $ drawMenu gr 0 r mAss
+        r' = appendMenu baseView $ menuAsset gv
+        r'' = if null (activeOverlays gv) then r' else foldl appendOverlay r' $ activeOverlays gv
+        appendOverlay rNew idx = drawOverlay gr (overlays gv M.! idx) (idx + 1) rNew
         --TODO: Add overlays
+
+drawOverlay :: Graphics -> Overlay -> Int -> ToRender -> ToRender
+drawOverlay gr (AOverlay assets menu ox oy ow oh oc _) d r = r'''
+    where
+        r' = addRectangle r d 0 $ DRectangle oc (fromIntegral ox) (fromIntegral oy) (fromIntegral ow) (fromIntegral oh)
+        r'' = foldl (drawAsset gr d) r' assets
+        r''' = maybe r'' (fst . drawMenu gr d r'') menu
 
 getMax :: StackDir -> Graphics -> Int -> Int -> AssetObj -> Int
 getMax StackHorizontal gr x y asset = x + assetObjWidth gr asset

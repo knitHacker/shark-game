@@ -1,13 +1,18 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module GameState.Util
     (shouldAnimationStep
     , getAnimationStep
     , pauseOverlay
-    , PauseOpts(..)
+    , PauseOpt(..)
     ) where
+
+import qualified Data.Map.Strict as M
 
 import InputState
 import Graphics.NewTypes
 import Graphics.Types
+import Graphics.Asset
 import GameState.Types
 import Graphics.TextUtil
 import OutputHandles.Types
@@ -24,21 +29,26 @@ getAnimationStep inputs animStates = if not shouldStep then NoChange else StepAn
             | shouldAnimationStep inputs animState = (anims ++ [animState { lastAnimTS = ts }], True)
             | otherwise = (anims ++ [animState], should)
 
-data PauseOpts = ContinuePause | MainMenuPause | ExitPause
+data PauseOpt = ContinuePause | MainMenuPause | ExitPause
                deriving (Show, Ord, Bounded, Enum, Eq)
 
-pauseOverlay :: Graphics -> Overlay
-pauseOverlay gr = AOverlay assets (Just overMenu) (ox gr) (oy gr) ow oh Blue $ Just oRsz
+pauseOverlay :: Graphics -> Maybe PauseOpt -> Overlay
+pauseOverlay gr mPSel = AOverlay assets (Just overMenu) (ox gr) (oy gr) ow oh DarkBlue $ Just oRsz
     where
         ow = 750
         oh = 600
         ox gr' = midStartX gr' ow
         oy gr' = midStartY gr' oh
-        assets = undefined
+        titleX gr' = midTextStart gr' "Pause" (fromIntegral 8)
+        titleRsz titleA gr' = titleA { assetX = titleX gr', assetY = oy gr' + 50 }
+        assets = M.fromList [(0, Asset (AssetText "Pause" White 8) (titleX gr) (oy gr + 50) 2 True (Just titleRsz))]
         mRsz mAss gr' = mAss { menuXBase = ox gr' + 150, menuYBase = oy gr' + 300 }
-        overMenu = MenuAsset ((ox gr) + 150) ((oy gr) + 300) 2 (Just mRsz) 3 mItems
+        overMenu = MenuAsset ((ox gr) + 150) ((oy gr) + 300) 2 (Just mRsz) False 3 mItems
         oRsz ov gr' = ov { oAssets = resizeAssets (oAssets ov) gr', oMenu = resizeMenu (oMenu ov) gr', overlayX = ox gr', overlayY = oy gr' }
-        mItem = [ MenuItem "Continue" White
-                , MenuItem "Main Menu" White
-                , MenuItem "Save & Exit" White
-                ]
+        getHl sel = case mPSel of
+                        Nothing -> if sel == ContinuePause then Just White else Nothing
+                        (Just psel) -> if sel == psel then Just White else Nothing
+        mItems = [ MenuItem "Continue" Blue 4 0 0 (getHl ContinuePause) Nothing
+                 , MenuItem "Main Menu" Blue 4 0 0 (getHl MainMenuPause) Nothing
+                 , MenuItem "Save & Exit" Blue 4 0 0 (getHl ExitPause) Nothing
+                 ]

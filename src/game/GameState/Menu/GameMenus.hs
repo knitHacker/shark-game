@@ -6,6 +6,7 @@ module GameState.Menu.GameMenus
     , MainMenuState(..)
     , MainMenuOpt(..)
     , initSplash
+    , initMainMenu
     , initResearchCenter
     , researchCenterMenu
     ) where
@@ -13,7 +14,7 @@ module GameState.Menu.GameMenus
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Data.Int (Int64)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, isNothing)
 
 import Configs
 import SaveData
@@ -60,9 +61,12 @@ instance GamePlayStateE SplashState where
 
 
 data MainMenuOpt = ContinueMain | NewGameMain | ExitMain
-                  deriving (Enum, Ord, Eq, Show)
+                  deriving (Enum, Ord, Eq, Show, Bounded)
 
 data MainMenuState = MainMenuState (Maybe GameData) MainMenuOpt [AnimationState]
+
+initMainMenu :: Maybe GameData -> MainMenuState
+initMainMenu gdM = MainMenuState gdM minBound []
 
 instance GamePlayStateE MainMenuState where
     think gps@(MainMenuState gdM mmo animS) cfgs inputs
@@ -292,37 +296,67 @@ data RCMenu = PlanTripMenu | ReviewDataMenu | LabManagementMenu
 data ResearchCenterState = ResearchCenterState
     { rcGameData :: GameData
     , rcMenuSelect :: RCMenu
+    , rcPauseSelect :: Maybe PauseOpt
     , rcAnimations :: [AnimationState]
     }
 
 initResearchCenter :: GameData -> ResearchCenterState
-initResearchCenter gd = ResearchCenterState gd minBound []
+initResearchCenter gd = ResearchCenterState gd minBound Nothing []
 
 instance GamePlayStateE ResearchCenterState where
-    think rcs@(ResearchCenterState gd mSel _) _ inputs
+    think rcs@(ResearchCenterState gd mSel pSelM as) _ inputs
         | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs =
+        | enterJustPressed inputs && isNothing pSelM =
             case mSel of
                 PlanTripMenu -> Step $ TopTransition TripMenus gd
                 ReviewDataMenu -> Step $ TopTransition ReviewMenus gd
                 LabManagementMenu -> Step $ TopTransition LabMenus gd
+        | enterJustPressed inputs =
+            case pSelM of
+                Just ContinuePause -> Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Nothing }
+                Just MainMenuPause -> Step $ Transition $ AnyGamePlayState $ initMainMenu $ Just gd
+                Just ExitPause -> Exit $ Just gd
+                _ -> error "Shouldn't be able to have Nothing for pause menu opt"
+        | escapeJustPressed inputs && isNothing pSelM = Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Just minBound }
+        | escapeJustPressed inputs = Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Nothing }
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, mSel, pSelM) of
+                (Just DUp, _, Just ContinuePause) -> Step NoChange
+                (Just DUp, _, Just pSel) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd mSel (Just (pred pSel)) as
+                (Just DUp, PlanTripMenu, _) -> Step NoChange
+                (Just DUp, ms, _) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd (pred ms) Nothing as
+                (Just DDown, _, Just ExitPause) -> Step NoChange
+                (Just DDown, _, Just pSel) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd mSel (Just (succ pSel)) as
+                (Just DDown, LabManagementMenu, _) -> Step NoChange
+                (Just DDown, ms, _) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd (succ ms) Nothing as
+                _ -> Step NoChange
         | otherwise = Step NoChange
 
-    transition rcs@(ResearchCenterState gd mSel _) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) mempty [] Nothing
+    transition rcs@(ResearchCenterState gd mSel pSelM _) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) overlays [] $ Just menu
         where
+            overlays = M.singleton 0 $ pauseOverlay gr pSelM
             assets = zip [0..]
                          [ staticText "Research" White 50 10 7 0
                          , staticText "Center" White 200 140 7 0
                          , oneLineText [("Current Funds: ", White, 3), (showMoney funds, Green, 3)] 2 630 100 0
                          ]
             funds = gameDataFunds gd
+            menu = MenuAsset 100 400 1 Nothing False 15 mItems
+            mItems = [ MenuItem "Plan Research Trip" Blue 3 0 0 (if mSel == PlanTripMenu then Just White else Nothing) Nothing
+                     , MenuItem "Review Data" Blue 3 0 0 (if mSel == ReviewDataMenu then Just White else Nothing) Nothing
+                     , MenuItem "Lab Management" Blue 3 0 0 (if mSel == LabManagementMenu then Just White else Nothing) Nothing
+                     ]
             --imgAsset = Asset (AssetImage "institute" )
             --rsImg as gr' = as { object = AssetImage "institute" (), assetX = , assetY = )
 
-    update gps@(ResearchCenterState gd mSel _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
+    update gps@(ResearchCenterState gd mSel Nothing _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
         where
-            nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn) }
+            nGV = (gView gsn) { menuAsset = updateM <$> menuAsset (gView gsn), activeOverlays = [] }
             updateM menuA = changeHighlight menuA (fromEnum mSel) White
+    update gps@(ResearchCenterState gd _ (Just pSel) _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
+        where
+            overlayUpdate ov = ov { oMenu = (\ma -> changeHighlight ma (fromEnum pSel) White) <$> oMenu ov }
+            nGV = (gView gsn) { overlays = M.adjust overlayUpdate 0 (overlays (gView gsn)), activeOverlays = [0] }
 
     updateAnims gps anims = gps { rcAnimations = anims }
 

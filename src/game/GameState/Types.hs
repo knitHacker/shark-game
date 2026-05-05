@@ -111,8 +111,8 @@ data GamePlayState =
     deriving (Eq, Show)
 
 data GameSection =
-      --StartGame
-      MainMenus
+      TopMainMenu
+    | ResearchCenterMenu
     | TripMenus
     | ReviewMenus
     | LabMenus
