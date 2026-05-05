@@ -8,6 +8,7 @@ module GameState.Menu.TripMenus
     , tripProgressMenu
     , sharkFoundMenu
     , tripResultsMenu
+    , initTripMapState
     ) where
 
 import SaveData
@@ -37,6 +38,9 @@ import GameState.Util
 import Debug.Trace
 
 data TripMapState = TripMapState GameData Int (Maybe PauseOpt)
+
+initTripMapState :: GameData -> TripMapState
+initTripMapState gd = TripMapState gd 0 Nothing
 
 instance GamePlayStateE TripMapState where
     think tms@(TripMapState gd locIdx pSelM) cfgs inputs

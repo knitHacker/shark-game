@@ -19,6 +19,7 @@ import Graphics.NewDraw (drawAssets)
 import GameState (stepGameState)
 import GameState.Types
 import GameState.Menu.GameMenus
+import GameState.Menu.TripMenus
 import InputState
 import SaveData (GameData, loadFromFile)
 import Generate (defaultGameData)
@@ -150,4 +151,5 @@ buildInitialState "intro-research"  cfgs gr gd = Just $ transition (IntroState g
 buildInitialState "intro-funds"     cfgs gr gd = Just $ transition (IntroState gd IntroFundsPage) cfgs gr
 buildInitialState "intro-end"       cfgs gr gd = Just $ transition (IntroState gd IntroEndPage) cfgs gr
 buildInitialState "research-center" cfgs gr gd = Just $ transition (initResearchCenter gd) cfgs gr
+buildInitialState "trip-map"        cfgs gr gd = Just $ transition (initTripMapState gd) cfgs gr
 buildInitialState _                 _    _  _  = Nothing
