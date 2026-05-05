@@ -98,6 +98,11 @@ instance GameStateStep PreviewEnv where
         gr <- readGraphics
         gs <- readGameState
         return $ drawAssets gr $ gView gs
+    stepGame (TopTransition sec _) = do
+        liftIO $ putStrLn $ "Would transition to: " ++ show sec
+        gr <- readGraphics
+        gs <- readGameState
+        return $ drawAssets gr $ gView gs
     stepGame step = do
         cfgs <- readConfigs
         gr <- readGraphics
@@ -137,5 +142,12 @@ loadGameData cfgs [] = defaultGameData cfgs
 
 buildInitialState :: String -> GameConfigs -> Graphics -> GameData -> Maybe GameStateNew
 buildInitialState "main-menu"       cfgs gr gd = Just $ transition (MainMenuState (Just gd) ContinueMain []) cfgs gr
+buildInitialState "intro-welcome"   cfgs gr gd = Just $ transition (IntroState gd IntroWelcomePage) cfgs gr
+buildInitialState "intro-mission"   cfgs gr gd = Just $ transition (IntroState gd IntroMissionPage) cfgs gr
+buildInitialState "intro-boat"      cfgs gr gd = Just $ transition (IntroState gd IntroBoatPage) cfgs gr
+buildInitialState "intro-equip"     cfgs gr gd = Just $ transition (IntroState gd IntroEquipPage) cfgs gr
+buildInitialState "intro-research"  cfgs gr gd = Just $ transition (IntroState gd IntroResearchPage) cfgs gr
+buildInitialState "intro-funds"     cfgs gr gd = Just $ transition (IntroState gd IntroFundsPage) cfgs gr
+buildInitialState "intro-end"       cfgs gr gd = Just $ transition (IntroState gd IntroEndPage) cfgs gr
 buildInitialState "research-center" cfgs gr gd = Just $ transition (initResearchCenter gd) cfgs gr
 buildInitialState _                 _    _  _  = Nothing

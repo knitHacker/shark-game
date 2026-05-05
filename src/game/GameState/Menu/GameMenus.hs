@@ -5,6 +5,8 @@ module GameState.Menu.GameMenus
     ( SplashState(..)
     , MainMenuState(..)
     , MainMenuOpt(..)
+    , IntroState(..)
+    , IntroPage(..)
     , initSplash
     , initMainMenu
     , initResearchCenter
@@ -156,7 +158,7 @@ data IntroState = IntroState GameData IntroPage
 instance GamePlayStateE IntroState where
     think is@(IntroState gd page) _ inputs
         | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs && page < IntroEndPage = Step $ InputUpdate $ AnyGamePlayState $ IntroState gd $ succ page -- maybe transition?
+        | enterJustPressed inputs && page < IntroEndPage = Step $ Transition $ AnyGamePlayState $ IntroState gd $ succ page -- maybe transition?
         | enterJustPressed inputs && page == maxBound = Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
         | otherwise = Step NoChange
 
@@ -330,15 +332,17 @@ instance GamePlayStateE ResearchCenterState where
                 (Just DDown, LabManagementMenu, _) -> Step NoChange
                 (Just DDown, ms, _) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd (succ ms) Nothing as
                 _ -> Step NoChange
-        | otherwise = Step NoChange
+        | otherwise = Step $ getAnimationStep inputs as
 
-    transition rcs@(ResearchCenterState gd mSel pSelM _) _ gr = GameStateNew (AnyGamePlayState rcs) $ GView (M.fromList assets) overlays [] $ Just menu
+    transition rcs@(ResearchCenterState gd mSel pSelM _) _ gr = GameStateNew (AnyGamePlayState (rcs { rcAnimations = [as] } )) $ GView (M.fromList assets) overlays [] $ Just menu
         where
             overlays = M.singleton 0 $ pauseOverlay gr pSelM
             assets = zip [0..]
-                         [ staticText "Research" White 50 10 7 0
+                         [ flagAnim gr
+                         , staticText "Research" White 50 10 7 0
                          , staticText "Center" White 200 140 7 0
                          , oneLineText [("Current Funds: ", White, 3), (showMoney funds, Green, 3)] 2 630 100 0
+                         , imgAsset gr
                          ]
             funds = gameDataFunds gd
             menu = MenuAsset 100 400 1 Nothing False 15 mItems
@@ -346,8 +350,26 @@ instance GamePlayStateE ResearchCenterState where
                      , MenuItem "Review Data" Blue 3 0 0 (if mSel == ReviewDataMenu then Just White else Nothing) Nothing
                      , MenuItem "Lab Management" Blue 3 0 0 (if mSel == LabManagementMenu then Just White else Nothing) Nothing
                      ]
-            --imgAsset = Asset (AssetImage "institute" )
-            --rsImg as gr' = as { object = AssetImage "institute" (), assetX = , assetY = )
+            imgScale gr' = max 2.0 $ min ((fromIntegral (graphicsWindowWidth gr') / 2 - 40) / fromIntegral (instituteW gr'))
+                                         ((fromIntegral (graphicsWindowHeight gr') - 270) / fromIntegral (instituteH gr'))
+            instituteInfo gr' = graphicsStaticTextures gr' M.! "institute"
+            instituteW gr' = imageSizeX $ instituteInfo gr'
+            instituteH gr' = imageSizeY $ instituteInfo gr'
+            imgX gr' = graphicsWindowWidth gr' `div` 2
+            imgY = 250
+            imgAsset gr' = Asset (AssetImage "institute" (imgScale gr')) (imgX gr') imgY 1 True $ Just rsImg
+            rsImg as gr' = as { object = AssetImage "institute" (max 2.0 (imgScale gr')), assetX = graphicsWindowWidth gr' `div` 2 }
+            flagAnim gr' =
+                let scale = imgScale gr'
+                in Asset (AssetAnimation "flag_with_shadow" 0 0 scale) (imgX gr' + floor (21 * scale)) (imgY + floor (132 * scale)) 2 True (Just flagRs)
+            flagRs asset' gr' =
+                let scale = imgScale gr'
+                in asset' { object = AssetAnimation "flag_with_shadow" 0 0 scale, assetX = imgX gr' + floor (21 * scale), assetY = imgY + floor (132 * scale) }
+            as = AnimState 0 170 [0] anUp
+            anUp as@(Asset (AssetAnimation img f d scale) _ _ _ _ rs ) gr' =
+                let as' = maybe as' (\rsF -> rsF as gr') rs
+                    newF = mod (f + 1) $ animFrameCount $ graphicsAnimTextures gr' M.! img
+                in as' { object = AssetAnimation img newF d scale}
 
     update gps@(ResearchCenterState gd mSel Nothing _) gsn cfgs gr = gsn { gameStateE = (AnyGamePlayState gps), gView = nGV }
         where

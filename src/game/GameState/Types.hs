@@ -116,6 +116,7 @@ data GameSection =
     | TripMenus
     | ReviewMenus
     | LabMenus
+    deriving (Show, Eq)
 
 -- Class for reading game state from the top level monad
 class Monad m => GameStateRead m where

@@ -89,10 +89,9 @@ resizeGameView gps gr gv@(GView ats ovs _ menuAsset) = gv { assets = resizeAsset
         doOResize over = maybe over (\rsFn -> rsFn over gr) (resizeOverlay over)
 
 resizeMenu :: Maybe MenuAsset -> Graphics -> Maybe MenuAsset
-resizeMenu mM gr = do
-    menu <- mM
-    rFn <- menuResize menu
-    return $ rFn menu gr
+resizeMenu Nothing _ = Nothing
+resizeMenu (Just menu) gr = Just $ maybe menu (\rFn -> rFn menu gr) (menuResize menu)
+
 
 resizeAssets :: M.Map AssetId Asset -> Graphics -> M.Map AssetId Asset
 resizeAssets assets gr = doResize <$> assets
