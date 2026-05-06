@@ -26,6 +26,7 @@ import qualified Data.Text as T
 import qualified Data.Set as S
 import Data.Maybe (isJust, fromJust, isNothing)
 import Data.Typeable (cast)
+import Data.Int (Int64)
 
 import Graphics.Types
 import Graphics.Menu
@@ -275,13 +276,22 @@ instance GamePlayStateE TripReviewState where
                 _ -> Step NoChange
         | enterJustPressed inputs =
             case mIdx of
-                StartTripRv -> Step NoChange -- $ Transition $ AnyGamePlayState $
+                StartTripRv -> Step $ Transition $ AnyGamePlayState $ TripProgressState gd'' atmpts $ timestamp inputs
                 BackEquipRv -> Step $ Transition $ AnyGamePlayState $ initEquipPickState gd locI loc
                 AbortTripRv -> Step $ TopTransition ResearchCenterMenu gd
         | otherwise =
             case keyInputs inputs of
                 (Just (Keyboard _ (Just dir) _ False)) -> moveMenuPos dir mIdx (\newMI -> (gps { reviewMenuIdx = newMI }))
                 _ -> Step NoChange
+        where
+            equipKeys = snd <$> S.toList equip
+            region = gameCurrentRegion gd
+            boat = gameActiveBoat $ gameDataEquipment gd
+            trip = tripInfo (sharkCfgs cfgs) region loc boat equipKeys
+            funds = gameDataFunds gd
+            tc = tripCost trip
+            gd' = gd { gameDataFunds = funds - tc, gameDataMonth = gameDataMonth gd + tripLength trip }
+            (gd'', atmpts) = initTripProgress gd' (gameCurrentRegion gd) loc boat equipKeys cfgs
 
     transition gps@(TripReviewState gd (_, loc) equip mIdx pSelM) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
         where
@@ -353,6 +363,21 @@ reviewTripMenu gd (idx, loc) eqs cfgs = GameMenu (textView words) (Menu (selOneO
                ]
         backOpt = MenuAction "Abort Trip" Nothing $ Just (ResearchCenter gd)
 
+data TripProgressState = TripProgressState GameData TripState Int64
+
+instance GamePlayStateE TripProgressState where
+    think gps@(TripProgressState gd trip startTS) cfgs inputs
+        | timestamp inputs - startTS > 1000 = Step $ Transition $ AnyGamePlayState $ SharkFoundState gd Nothing trip
+        | otherwise = Step NoChange
+
+    transition gps@(TripProgressState gd trip _) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
+        where
+            gview = GView assets mempty [] Nothing
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Trip Progress" White 50 50 8 0
+                                      , staticText "Looking for sharks..." Blue 100 200 4 0
+                                      ]
+
 tripProgressMenu :: GameData -> TripState -> GameConfigs -> InputState -> Graphics -> GameView
 tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
     case tripTries tp of
@@ -384,6 +409,15 @@ tripProgressMenu gd tp cfgs (InputState _ _ _ ts) gr =
                             Nothing -> tp { tripTries = tl }
                             Just sf -> tp { tripTries = tl, sharkFinds = sharkFinds tp ++ [sf]}
         exec = executeTrip (sharkCfgs cfgs) gd (trip tp)
+
+data SharkFoundState = SharkFoundState GameData (Maybe SharkFind) TripState
+
+instance GamePlayStateE SharkFoundState where
+    think gps@(SharkFoundState gd sfM trip) cfgs inputs
+        | enterJustPressed inputs = Step $ Transition $ AnyGamePlayState $ TripProgressState gd trip' $ timestamp inputs
+        | otherwise = Step NoChange
+        where
+            trip' = trip -- add shark?
 
 sharkFoundMenu :: GameData -> Maybe SharkFind -> TripState -> GameConfigs -> Graphics -> GameMenu
 sharkFoundMenu gd sfM tp cfgs gr = GameMenu (View ((,0) <$> words) imgs [] [] Nothing) (Menu (selOneOpts menuOptX (imgEnd + 50) 3 4 opts Nothing (CursorRect White) 0) Nothing)
