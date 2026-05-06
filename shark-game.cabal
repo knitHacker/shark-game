@@ -1,6 +1,6 @@
 cabal-version: 2.0
 
--- This file has been generated from package.yaml by hpack version 0.38.1.
+-- This file has been generated from package.yaml by hpack version 0.39.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -232,6 +232,7 @@ executable preview
   ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N
   build-depends:
       base >=4.16 && <5
+    , containers
     , mtl
     , shark-game-core
     , shark-game-tools

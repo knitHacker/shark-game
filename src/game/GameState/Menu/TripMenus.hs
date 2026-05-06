@@ -2,13 +2,11 @@
 {-# LANGUAGE TupleSections #-}
 
 module GameState.Menu.TripMenus
-    ( initEquipPickState
-    , equipmentPickMenu
-    , reviewTripMenu
-    , tripProgressMenu
-    , sharkFoundMenu
-    , tripResultsMenu
+    ( TripMapState(..)
     , initTripMapState
+    , TripEquipPickState(..)
+    , initEquipPickState
+    , initTripReviewState
     ) where
 
 import SaveData
@@ -209,7 +207,7 @@ instance GamePlayStateE TripEquipPickState where
             stepInputUpdate $ gps { equipSel = S.delete (mIdx, currEq) eSel }
         | enterJustPressed inputs && mIdx < eqLen =
             stepInputUpdate $ gps { equipSel = S.insert (mIdx, currEq) eSel }
-        | enterJustPressed inputs && mIdx == eqLen && not (null eSel) = Step NoChange -- $ Transition review trip
+        | enterJustPressed inputs && mIdx == eqLen && not (null eSel) = Step $ Transition $ AnyGamePlayState $ initTripReviewState gd locIdx loc eSel
         | enterJustPressed inputs && mIdx > eqLen = Step $ Transition $ AnyGamePlayState $ TripMapState gd locIdx Nothing
         | otherwise = Step NoChange
         where
@@ -251,33 +249,76 @@ instance GamePlayStateE TripEquipPickState where
                                           , highlightedColor = getMenuHighlight gd cfgs loc eSel mIdx i
                                           })
 
-equipmentPickMenu :: GameData -> (Int, T.Text) -> [T.Text] -> Int -> GameConfigs -> GameMenu
-equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
-    where
-        region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
-        myEquip = gameDataEquipment gd
-        boatInfo = boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
-        slots = boatEquipmentSlots boatInfo
-        allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
-        eq = equipment $ sharkCfgs cfgs
-        aEs = filter (`elem` allowedEq) $ gameOwnedEquipment myEquip
-        lupE et =
-            let eqEntry = eq M.! et
-                eqSize = equipSize eqEntry
-            in (et, eqSize, T.concat [equipText eqEntry, " - ", T.pack (show eqSize), " slots"])
-        aEs' = lupE <$> aEs
-        usedSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
-        openSlots = traceShowId $ slots - usedSlots
-        slotTxt = T.concat ["Equipment Loaded: ", T.pack (show usedSlots), " slots"]
-        words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
-                , TextDisplay "Equipment" 150 175 10 White Nothing
-                , TextDisplay (T.concat ["Max Slots: ", T.pack (show slots), " slots"]) 200 350 3 Green Nothing
-                , TextDisplay slotTxt 200 400 3 Green Nothing
-                ]
-        opts' = (\(k, s, t) -> SelectOption t k (k `elem` chsn) True $ s > openSlots) <$> aEs'
-        update = TripEquipmentSelect gd (idx, loc)
-        act = if null chsn  || usedSlots > slots then Nothing else Just $ \ls -> TripReview gd (idx, loc) ls
-        back = TripDestinationSelect gd idx
+data TripReviewOpts = StartTripRv | BackEquipRv | AbortTripRv
+                    deriving (Show, Eq, Enum, Ord, Bounded)
+
+data TripReviewState = TripReviewState
+    { reviewGameData :: GameData
+    , reviewLoc :: (Int, T.Text)
+    , reviewEquip :: S.Set (Int, T.Text)
+    , reviewMenuIdx :: TripReviewOpts
+    , reviewPauseOpt :: Maybe PauseOpt
+    }
+
+initTripReviewState :: GameData -> Int -> T.Text -> S.Set (Int, T.Text) -> TripReviewState
+initTripReviewState gd locIdx locKey equips = TripReviewState gd (locIdx, locKey) equips minBound Nothing
+
+instance GamePlayStateE TripReviewState where
+    think gps@(TripReviewState gd (locI, loc) equip mIdx pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> gps { reviewPauseOpt = pSelM' })
+        | escapeJustPressed inputs = stepInputUpdate $ gps { reviewPauseOpt = Nothing }
+        | isJust pSelM && (enterJustPressed inputs || moveInputJustPressed inputs) =
+            case (inputDirection inputs, enterJustPressed inputs, pSelM) of
+                (Just dir, _, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { reviewPauseOpt = Just po}))
+                (_, True, Just pSel) -> getPauseEnterAction pSel gd $ AnyGamePlayState (gps { reviewPauseOpt = Nothing })
+                _ -> Step NoChange
+        | enterJustPressed inputs =
+            case mIdx of
+                StartTripRv -> Step NoChange -- $ Transition $ AnyGamePlayState $
+                BackEquipRv -> Step $ Transition $ AnyGamePlayState $ initEquipPickState gd locI loc
+                AbortTripRv -> Step $ TopTransition ResearchCenterMenu gd
+        | otherwise =
+            case keyInputs inputs of
+                (Just (Keyboard _ (Just dir) _ False)) -> moveMenuPos dir mIdx (\newMI -> (gps { reviewMenuIdx = newMI }))
+                _ -> Step NoChange
+
+    transition gps@(TripReviewState gd (_, loc) equip mIdx pSelM) cfgs gr = GameStateNew (AnyGamePlayState gps) gview
+        where
+            gview = GView assets (M.singleton 0 (pauseOverlay gr pSelM)) (activeO pSelM) $ Just menu
+            activeO Nothing = []
+            activeO (Just _) = [0]
+            assets = M.fromList $ zip [0..]
+                                      [ staticText "Review Trip" White 50 20 8 0
+                                      , staticText "Details" White 150 125 10 0
+                                      , staticText boatTxt White 300 280 3 0
+                                      , staticText fuelCostTxt White 305 325 3 0
+                                      , Asset stack 250 425 0 True Nothing
+                                      ]
+            boatTxt = T.append "Boat: " (boatName boatInfo)
+            fuelCost = boatFuelCost boatInfo
+            fuelCostTxt = T.append "Fuel Cost: " (showMoney fuelCost)
+            menu = MenuAsset 400 600 1 Nothing False 5 items
+            itemHL i = if fromEnum mIdx == i then Just White else Nothing
+            items = [ MenuItem "Start Trip" Blue 3 0 0 True (itemHL 0) Nothing
+                    , MenuItem "Back to equipment" Blue 3 0 0 True (itemHL 1) Nothing
+                    , MenuItem "Abort Trip" Blue 3 0 0 True (itemHL 2) Nothing
+                    ]
+            region = gameCurrentRegion gd
+            boat = gameActiveBoat $ gameDataEquipment gd
+            boatInfo = boats (sharkCfgs cfgs) ! boat
+            trip = tripInfo (sharkCfgs cfgs) region loc boat $ snd <$> S.toList equip
+            funds = gameDataFunds gd
+            tc = tripCost trip
+            costTxts = zip [Green, Red, if funds >= tc then Green else Red] $
+                           splitJustSpacing [ ("Current Funds: ", showMoney funds)
+                                            , ("Trip Cost: ", showMoney tc)
+                                            , ("After Trip: ", showMoney (funds - tc))
+                                            ]
+            stack = AssetStacked StackVertical stackItems 8
+            stackItems = (\(c, txt) -> StackItem (AssetText txt c 3) 0 0) <$> costTxts
+
+    update gps@(TripReviewState gd (_, loc) equip mIdx pSelM) gsn cfgs gr = withPauseUpdate gps pSelM (updateMenuHighlight (fromEnum mIdx) White) gsn
 
 
 reviewTripMenu :: GameData -> (Int, T.Text) -> [T.Text] -> GameConfigs -> GameMenu

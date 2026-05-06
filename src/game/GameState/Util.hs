@@ -16,6 +16,7 @@ module GameState.Util
     , stepInputUpdate
     , updateSomeMenu
     , updateMenu
+    , moveMenuPos
     ) where
 
 import qualified Data.Map.Strict as M
@@ -28,6 +29,15 @@ import GameState.Types
 import Graphics.TextUtil
 import OutputHandles.Types
 import SaveData
+
+moveMenuPos :: (Eq a, Enum a, Bounded a, GamePlayStateE b) => Direction -> a -> (a -> b) -> Action
+moveMenuPos dir idxE update =
+    case dir of
+        DUp | idxE == minBound -> Step NoChange
+        DUp -> stepInputUpdate $ update $ pred idxE
+        DDown | idxE == maxBound -> Step NoChange
+        DDown -> stepInputUpdate $ update $ succ idxE
+        _ -> Step NoChange
 
 simpleUpdate :: GamePlayStateE a => a -> (GView -> GView) -> GameStateNew -> GameStateNew
 simpleUpdate gps f gsn = gsn { gameStateE = AnyGamePlayState gps, gView = f (gView gsn) }

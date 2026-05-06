@@ -9,6 +9,7 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.State.Strict (StateT, MonadState, evalStateT, gets, modify)
 import System.Environment (getArgs)
 import qualified Data.Text as T
+import qualified Data.Set as S
 import Data.Word (Word32)
 
 import Configs (initConfigs, ConfigsRead(..), GameConfigs)
@@ -154,4 +155,5 @@ buildInitialState "intro-end"       cfgs gr gd = Just $ transition (IntroState g
 buildInitialState "research-center" cfgs gr gd = Just $ transition (initResearchCenter gd) cfgs gr
 buildInitialState "trip-map"        cfgs gr gd = Just $ transition (initTripMapState gd) cfgs gr
 buildInitialState "trip-equip"      cfgs gr gd = Just $ transition (initEquipPickState gd 1 "estuary") cfgs gr
+buildInitialState "trip-review"     cfgs gr gd = Just $ transition (initTripReviewState gd 1 "estuary" (S.singleton (0, "fishingRod"))) cfgs gr
 buildInitialState _                 _    _  _  = Nothing
