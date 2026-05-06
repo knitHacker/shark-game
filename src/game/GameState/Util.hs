@@ -12,6 +12,8 @@ module GameState.Util
     , updateMenuCursor
     , withPauseUpdate
     , updateOverlayHighlight
+    , openPauseMenu
+    , stepInputUpdate
     ) where
 
 import qualified Data.Map.Strict as M
@@ -92,3 +94,9 @@ updateOverlayHighlight :: Int -> Int -> Color -> GView -> GView
 updateOverlayHighlight overlayIdx menuIdx c gv = gv { overlays = M.adjust updateOv overlayIdx (overlays gv), activeOverlays = [overlayIdx] }
     where
         updateOv ov = ov { oMenu = (\ma -> changeHighlight ma menuIdx c) <$> oMenu ov }
+
+stepInputUpdate :: GamePlayStateE a => a -> Action
+stepInputUpdate gps = Step $ InputUpdate $ AnyGamePlayState gps
+
+openPauseMenu :: GamePlayStateE a => (Maybe PauseOpt -> a) -> Action
+openPauseMenu stateUp = Step $ InputUpdate $ AnyGamePlayState $ stateUp $ Just minBound

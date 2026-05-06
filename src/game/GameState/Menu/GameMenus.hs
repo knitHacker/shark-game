@@ -82,9 +82,9 @@ instance GamePlayStateE MainMenuState where
             case (inputDirection inputs, gdM, mmo) of
                 (Just DUp, Just _, ContinueMain) -> Step NoChange
                 (Just DUp, Nothing, NewGameMain) -> Step NoChange
-                (Just DUp, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM (pred mmo) animS
+                (Just DUp, _, _) -> stepInputUpdate $ MainMenuState gdM (pred mmo) animS
                 (Just DDown, _, ExitMain) -> Step NoChange
-                (Just DDown, _, _) -> Step $ InputUpdate $ AnyGamePlayState $ MainMenuState gdM (succ mmo) animS
+                (Just DDown, _, _) -> stepInputUpdate $ MainMenuState gdM (succ mmo) animS
                 _ -> Step NoChange
         | otherwise = Step $ getAnimationStep inputs animS
 
@@ -316,24 +316,26 @@ instance GamePlayStateE ResearchCenterState where
             case pSelM of
                 Just po -> getPauseEnterAction po gd $ AnyGamePlayState (rcs { rcPauseSelect = Nothing })
                 _ -> error "Shouldn't be able to have Nothing for pause menu opt"
-        | escapeJustPressed inputs && isNothing pSelM = Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Just minBound }
-        | escapeJustPressed inputs = Step $ InputUpdate $ AnyGamePlayState $ rcs { rcPauseSelect = Nothing }
+        | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> rcs { rcPauseSelect = pSelM' })
+        | escapeJustPressed inputs = stepInputUpdate $ rcs { rcPauseSelect = Nothing }
         | moveInputJustPressed inputs =
             case (inputDirection inputs, mSel, pSelM) of
                 (Just DUp, _, Just ContinuePause) -> Step NoChange
-                (Just DUp, _, Just pSel) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd mSel (Just (pred pSel)) as
+                (Just DUp, _, Just pSel) -> stepInputUpdate $ ResearchCenterState gd mSel (Just (pred pSel)) as
                 (Just DUp, PlanTripMenu, _) -> Step NoChange
-                (Just DUp, ms, _) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd (pred ms) Nothing as
+                (Just DUp, ms, _) -> stepInputUpdate $ ResearchCenterState gd (pred ms) Nothing as
                 (Just DDown, _, Just ExitPause) -> Step NoChange
-                (Just DDown, _, Just pSel) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd mSel (Just (succ pSel)) as
+                (Just DDown, _, Just pSel) -> stepInputUpdate $ ResearchCenterState gd mSel (Just (succ pSel)) as
                 (Just DDown, LabManagementMenu, _) -> Step NoChange
-                (Just DDown, ms, _) -> Step $ InputUpdate $ AnyGamePlayState $ ResearchCenterState gd (succ ms) Nothing as
+                (Just DDown, ms, _) -> stepInputUpdate $ ResearchCenterState gd (succ ms) Nothing as
                 _ -> Step NoChange
         | otherwise = Step $ getAnimationStep inputs as
 
-    transition rcs@(ResearchCenterState gd mSel pSelM _) _ gr = GameStateNew (AnyGamePlayState (rcs { rcAnimations = [as] } )) $ GView (M.fromList assets) overlays [] $ Just menu
+    transition rcs@(ResearchCenterState gd mSel pSelM _) _ gr = GameStateNew (AnyGamePlayState (rcs { rcAnimations = [as] } )) $ GView (M.fromList assets) overlays (activeO pSelM) $ Just menu
         where
             overlays = M.singleton 0 $ pauseOverlay gr pSelM
+            activeO Nothing = []
+            activeO (Just _) = [0]
             assets = zip [0..]
                          [ flagAnim gr
                          , staticText "Research" White 50 10 7 0

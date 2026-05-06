@@ -97,12 +97,12 @@ instance GamePlayStateE TripMapState where
         | moveInputJustPressed inputs =
             case (inputDirection inputs, locIdx) of
                 (Just DUp, 0) -> Step NoChange
-                (Just DUp, n) -> Step $ InputUpdate $ AnyGamePlayState $ TripMapState gd (locIdx - 1) pSelM
+                (Just DUp, n) -> stepInputUpdate $ TripMapState gd (locIdx - 1) pSelM
                 (Just DDown, n) | n == locNum -> Step NoChange
-                (Just DDown, n) -> Step $ InputUpdate $ AnyGamePlayState $ TripMapState gd (locIdx + 1) pSelM
+                (Just DDown, n) -> stepInputUpdate $ TripMapState gd (locIdx + 1) pSelM
                 _ -> Step NoChange
-        | escapeJustPressed inputs && isNothing pSelM = Step $ InputUpdate $ AnyGamePlayState $ TripMapState gd locIdx $ Just minBound
-        | escapeJustPressed inputs = Step $ InputUpdate $ AnyGamePlayState $ TripMapState gd locIdx Nothing
+        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ TripMapState gd locIdx $ Just minBound
+        | escapeJustPressed inputs = stepInputUpdate $ TripMapState gd locIdx Nothing
         | otherwise = Step $ NoChange
         where
             region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
@@ -116,7 +116,9 @@ instance GamePlayStateE TripMapState where
     transition tms@(TripMapState gd locIdx pSelM) cfgs gr = GameStateNew (AnyGamePlayState (TripMapState gd locIdx pSelM)) gview
         where
             pause = pauseOverlay gr pSelM
-            gview = GView (M.fromList assets) (M.singleton 0 pause) [] $ Just menu
+            activeO Nothing = []
+            activeO (Just _) = [0]
+            gview = GView (M.fromList assets) (M.singleton 0 pause) (activeO pSelM) $ Just menu
             assets = zip [0..]
                          [ getBiomeDesc gr gd cfgs locIdx
                          , staticText "Select Trip" White 40 40 7 0
@@ -138,8 +140,6 @@ instance GamePlayStateE TripMapState where
 -- assuming I add ability to have more than one boat, need to select boat in new menu
 -- this is done in fleet management currently
 
---data EquipMenuOpt = Equip T.Text | 
-
 data TripEquipPickState = TripEquipPickState
     { gameData :: GameData
     , locIdx :: Int
@@ -153,11 +153,45 @@ initEquipPickState :: GameData -> Int -> T.Text -> TripEquipPickState
 initEquipPickState gd lIdx lKey = TripEquipPickState gd lIdx lKey 0 [] Nothing
 
 instance GamePlayStateE TripEquipPickState where
-    think gps@(TripEquipPickState gd _ _ mIdx eSel pSelM) cfgs inputs = Step NoChange
+    think gps@(TripEquipPickState gd _ _ mIdx eSel pSelM) cfgs inputs
+        | wasWindowResized inputs = Step ResizeWindow
+        | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> gps { pauseOpt = pSelM' })
+        | escapeJustPressed inputs = stepInputUpdate $ gps { pauseOpt = Nothing }
+        | moveInputJustPressed inputs && isNothing pSelM = Step NoChange
+        | moveInputJustPressed inputs =
+            case (inputDirection inputs, pSelM) of
+                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { pauseOpt = Just po}))
+                _ -> Step NoChange
+        | enterJustPressed inputs && isNothing pSelM = Step NoChange
+        | enterJustPressed inputs =
+            case pSelM of
+                Just pSel -> getPauseEnterAction pSel gd $ AnyGamePlayState (gps { pauseOpt = Nothing })
+                _ -> error "Can't get here: trip equip"
+        | otherwise = Step NoChange
 
-    transition gps cfgs gr = GameStateNew (AnyGamePlayState gps) gv
+    transition gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) cfgs gr = GameStateNew (AnyGamePlayState gps) gv
         where
-            gv = GView mempty mempty [] Nothing
+            gv = GView assets (M.singleton 0 (pauseOverlay gr pSelM)) (activeO pSelM) Nothing
+            activeO Nothing = []
+            activeO (Just _) = [0]
+            assets = M.fromList $ zip [0..]
+                                      [ staticText maxSlotsTxt Green 200 350 3 0
+                                      , staticText equipLoadedTxt Green 200 400 3 0
+                                      , staticText "Select Trip" White 50 50 8 0
+                                      , staticText "Equipment" White 150 175 10 0
+                                      ]
+            maxSlotsTxt = T.concat ["Max Slots: ", T.pack (show maxSlots), " slots"]
+            equipLoadedTxt = T.concat ["Equipment Loaded: ", T.pack (show equipSlots), " slots"]
+            region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
+            eq = equipment $ sharkCfgs cfgs
+            myEquip = gameDataEquipment gd
+            allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
+            maxSlots = boatEquipmentSlots $ boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
+            equipSlots = sum $ (\(_, s) -> equipSize $ eq M.! s) <$> eSel
+
+    update gps@(TripEquipPickState _ _ _ mIdx _ pSelM) gsn cfgs gr = withPauseUpdate gps pSelM nGv gsn
+        where
+            nGv gv = gv
 
 equipmentPickMenu :: GameData -> (Int, T.Text) -> [T.Text] -> Int -> GameConfigs -> GameMenu
 equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
