@@ -36,7 +36,6 @@ module Graphics.Types
     , mergeOverlayMenu
     , updateMenuData
     , updateTimeoutData
-    , updateMenu
     ) where
 
 import qualified Data.Text as T
@@ -310,15 +309,6 @@ data Menu a = Menu
     , popupMaybe :: !(Maybe (MenuPopup a))
     } deriving (Show, Eq)
 
-updateMenu :: Menu a -> Menu a -> Menu a
-updateMenu m1 m2 = m2
-    { options = updateMenuData (options m1) (options m2)
-    , popupMaybe = popM
-    }
-    where
-        popM = case (popupMaybe m1, popupMaybe m2) of
-            (Just p1, Just p2) -> Just $ p2 { popupOptions = updateMenuData (popupOptions p1) (popupOptions p2) }
-            _ -> popupMaybe m2
 
 data MenuPopup a = MenuPopup
     { popupView :: !(View a)

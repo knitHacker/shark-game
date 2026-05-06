@@ -26,6 +26,8 @@ module Graphics.Asset
     , resizeAssets
     , resizeMenu
     , wrapTextStack
+    , updateSomeMenuItems
+    , updateMenuItems
     ) where
 
 import qualified Data.Text as T
@@ -47,13 +49,18 @@ applyAnimationState ts gr gv (AnimState aTs _ assetIds update)
         assets' = foldl fn (assets gv) assetIds
         fn assetMap id = M.adjust (\a -> update a gr) id assetMap
 
+updateMenuItems :: MenuAsset -> (Int -> AssetMenuItem -> AssetMenuItem) -> MenuAsset
+updateMenuItems ma upFn = ma { menuItems = (\(i, mi) -> upFn i mi) <$> zip [0..] (menuItems ma) }
+
+updateSomeMenuItems :: MenuAsset -> (Int -> Bool) -> (AssetMenuItem -> AssetMenuItem) -> MenuAsset
+updateSomeMenuItems ma shouldUpdate upF = ma { menuItems = (\(i, mi) -> if shouldUpdate i then upF mi else mi) <$> zip [0..] (menuItems ma) }
+
 changeHighlight :: MenuAsset -> Int -> Color -> MenuAsset
 changeHighlight ma idx c = ma { menuItems = updateItems <$> zip [0..] (menuItems ma) }
     where
         updateItems (i, mi)
             | i == idx = mi { highlightedColor = Just c }
             | otherwise = mi { highlightedColor = Nothing }
-
 
 changeCursor :: MenuAsset -> Int -> Image -> Double -> MenuAsset
 changeCursor ma idx img s = ma { menuItems = updateItems <$> zip [0..] (menuItems ma) }

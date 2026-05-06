@@ -27,6 +27,7 @@ import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Set as S
 import Data.Maybe (isJust, fromJust, isNothing)
+import Data.Typeable (cast)
 
 import Graphics.Types
 import Graphics.Menu
@@ -153,8 +154,39 @@ data TripEquipPickState = TripEquipPickState
 initEquipPickState :: GameData -> Int -> T.Text -> TripEquipPickState
 initEquipPickState gd lIdx lKey = TripEquipPickState gd lIdx lKey 0 mempty Nothing
 
+equipLen :: GameData -> GameConfigs -> T.Text -> Int
+equipLen gd cfgs loc = length $ tripAvailableEquip (sharkCfgs cfgs) gd loc
+
+getMenuItemColor :: GameData -> GameConfigs -> T.Text -> S.Set (Int, T.Text) -> Int -> Color
+getMenuItemColor gd cfgs loc eSels idx
+    | idx == eqLen = if null eSels then Gray else Blue
+    | idx > eqLen = Blue
+    | openSlots >= iSlot = Blue
+    | idx `elem` (fst <$> S.toList eSels) = Blue
+    | otherwise = Gray
+    where
+        selKeys = snd <$> S.toList eSels
+        eqLen = length availEq
+        availEq = tripAvailableEquip (sharkCfgs cfgs) gd loc
+        selectSlots = (\de -> equipSize (entryData de)) <$> filter (\de -> entryKey de `elem` selKeys) availEq
+        boatSlots = boatEquipmentSlots (boats (sharkCfgs cfgs) ! gameActiveBoat (gameDataEquipment gd))
+        openSlots = boatSlots - sum selectSlots
+        iSlot = getData (availEq !! idx) equipSize
+
+getMenuHighlight :: GameData -> GameConfigs -> T.Text -> S.Set (Int, T.Text) -> Int -> Int -> Maybe Color
+getMenuHighlight gd cfgs loc eSels mIdx idx
+    | mIdx == idx = Just Yellow
+    | idx >= eqLen = Nothing
+    | idx `elem` selIds = Just White
+    | otherwise = Nothing
+    where
+        selIds = fst <$> S.toList eSels
+        availEq = tripAvailableEquip (sharkCfgs cfgs) gd loc
+        eqLen = length availEq
+
+
 instance GamePlayStateE TripEquipPickState where
-    think gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) cfgs inputs
+    think gps@(TripEquipPickState gd locIdx loc mIdx eSel pSelM) cfgs inputs
         | wasWindowResized inputs = Step ResizeWindow
         | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> gps { pauseOpt = pSelM' })
         | escapeJustPressed inputs = stepInputUpdate $ gps { pauseOpt = Nothing }
@@ -162,21 +194,23 @@ instance GamePlayStateE TripEquipPickState where
             case (inputDirection inputs, mIdx) of
                 (Just DUp, 0) -> Step NoChange
                 (Just DUp, i) -> stepInputUpdate $ gps { menuIdx = i - 1 }
-                (Just DDown, i) | i == eqLen + 2 -> Step NoChange
+                (Just DDown, i) | i == eqLen + 1 -> Step NoChange
                 (Just DDown, i) -> stepInputUpdate $ gps { menuIdx = i + 1 }
                 _ -> Step NoChange
         | moveInputJustPressed inputs =
             case (inputDirection inputs, pSelM) of
                 (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { pauseOpt = Just po}))
                 _ -> Step NoChange
-        | enterJustPressed inputs && isNothing pSelM && mIdx < eqLen && S.member (mIdx, currEq) eSel =
-            stepInputUpdate $ gps { equipSel = S.insert (mIdx, currEq) eSel }
-        | enterJustPressed inputs && isNothing pSelM && mIdx < eqLen =
-            stepInputUpdate $ gps { equipSel = S.delete (mIdx, currEq) eSel }
-        | enterJustPressed inputs =
+        | enterJustPressed inputs && isJust pSelM =
             case pSelM of
                 Just pSel -> getPauseEnterAction pSel gd $ AnyGamePlayState (gps { pauseOpt = Nothing })
                 _ -> error "Can't get here:trip equip:1"
+        | enterJustPressed inputs && mIdx < eqLen && S.member (mIdx, currEq) eSel =
+            stepInputUpdate $ gps { equipSel = S.delete (mIdx, currEq) eSel }
+        | enterJustPressed inputs && mIdx < eqLen =
+            stepInputUpdate $ gps { equipSel = S.insert (mIdx, currEq) eSel }
+        | enterJustPressed inputs && mIdx == eqLen && not (null eSel) = Step NoChange -- $ Transition review trip
+        | enterJustPressed inputs && mIdx > eqLen = Step $ Transition $ AnyGamePlayState $ TripMapState gd locIdx Nothing
         | otherwise = Step NoChange
         where
             region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
@@ -193,30 +227,29 @@ instance GamePlayStateE TripEquipPickState where
             activeO Nothing = []
             activeO (Just _) = [0]
             assets = M.fromList $ zip [0..]
-                                      [ staticText maxSlotsTxt Green 200 350 3 0
-                                      , staticText equipLoadedTxt Green 200 400 3 0
+                                      [ staticText equipLoadedTxt Green 200 400 3 0
                                       , staticText "Select Trip" White 50 50 8 0
                                       , staticText "Equipment" White 150 175 10 0
+                                      , staticText maxSlotsTxt Green 200 350 3 0
                                       ]
             maxSlotsTxt = T.concat ["Max Slots: ", T.pack (show maxSlots), " slots"]
             equipLoadedTxt = T.concat ["Equipment Loaded: ", T.pack (show equipSlots), " slots"]
-            region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
-            eq = equipment $ sharkCfgs cfgs
-            myEquip = gameDataEquipment gd
-            allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
-            maxSlots = boatEquipmentSlots $ boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
-            equipSlots = sum $ (\(_, s) -> equipSize $ eq M.! s) <$> (S.toList eSel)
-            menu = MenuAsset 250 475 1 Nothing False 8 (items ++ cntItems)
-            items = (\(i, e) -> MenuItem (equipText (eq M.! e)) Blue 3 0 0 (if i == mIdx then Just White else Nothing) Nothing) <$>
-                        zip [0..] (filter (\e -> e `elem` (gameOwnedEquipment myEquip)) allowedEq)
-            cntItems = [ MenuItem "Continue" Blue 3 0 0 Nothing Nothing
-                       , MenuItem "Back" Blue 3 0 0 Nothing Nothing
-                       ]
+            tripAvailEq = tripAvailableEquip (sharkCfgs cfgs) gd loc
+            maxSlots = boatEquipmentSlots $ boats (sharkCfgs cfgs) ! gameActiveBoat (gameDataEquipment gd)
+            equipSlots = sum $ (\(_, s) -> equipSize $ (equipment (sharkCfgs cfgs)) M.! s) <$> (S.toList eSel)
+            menu = MenuAsset 250 475 1 Nothing False 8 items
+            itemTxts = ((\ede -> getData ede equipText ) <$> tripAvailEq) ++ ["Continue", "Back"]
+            items = mkMI <$> zip [0..] itemTxts
+            mkMI (i, it) = MenuItem it (getMenuItemColor gd cfgs loc eSel i) 3 0 0 (getMenuHighlight gd cfgs loc eSel mIdx i) Nothing
 
-    update gps@(TripEquipPickState _ _ _ mIdx eSel pSelM) gsn cfgs gr = withPauseUpdate gps pSelM nGv gsn
+    update gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) gsn cfgs gr = withPauseUpdate gps pSelM (nGv . updateLoaded) gsn
         where
-            oldESel = equipSel $ gameAState $ gameStaetE gsn
-            nGv gv = updateMenuHighlight mIdx Yellow gv
+            equipSlots = sum $ (\(_, s) -> equipSize $ (equipment (sharkCfgs cfgs)) M.! s) <$> (S.toList eSel)
+            equipLoadedTxt = T.concat ["Equipment Loaded: ", T.pack (show equipSlots), " slots"]
+            updateLoaded gv = gv { assets = M.adjust (\a -> a { object = AssetText equipLoadedTxt Green 3 }) 0 (assets gv) }
+            nGv = updateMenu (\i mi -> mi { menuItemColor = getMenuItemColor gd cfgs loc eSel i
+                                          , highlightedColor = getMenuHighlight gd cfgs loc eSel mIdx i
+                                          })
 
 equipmentPickMenu :: GameData -> (Int, T.Text) -> [T.Text] -> Int -> GameConfigs -> GameMenu
 equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
@@ -234,7 +267,7 @@ equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu 
             in (et, eqSize, T.concat [equipText eqEntry, " - ", T.pack (show eqSize), " slots"])
         aEs' = lupE <$> aEs
         usedSlots = sum $ (\s -> equipSize $ eq M.! s) <$> chsn
-        openSlots = slots - usedSlots
+        openSlots = traceShowId $ slots - usedSlots
         slotTxt = T.concat ["Equipment Loaded: ", T.pack (show usedSlots), " slots"]
         words = [ TextDisplay "Select Trip" 50 50 8 White Nothing
                 , TextDisplay "Equipment" 150 175 10 White Nothing

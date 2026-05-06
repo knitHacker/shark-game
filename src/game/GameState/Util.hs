@@ -14,6 +14,8 @@ module GameState.Util
     , updateOverlayHighlight
     , openPauseMenu
     , stepInputUpdate
+    , updateSomeMenu
+    , updateMenu
     ) where
 
 import qualified Data.Map.Strict as M
@@ -29,6 +31,12 @@ import SaveData
 
 simpleUpdate :: GamePlayStateE a => a -> (GView -> GView) -> GameStateNew -> GameStateNew
 simpleUpdate gps f gsn = gsn { gameStateE = AnyGamePlayState gps, gView = f (gView gsn) }
+
+updateMenu :: (Int -> AssetMenuItem -> AssetMenuItem) -> GView -> GView
+updateMenu upFn gv = gv { menuAsset = (\ma -> updateMenuItems ma upFn) <$> menuAsset gv }
+
+updateSomeMenu :: (Int -> Bool) -> (AssetMenuItem -> AssetMenuItem) -> GView -> GView
+updateSomeMenu shouldUp upFn gv = gv { menuAsset = (\ma -> updateSomeMenuItems ma shouldUp upFn) <$> menuAsset gv }
 
 updateMenuHighlight :: Int -> Color -> GView -> GView
 updateMenuHighlight idx c gv = gv { menuAsset = (\ma -> changeHighlight ma idx c) <$> menuAsset gv }
