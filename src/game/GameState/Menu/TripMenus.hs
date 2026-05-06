@@ -25,6 +25,7 @@ import Data.Map ((!))
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import qualified Data.Text as T
+import qualified Data.Set as S
 import Data.Maybe (isJust, fromJust, isNothing)
 
 import Graphics.Types
@@ -145,33 +146,50 @@ data TripEquipPickState = TripEquipPickState
     , locIdx :: Int
     , locKey :: T.Text
     , menuIdx :: Int
-    , equipSel :: [(Int, T.Text)]
+    , equipSel :: S.Set (Int, T.Text)
     , pauseOpt :: Maybe PauseOpt
     }
 
 initEquipPickState :: GameData -> Int -> T.Text -> TripEquipPickState
-initEquipPickState gd lIdx lKey = TripEquipPickState gd lIdx lKey 0 [] Nothing
+initEquipPickState gd lIdx lKey = TripEquipPickState gd lIdx lKey 0 mempty Nothing
 
 instance GamePlayStateE TripEquipPickState where
-    think gps@(TripEquipPickState gd _ _ mIdx eSel pSelM) cfgs inputs
+    think gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) cfgs inputs
         | wasWindowResized inputs = Step ResizeWindow
         | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> gps { pauseOpt = pSelM' })
         | escapeJustPressed inputs = stepInputUpdate $ gps { pauseOpt = Nothing }
-        | moveInputJustPressed inputs && isNothing pSelM = Step NoChange
+        | moveInputJustPressed inputs && isNothing pSelM =
+            case (inputDirection inputs, mIdx) of
+                (Just DUp, 0) -> Step NoChange
+                (Just DUp, i) -> stepInputUpdate $ gps { menuIdx = i - 1 }
+                (Just DDown, i) | i == eqLen + 2 -> Step NoChange
+                (Just DDown, i) -> stepInputUpdate $ gps { menuIdx = i + 1 }
+                _ -> Step NoChange
         | moveInputJustPressed inputs =
             case (inputDirection inputs, pSelM) of
                 (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { pauseOpt = Just po}))
                 _ -> Step NoChange
-        | enterJustPressed inputs && isNothing pSelM = Step NoChange
+        | enterJustPressed inputs && isNothing pSelM && mIdx < eqLen && S.member (mIdx, currEq) eSel =
+            stepInputUpdate $ gps { equipSel = S.insert (mIdx, currEq) eSel }
+        | enterJustPressed inputs && isNothing pSelM && mIdx < eqLen =
+            stepInputUpdate $ gps { equipSel = S.delete (mIdx, currEq) eSel }
         | enterJustPressed inputs =
             case pSelM of
                 Just pSel -> getPauseEnterAction pSel gd $ AnyGamePlayState (gps { pauseOpt = Nothing })
-                _ -> error "Can't get here: trip equip"
+                _ -> error "Can't get here:trip equip:1"
         | otherwise = Step NoChange
+        where
+            region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
+            eq = equipment $ sharkCfgs cfgs
+            myEquip = gameOwnedEquipment $ gameDataEquipment gd
+            allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
+            shownEq = filter (\e -> e `elem` myEquip) allowedEq
+            eqLen = length shownEq
+            currEq = shownEq !! mIdx
 
     transition gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) cfgs gr = GameStateNew (AnyGamePlayState gps) gv
         where
-            gv = GView assets (M.singleton 0 (pauseOverlay gr pSelM)) (activeO pSelM) Nothing
+            gv = GView assets (M.singleton 0 (pauseOverlay gr pSelM)) (activeO pSelM) $ Just menu
             activeO Nothing = []
             activeO (Just _) = [0]
             assets = M.fromList $ zip [0..]
@@ -187,11 +205,18 @@ instance GamePlayStateE TripEquipPickState where
             myEquip = gameDataEquipment gd
             allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
             maxSlots = boatEquipmentSlots $ boats (sharkCfgs cfgs) ! gameActiveBoat myEquip
-            equipSlots = sum $ (\(_, s) -> equipSize $ eq M.! s) <$> eSel
+            equipSlots = sum $ (\(_, s) -> equipSize $ eq M.! s) <$> (S.toList eSel)
+            menu = MenuAsset 250 475 1 Nothing False 8 (items ++ cntItems)
+            items = (\(i, e) -> MenuItem (equipText (eq M.! e)) Blue 3 0 0 (if i == mIdx then Just White else Nothing) Nothing) <$>
+                        zip [0..] (filter (\e -> e `elem` (gameOwnedEquipment myEquip)) allowedEq)
+            cntItems = [ MenuItem "Continue" Blue 3 0 0 Nothing Nothing
+                       , MenuItem "Back" Blue 3 0 0 Nothing Nothing
+                       ]
 
-    update gps@(TripEquipPickState _ _ _ mIdx _ pSelM) gsn cfgs gr = withPauseUpdate gps pSelM nGv gsn
+    update gps@(TripEquipPickState _ _ _ mIdx eSel pSelM) gsn cfgs gr = withPauseUpdate gps pSelM nGv gsn
         where
-            nGv gv = gv
+            oldESel = equipSel $ gameAState $ gameStaetE gsn
+            nGv gv = updateMenuHighlight mIdx Yellow gv
 
 equipmentPickMenu :: GameData -> (Int, T.Text) -> [T.Text] -> Int -> GameConfigs -> GameMenu
 equipmentPickMenu gd (idx, loc) chsn pos cfgs = GameMenu (textView words) (Menu (selMultOpts 250 475 3 8 opts' update act (Just back) pos) Nothing)
