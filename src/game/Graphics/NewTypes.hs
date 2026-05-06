@@ -83,11 +83,9 @@ data AssetStackItem = StackItem
     }
 
 data AssetScroll = ScrollObj
-    { scrollText :: [T.Text]
-    , scrollTextSize :: Int
-    , scrollColor :: Color
-    , showTextScroll :: Bool
-    , scrollLineSpace :: Int
+    { scrollAssets :: M.Map AssetId Asset
+    , scrollPosition :: Int
+    , scrollHeight :: Int
     }
 
 data MenuAsset = MenuAsset
@@ -106,6 +104,7 @@ data AssetMenuItem = MenuItem
     , menuItemFontSize :: Int
     , menuItemXOff :: Int
     , menuItemYOff :: Int
+    , menuItemVisible :: Bool
     , highlightedColor :: Maybe Color
     , cursorImg :: Maybe (Image, Double)
     }

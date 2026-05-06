@@ -102,7 +102,7 @@ instance GamePlayStateE MainMenuState where
             items = mkMenuItem menuOpts
             cursor m = if m == mmo then Just ("green_arrow", 4) else Nothing
             mkMenuItem [] = []
-            mkMenuItem ((i, sel):tl) = MenuItem i Blue 3 0 0 Nothing (cursor sel) : mkMenuItem tl
+            mkMenuItem ((i, sel):tl) = MenuItem i Blue 3 0 0 True Nothing (cursor sel) : mkMenuItem tl
             menuAsset x y = MenuAsset x y 2 (Just resizeMenu) False 2 items
             midX gr' = graphicsWindowWidth gr' `div` 2
             midY gr' = graphicsWindowHeight gr' `div` 2
@@ -345,9 +345,9 @@ instance GamePlayStateE ResearchCenterState where
                          ]
             funds = gameDataFunds gd
             menu = MenuAsset 100 400 1 Nothing False 15 mItems
-            mItems = [ MenuItem "Plan Research Trip" Blue 3 0 0 (if mSel == PlanTripMenu then Just White else Nothing) Nothing
-                     , MenuItem "Review Data" Blue 3 0 0 (if mSel == ReviewDataMenu then Just White else Nothing) Nothing
-                     , MenuItem "Lab Management" Blue 3 0 0 (if mSel == LabManagementMenu then Just White else Nothing) Nothing
+            mItems = [ MenuItem "Plan Research Trip" Blue 3 0 0 True (if mSel == PlanTripMenu then Just White else Nothing) Nothing
+                     , MenuItem "Review Data" Blue 3 0 0 True (if mSel == ReviewDataMenu then Just White else Nothing) Nothing
+                     , MenuItem "Lab Management" Blue 3 0 0 True (if mSel == LabManagementMenu then Just White else Nothing) Nothing
                      ]
             imgScale gr' = max 2.0 $ min ((fromIntegral (graphicsWindowWidth gr') / 2 - 40) / fromIntegral (instituteW gr'))
                                          ((fromIntegral (graphicsWindowHeight gr') - 270) / fromIntegral (instituteH gr'))

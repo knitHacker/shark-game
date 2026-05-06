@@ -77,7 +77,7 @@ assetObjWidth gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (i
 assetObjWidth gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeX i) * scale) (M.lookup img (graphicsAnimTextures gr))
 assetObjWidth gr (AssetStacked StackVertical items _)   = maximum $ assetObjWidth gr . stackItem <$> items
 assetObjWidth gr (AssetStacked StackHorizontal items sp) = sum $ (\i -> assetObjWidth gr (stackItem i) + sp) <$> items
-assetObjWidth gr (AssetScroll sc) = maximum $ (\t -> floor $ fromIntegral (T.length t) * fontWidth gr * fromIntegral (scrollTextSize sc)) <$> scrollText sc
+assetObjWidth gr (AssetScroll sc) = undefined
 
 
 assetObjHeight :: Graphics -> AssetObj -> Int
@@ -87,8 +87,7 @@ assetObjHeight gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (
 assetObjHeight gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeY i) * scale) (M.lookup img (graphicsAnimTextures gr))
 assetObjHeight gr (AssetStacked StackVertical items sp)   = sum $ (\i -> assetObjHeight gr (stackItem i) + sp) <$> items
 assetObjHeight gr (AssetStacked StackHorizontal items _) = maximum $ (\i -> stackYOff i + assetObjHeight gr (stackItem i)) <$> items
-assetObjHeight gr (AssetScroll sc) = let lh = ceiling (fontHeight gr * fromIntegral (scrollTextSize sc)) + scrollLineSpace sc
-                                     in length (scrollText sc) * lh
+assetObjHeight gr (AssetScroll sc) = undefined
 
 
 resizeGameView :: a -> Graphics -> GView -> GView
@@ -127,7 +126,7 @@ mkResizeAsset gr obj l vis rFn = rFn (Asset obj undefined undefined l vis (Just 
 
 
 singleMenu :: Graphics -> T.Text -> Int -> MenuAsset
-singleMenu gr txt l = MenuAsset (txtX gr) (graphicsWindowHeight gr - 100) l (Just menuResize) False 0 [MenuItem txt Blue sz 0 0 (Just White) Nothing]
+singleMenu gr txt l = MenuAsset (txtX gr) (graphicsWindowHeight gr - 100) l (Just menuResize) False 0 [MenuItem txt Blue sz 0 0 True (Just White) Nothing]
     where
         sz = 3
         txtX gr' = midTextStart gr' txt (fromIntegral sz)

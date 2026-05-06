@@ -134,7 +134,8 @@ getCursor gr img iS x y sz = DTexture img x' y' (floor curW) (floor curH) Nothin
 
 
 drawMenuItem :: Graphics -> Int -> ToRender -> Int -> Int -> Int -> Int -> AssetMenuItem -> (ToRender, Int)
-drawMenuItem gr d r l sp x y (MenuItem txt c sz xOff yOff hlM csrM) = (addText r'' d (l + 1) draw, maxY + sp)
+drawMenuItem _ _ r _ _ _ y (MenuItem _ _ _ _ _ False _ _) = (r, y)
+drawMenuItem gr d r l sp x y (MenuItem txt c sz xOff yOff True hlM csrM) = (addText r'' d (l + 1) draw, maxY + sp)
     where
         x' = x + xOff
         y' = y + yOff
@@ -146,5 +147,3 @@ drawMenuItem gr d r l sp x y (MenuItem txt c sz xOff yOff hlM csrM) = (addText r
                 Just (csr, iS) -> addTexture r' d l $ getCursor gr csr iS x' y' sz
         draw = TextDisplay txt (fromIntegral x') (fromIntegral y') sz c Nothing
         maxY = fromJust $ getTextMaxY (graphicsFontSize gr) [draw]
-
-

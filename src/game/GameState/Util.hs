@@ -75,9 +75,9 @@ pauseOverlay gr mPSel = AOverlay assets (Just overMenu) (ox gr) (oy gr) ow oh Da
         getHl sel = case mPSel of
                         Nothing -> if sel == ContinuePause then Just White else Nothing
                         (Just psel) -> if sel == psel then Just White else Nothing
-        mItems = [ MenuItem "Continue" Blue 4 0 0 (getHl ContinuePause) Nothing
-                 , MenuItem "Main Menu" Blue 4 0 0 (getHl MainMenuPause) Nothing
-                 , MenuItem "Save & Exit" Blue 4 0 0 (getHl ExitPause) Nothing
+        mItems = [ MenuItem "Continue" Blue 4 0 0 True (getHl ContinuePause) Nothing
+                 , MenuItem "Main Menu" Blue 4 0 0 True (getHl MainMenuPause) Nothing
+                 , MenuItem "Save & Exit" Blue 4 0 0 True (getHl ExitPause) Nothing
                  ]
 
 getPauseEnterAction :: PauseOpt -> GameData -> AnyGamePlayState -> Action

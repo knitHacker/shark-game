@@ -129,8 +129,8 @@ instance GamePlayStateE TripMapState where
             menu = MenuAsset 140 300 1 Nothing False 8 menuItems
             locs = getLocInfo gd cfgs locIdx
             menuItems = (menuItem <$> locs) ++ [lastItem]
-            menuItem (loc, enable, sel) = MenuItem loc (if enable then Blue else Gray) 3 0 0 (if sel then Just White else Nothing) Nothing
-            lastItem = MenuItem "Return to Lab" Blue 3 0 0 (if length locs == locIdx then Just White else Nothing) Nothing
+            menuItem (loc, enable, sel) = MenuItem loc (if enable then Blue else Gray) 3 0 0 True (if sel then Just White else Nothing) Nothing
+            lastItem = MenuItem "Return to Lab" Blue 3 0 0 True (if length locs == locIdx then Just White else Nothing) Nothing
 
     update gsp@(TripMapState gd locIdx pSelM) gsn cfgs gr = withPauseUpdate gsp pSelM nGv gsn
         where
@@ -240,7 +240,7 @@ instance GamePlayStateE TripEquipPickState where
             menu = MenuAsset 250 475 1 Nothing False 8 items
             itemTxts = ((\ede -> getData ede equipText ) <$> tripAvailEq) ++ ["Continue", "Back"]
             items = mkMI <$> zip [0..] itemTxts
-            mkMI (i, it) = MenuItem it (getMenuItemColor gd cfgs loc eSel i) 3 0 0 (getMenuHighlight gd cfgs loc eSel mIdx i) Nothing
+            mkMI (i, it) = MenuItem it (getMenuItemColor gd cfgs loc eSel i) 3 0 0 True (getMenuHighlight gd cfgs loc eSel mIdx i) Nothing
 
     update gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) gsn cfgs gr = withPauseUpdate gps pSelM (nGv . updateLoaded) gsn
         where
