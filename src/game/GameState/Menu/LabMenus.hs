@@ -50,124 +50,77 @@ import Debug.Trace
 data LabTopOpt = LabTopFundraising | LabTopFleet | LabTopEquip | LabTopReturnRC
                deriving (Show, Eq, Enum, Ord, Bounded)
 
-data LabTopState = LabTopState GameData LabTopOpt (Maybe PauseOpt)
+data LabTopState = LabTopState (MenuStateInfo LabTopOpt)
 
 initLabTopState :: GameData -> LabTopState
-initLabTopState gd = LabTopState gd minBound Nothing
+initLabTopState gd = LabTopState $ initMenuStateInfo gd
 
 instance GamePlayStateE LabTopState where
-    think gps@(LabTopState gd mOpt pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | isJust pSelM && (enterJustPressed inputs || moveInputJustPressed inputs) =
-            case (inputDirection inputs, enterJustPressed inputs, pSelM) of
-                (_, True, Just pSel) -> getPauseEnterAction pSel gd $ AnyGamePlayState $ LabTopState gd mOpt Nothing
-                (Just dir, _, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (LabTopState gd mOpt (Just po)))
-                _ -> Step NoChange
-        | escapeJustPressed inputs =
-            case pSelM of
-                Nothing -> stepInputUpdate $ LabTopState gd mOpt $ Just minBound
-                _ -> stepInputUpdate $ LabTopState gd mOpt Nothing
-        | enterJustPressed inputs =
-            case mOpt of
-                LabTopFundraising -> Step $ Transition $ AnyGamePlayState $ initFundraiserTopState gd
-                LabTopFleet -> Step $ Transition $ AnyGamePlayState $ initFleetManagementState gd
-                LabTopEquip -> Step $ Transition $ AnyGamePlayState $ initEquipManagementState gd
-                LabTopReturnRC -> Step $ TopTransition ResearchCenterMenu gd
-        | moveInputJustPressed inputs =
-            case inputDirection inputs of
-                Just dir -> moveMenuPos dir mOpt (\newMOpt -> LabTopState gd newMOpt pSelM)
-                Nothing -> Step NoChange
-        | otherwise = Step NoChange
-
-    transition gps@(LabTopState gd mOpt pSelM) cfgs gr = (gview, [])
+    think gps@(LabTopState msi) _ = menuInfoThink LabTopState next back msi
         where
-            gview = GView assets (overlays pSelM) $ Just menu
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
-            overlays Nothing = mempty
+            gd = menuGetData msi
+            back = Step $ TopTransition ResearchCenterMenu gd
+            next LabTopFundraising = stepTransition $ initFundraiserTopState gd
+            next LabTopFleet = stepTransition $ initFleetManagementState gd
+            next LabTopEquip = stepTransition $ initEquipManagementState gd
+            next LabTopReturnRC = back
+
+    transition gps@(LabTopState msi) _ gr = (menuInfoApply msi gview gr id, [])
+        where
+            gview = GView assets mempty $ Just menu
             assets = M.fromList $ zip [0..]
                                       [ staticText "Lab" White 40 20 10 0
                                       , staticText "Management" White 150 150 10 0
                                       ]
-            menu = DefaultMenu $ MenuAsset 200 450 1 Nothing 15 menuItems
-            itemHL i = if fromEnum mOpt == i then Just White else Nothing
-            menuItems = [ MenuItem (MText "Fundraising") Blue 3 0 0 True (itemHL 0) Nothing
-                        , MenuItem (MText "Fleet Management") Blue 3 0 0 True (itemHL 1) Nothing
-                        , MenuItem (MText "Equipment Management") Blue 3 0 0 True (itemHL 2) Nothing
-                        , MenuItem (MText "Return to Research Center") Blue 3 0 0 True (itemHL 3) Nothing
-                        ]
+            menu = DefaultMenu $ MenuAsset 200 450 1 Nothing 15 (mkItem <$> menuItems)
+            mkItem txt = MenuItem (MText txt) Blue 3 0 0 True Nothing Nothing
+            menuItems = ["Fundraising", "Fleet Management", "Equipment Management", "Return to Research Center"]
 
-data FundraiserTopOpt = HostFundRaiserOpt | ViewDonorsOpt | BackLabManagementOpt
+    update gps@(LabTopState msi) gv _ gr = menuInfoUpdate LabTopState msi gv gr id
+
+data FundraiserTopOpt = HostFundraiserOpt | ViewDonorsOpt | BackLabManagementOpt
                       deriving (Show, Eq, Ord, Enum, Bounded)
 
-data FundraiserTopState = FundraiserTopState GameData FundraiserTopOpt (Maybe PauseOpt)
+data FundraiserTopState = FundraiserTopState (MenuStateInfo FundraiserTopOpt)
 
 initFundraiserTopState :: GameData -> FundraiserTopState
-initFundraiserTopState gd = FundraiserTopState gd minBound Nothing
+initFundraiserTopState gd = FundraiserTopState $ initMenuStateInfo gd
 
 instance GamePlayStateE FundraiserTopState where
-    think gps@(FundraiserTopState gd mOpt pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs && isNothing pSelM =
-            case mOpt of
-                HostFundRaiserOpt -> Step $ Transition $ AnyGamePlayState $ initFundraisingState gd
-                ViewDonorsOpt -> Step $ Transition $ AnyGamePlayState $ initDonorList gd
-                BackLabManagementOpt -> Step $ Transition $ AnyGamePlayState $ initLabTopState gd
-        | enterJustPressed inputs =
-            case pSelM of
-                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ FundraiserTopState gd mOpt Nothing
-                _ -> error "Shouldn't get here: fundraiser top"
-        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ FundraiserTopState gd mOpt $ Just minBound
-        | escapeJustPressed inputs = stepInputUpdate $ FundraiserTopState gd mOpt Nothing
-        | moveInputJustPressed inputs =
-            case (inputDirection inputs, pSelM) of
-                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (FundraiserTopState gd mOpt (Just po)))
-                (Just dir, _) -> moveMenuPos dir mOpt (\newOpt -> FundraiserTopState gd newOpt pSelM)
-                _ -> Step NoChange
-        | otherwise = Step NoChange
-
-    transition gps@(FundraiserTopState gd mOpt pSelM) cfgs gr = (gview, [])
+    think gps@(FundraiserTopState msi) _ = menuInfoThink FundraiserTopState next back msi
         where
-            pauseIdx = 0
-            gview = GView assets (overlays pSelM) $ Just menu
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
-            overlays _ = mempty
+            gd = menuGetData msi
+            back = stepTransition $ initLabTopState gd
+            next HostFundraiserOpt = stepTransition $ initFundraisingState gd
+            next ViewDonorsOpt = stepTransition $ initDonorList gd
+            next BackLabManagementOpt = back
+
+    transition gps@(FundraiserTopState msi) _ gr = (menuInfoApply msi gview gr id, [])
+        where
+            gview = GView assets mempty $ Just menu
             assets = M.fromList $ zip [0..]
                                       [ staticText "Center" White 40 20 8 0
                                       , staticText "Fundraising" White 150 150 10 0
                                       ]
-            menu = DefaultMenu $ MenuAsset 250 450 0 Nothing 3 mItems
-            getHL i = if i == fromEnum mOpt then Just White else Nothing
-            mItems = [ MenuItem (MText "Host Fundraiser") Blue 4 0 0 True (getHL 0) Nothing
-                     , MenuItem (MText "View Donors") Blue 4 0 0 True (getHL 1) Nothing
-                     , MenuItem (MText "Return to Lab Management") Blue 4 0 0 True (getHL 2) Nothing
-                     ]
+            menu = DefaultMenu $ MenuAsset 250 450 0 Nothing 3 (mkItem <$> mItems)
+            mkItem txt = MenuItem (MText txt) Blue 4 0 0 True Nothing Nothing
+            mItems = ["Host Fundraiser", "View Donors", "Return to Lab Management"]
 
-data DonorListState = DonorListState GameData (Maybe PauseOpt)
+    update gps@(FundraiserTopState msi) gv _ gr = menuInfoUpdate FundraiserTopState msi gv gr id
+
+data DonorListState = DonorListState SimpleStateInfo
 
 initDonorList :: GameData -> DonorListState
-initDonorList gd = DonorListState gd Nothing
+initDonorList gd = DonorListState $ SimpleInfo gd Nothing
 
 instance GamePlayStateE DonorListState where
-    think gps@(DonorListState gd pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs =
-            case pSelM of
-                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ DonorListState gd Nothing
-                _ -> Step $ Transition $ AnyGamePlayState $ initFundraiserTopState gd
-        | escapeJustPressed inputs && isNothing pSelM =  stepInputUpdate $ DonorListState gd $ Just minBound
-        | escapeJustPressed inputs =  stepInputUpdate $ DonorListState gd Nothing
-        | moveInputJustPressed inputs =
-            case (inputDirection inputs, pSelM) of
-                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (DonorListState gd (Just po)))
-                _ -> Step NoChange
-        | otherwise = Step NoChange
-
-
-    transition gps@(DonorListState gd pSelM) cfgs gr = (gview, [])
+    think gps@(DonorListState si) _ = simpleInfoThink DonorListState (stepTransition (initFundraiserTopState gd)) si
         where
-            gview = GView assets (overlays pSelM) $ Just menu
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            gd = gamedata si
+
+    transition gps@(DonorListState si) _ gr = (withPauseApply gr (pauseSelM si) gview, [])
+        where
+            gview = GView assets mempty $ Just menu
             assets = M.fromList $ zip [0..]
                                       [ staticText "Donor" White 20 20 9 0
                                       , staticText "List" White 80 150 9 0
@@ -177,31 +130,18 @@ instance GamePlayStateE DonorListState where
                                            [ MenuItem (MText "Return to Fundraising") Blue 4 0 0 True (Just White) Nothing ]
 
 
-data FundraisingState = FundraisingState GameData (Maybe PauseOpt)
+data FundraisingState = FundraisingState SimpleStateInfo
 
 initFundraisingState :: GameData -> FundraisingState
-initFundraisingState gd = FundraisingState gd Nothing
+initFundraisingState gd = FundraisingState $ SimpleInfo gd Nothing
 
 instance GamePlayStateE FundraisingState where
-    think gps@(FundraisingState gd pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs =
-            case pSelM of
-                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ FundraisingState gd Nothing
-                _ -> Step $ Transition $ AnyGamePlayState $ initLabTopState gd
-        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ FundraisingState gd $ Just minBound
-        | escapeJustPressed inputs = stepInputUpdate $ initFundraisingState gd
-        | moveInputJustPressed inputs =
-            case (inputDirection inputs, pSelM) of
-                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (FundraisingState gd (Just po)))
-                _ -> Step NoChange
-        | otherwise = Step NoChange
+    think gps@(FundraisingState si) _ = simpleInfoThink FundraisingState (stepTransition (initLabTopState (gamedata si))) si
 
-    transition gps@(FundraisingState gd pSelM) cfgs gr = (gview, [])
+    transition gps@(FundraisingState si) _ gr = (withPauseApply gr (pauseSelM si) gview, [])
         where
-            gview = GView assets (overlays pSelM) $ Just menu
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            gd = gamedata si
+            gview = GView assets mempty $ Just menu
             assets = M.fromList $ zip [0..]
                                       [ staticText "Raise" White 40 20 10 0
                                       , staticText "Funds" White 150 150 10 0
@@ -250,9 +190,9 @@ instance GamePlayStateE FleetManagementState where
         | enterJustPressed inputs =
             case (pSelM, mOpt) of
                 (Just po, _) -> getPauseEnterAction po gd $ AnyGamePlayState $ FleetManagementState gd mOpt Nothing animS
-                (_, ChangeBoatsOpt) -> Step $ Transition $ AnyGamePlayState $ initChooseBoatState gd
-                (_, BoatStoreOpt) -> Step $ Transition $ AnyGamePlayState $ initBoatStoreState gd
-                (_, ReturnLabTop) -> Step $ Transition $ AnyGamePlayState $ initLabTopState gd
+                (_, ChangeBoatsOpt) -> stepTransition $ initChooseBoatState gd
+                (_, BoatStoreOpt) -> stepTransition $ initBoatStoreState gd
+                (_, ReturnLabTop) -> stepTransition $ initLabTopState gd
         | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ FleetManagementState gd mOpt (Just minBound) animS
         | escapeJustPressed inputs = stepInputUpdate $ FleetManagementState gd mOpt Nothing animS
         | moveInputJustPressed inputs =
@@ -315,7 +255,7 @@ instance GamePlayStateE FleetManagementState where
 
     update gps@(FleetManagementState gd mSel pSelM _) gsn cfgs gr = withPauseUpdate gr gps pSelM nGv gsn
         where
-            nGv gv = updateDefMenuHighlight (fromEnum mSel) White gv
+            nGv gv = updateMenuHighlight (fromEnum mSel) White gv
 
     updateAnims (FleetManagementState gd mSel pSelM _) newAnims = FleetManagementState gd mSel pSelM newAnims
 
@@ -326,12 +266,13 @@ initChooseBoatState :: GameData -> ChooseBoatState
 initChooseBoatState gd = ChooseBoatState $ MenuInfo 0 $ SimpleInfo gd Nothing
 
 instance GamePlayStateE ChooseBoatState where
-    think gps@(ChooseBoatState msi) cfgs inputs = menuInfoIntThink ChooseBoatState mAct maxMIdx msi inputs
+    think gps@(ChooseBoatState msi) cfgs inputs = menuInfoIntThink ChooseBoatState mAct back maxMIdx msi inputs
         where
+            back = stepTransition $ initFleetManagementState gd
             -- TODO: choose option
             mAct i
                 | i >= 0 && i < maxMIdx = stepInputUpdate $ ChooseBoatState $ menuUpdateData msi (gd' (owned !! i))
-                | i == maxMIdx = Step $ Transition $ AnyGamePlayState $ initFleetManagementState gd
+                | i == maxMIdx = back
                 | otherwise = Step NoChange
             maxMIdx = length owned
             owned = gameOwnedBoats $ gameDataEquipment gd
@@ -428,7 +369,7 @@ instance GamePlayStateE BoatStoreState where
             enterAction (Left idx)
                 | idx < length bList && getPrice idx > currFunds = Step NoChange
                 | idx < length bList = stepInputUpdate $ BoatStoreState (Right (initBoatPopupInfo (bList !! idx))) si
-                | otherwise = Step $ Transition $ AnyGamePlayState $ initFleetManagementState gd
+                | otherwise = stepTransition $ initFleetManagementState gd
             enterAction (Right (BoatPopupInfo bk _ _ BuyPopupCancel)) =
                 case L.elemIndex bk (fst <$> bList) of
                     Nothing -> stepInputUpdate $ BoatStoreState (Left 0) si
@@ -522,12 +463,13 @@ instance GamePlayStateE EquipManagementState where
     think gps@(EquipManagementState msi scrPos) cfgs inputs =
         case mouseInputs inputs of
             Just (MouseInputs sAmt) -> stepInputUpdate $ EquipManagementState msi (max 0 (scrPos + 5 * (-sAmt)))
-            Nothing -> menuInfoThink mkGPS menuAction msi inputs
+            Nothing -> menuInfoThink mkGPS menuAction back msi inputs
         where
             mkGPS msi' = EquipManagementState msi' scrPos
             gd = menuGetData msi
-            menuAction EquipStoreOpt = Step $ Transition $ AnyGamePlayState $ initEquipStoreState gd
-            menuAction EquipReturnLabOpt = Step $ Transition $ AnyGamePlayState $ initLabTopState gd
+            back = stepTransition $ initLabTopState gd
+            menuAction EquipStoreOpt = stepTransition $ initEquipStoreState gd
+            menuAction EquipReturnLabOpt = back
 
     transition gps@(EquipManagementState msi scrPos) cfgs gr = (gview, [])
         where
@@ -626,7 +568,7 @@ instance GamePlayStateE EquipStoreState where
             enterAction (Left idx)
                 | idx < length eList && getPrice idx > currFunds = Step NoChange
                 | idx < length eList = stepInputUpdate $ EquipStoreState (Right (initEquipPopupInfo (eList !! idx))) si
-                | otherwise = Step $ Transition $ AnyGamePlayState $ initEquipManagementState gd
+                | otherwise = stepTransition $ initEquipManagementState gd
             enterAction (Right (EquipPopupInfo ek _ _ BuyPopupCancel)) =
                 case L.elemIndex ek (fst <$> eList) of
                     Nothing -> stepInputUpdate $ EquipStoreState (Left 0) si

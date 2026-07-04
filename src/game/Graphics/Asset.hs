@@ -37,6 +37,8 @@ module Graphics.Asset
     , updateOverlayHighlight
     , updateMinSet
     , makeTableMenu
+    , scrollMenuResize
+    , mkScrollMenu
     ) where
 
 import qualified Data.Text as T
@@ -44,6 +46,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.List as L
 import Data.Int (Int64)
+import Data.Maybe (isJust)
 
 import Graphics.TextUtil
 import Graphics.Types
@@ -87,23 +90,40 @@ changeHighlight ma idx c = ma { menuItems = updateItems <$> zip [0..] (menuItems
             | otherwise = mi { highlightedColor = Nothing }
 
 changeScrollHighlight :: ScrollMenuAsset -> Int -> Color -> ScrollMenuAsset
-changeScrollHighlight ma idx c = adjustScroll $ ma
-    { menuScrollItems = updateScrollItems <$> zip [0..] (menuScrollItems ma)
-    , menuStationaryItems = updateStationaryItems <$> zip [numScrollItems..] (menuStationaryItems ma)
-    }
+changeScrollHighlight ma idx c
+    | idx < 0 = changeScrollHighlight ma 0 c
+    | idx >= totalItems = changeScrollHighlight ma (totalItems - 1) c
+    | idx < numScrollItems && idx < menuScrollStartIdx ma =
+        ma { menuScrollStartIdx = idx
+           , menuScrollItems = updateScrollItems <$> zip [0..] (menuScrollItems ma)
+           , menuStationaryItems = clearStationary
+           }
+    | idx < numScrollItems && idx > maxView =
+        ma { menuScrollStartIdx = menuScrollStartIdx ma + (idx - maxView)
+           , menuScrollItems = updateScrollItems <$> zip [0..] (menuScrollItems ma)
+           , menuStationaryItems = clearStationary
+           }
+    | idx < numScrollItems =
+        ma { menuScrollItems = updateScrollItems <$> zip [0..] (menuScrollItems ma)
+           , menuStationaryItems = clearStationary
+           }
+    | otherwise =
+        ma { menuScrollItems = clearScroll
+           , menuStationaryItems = updateStationaryItems <$> zip [0] (menuStationaryItems ma)
+           }
     where
-        numScrollItems = length (menuScrollItems ma)
+        clearStationary = (\mi -> mi { highlightedColor = Nothing }) <$> menuStationaryItems ma
+        clearScroll = (\mi -> mi { highlightedScrollColor = Nothing }) <$> menuScrollItems ma
+        maxView = menuScrollStartIdx ma + menuScrollViewable ma
+        numScrollItems = length $ menuScrollItems ma
+        numEndItems = length $ menuStationaryItems ma
+        totalItems = numScrollItems + numEndItems
         updateScrollItems (i, mi)
             | i == idx = mi { highlightedScrollColor = Just c }
             | otherwise = mi { highlightedScrollColor = Nothing }
         updateStationaryItems (i, mi)
-            | i == idx = mi { highlightedColor = Just c }
+            | i == (idx - numScrollItems) = mi { highlightedColor = Just c }
             | otherwise = mi { highlightedColor = Nothing }
-        adjustScroll sm
-            | idx >= numScrollItems = sm
-            | idx < menuScrollStartIdx sm = sm { menuScrollStartIdx = idx }
-            | idx >= menuScrollStartIdx sm + menuScrollViewable sm = sm { menuScrollStartIdx = idx - menuScrollViewable sm + 1 }
-            | otherwise = sm
 
 changeCursor :: MenuAsset -> Int -> Image -> Double -> MenuAsset
 changeCursor ma idx img s = ma { menuItems = updateItems <$> zip [0..] (menuItems ma) }
@@ -167,6 +187,42 @@ resizeMenu :: Maybe AssetMenu -> Graphics -> Maybe AssetMenu
 resizeMenu Nothing _ = Nothing
 resizeMenu (Just (DefaultMenu menu)) gr = Just $ DefaultMenu $ maybe menu (\rFn -> rFn menu gr) (menuResize menu)
 resizeMenu (Just (ScrollMenu menu)) gr = Just $ ScrollMenu $ maybe menu (\rFn -> rFn menu gr) (menuScrollResize menu)
+
+
+mkScrollMenu :: Graphics -> [ScrollMenuItem] -> [AssetMenuItem] -> (Graphics -> Int) -> Int -> Int -> Int -> Int -> Int -> ScrollMenuAsset
+mkScrollMenu gr scItems endItems fromBottom x y sp fs l = ScrollMenuAsset
+    { menuScrollX = x
+    , menuScrollY = y
+    , menuScrollLayer = l
+    , menuScrollResize = Just $ scrollMenuResize fromBottom
+    , menuScrollLineSpace = sp
+    , menuFontSize = fs
+    , menuScrollItems = scItems
+    , menuScrollStartIdx = 0
+    , menuScrollViewable = viewable
+    , menuStationaryItems = endItems
+    }
+    where
+        height = graphicsWindowHeight gr - y - fromBottom gr
+        entryH = round (fromIntegral fs * fontHeight gr) + sp
+        viewable = height `div` entryH
+
+-- bottomSpace computes the vertical space (from Graphics) that should be reserved below the scroll area
+scrollMenuResize :: (Graphics -> Int) -> ScrollMenuAsset -> Graphics -> ScrollMenuAsset
+scrollMenuResize bottomSpace menu gr = menu { menuScrollStartIdx = newStart, menuScrollViewable = newViewable }
+    where
+        scItems = menuScrollItems menu
+        mv = menuScrollViewable menu
+        height = graphicsWindowHeight gr - menuScrollY menu - bottomSpace gr
+        entryH = round (fromIntegral (menuFontSize menu) * fontHeight gr) + menuScrollLineSpace menu
+        newViewable = height `div` entryH
+        cutOff = take (mv - newViewable) (drop (newViewable + menuScrollStartIdx menu) scItems)
+        fstHLM = L.findIndex (isJust . highlightedScrollColor) cutOff
+        newStart
+            | newViewable >= mv = menuScrollStartIdx menu
+            | otherwise = case fstHLM of
+                            Nothing -> menuScrollStartIdx menu
+                            Just idx -> menuScrollStartIdx menu + idx + 1
 
 
 resizeAssets :: M.Map AssetId Asset -> Graphics -> M.Map AssetId Asset

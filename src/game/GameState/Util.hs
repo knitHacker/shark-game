@@ -7,11 +7,11 @@ module GameState.Util
     , getPauseEnterAction
     , getPauseMoveAction
     , simpleUpdate
-    , updateDefMenuHighlight
-    , updateDefMenuCursor
+    , updateMenuHighlight
     , withPauseUpdate
     , openPauseMenu
     , stepInputUpdate
+    , stepTransition
     , updateDefSomeMenu
     , updateDefaultMenu
     , moveMenuPos
@@ -138,18 +138,11 @@ updateDefSomeMenu shouldUp upFn gv = gv { menuAsset = DefaultMenu <$> (\ma -> up
                 (Just (DefaultMenu m)) -> Just m
                 _ -> Nothing
 
-updateDefMenuHighlight :: Int -> Color -> GView -> GView
-updateDefMenuHighlight idx c gv = gv { menuAsset = update <$> menuAsset gv }
+updateMenuHighlight :: Int -> Color -> GView -> GView
+updateMenuHighlight idx c gv = gv { menuAsset = update <$> menuAsset gv }
     where
         update (DefaultMenu m) = DefaultMenu $ changeHighlight m idx c
         update (ScrollMenu m) = ScrollMenu $ changeScrollHighlight m idx c
-
-updateDefMenuCursor :: Int -> Image -> Double -> GView -> GView
-updateDefMenuCursor idx img scale gv = gv { menuAsset = DefaultMenu <$> (\ma -> changeCursor ma idx img scale) <$> menu }
-    where
-        menu = case menuAsset gv of
-                (Just (DefaultMenu m)) -> Just m
-                _ -> Nothing
 
 shouldAnimationStep :: InputState -> AnimationState -> Bool
 shouldAnimationStep inputs as@(AnimState lastTs interval _ _) = timestamp inputs - lastTs > fromIntegral interval
@@ -240,11 +233,14 @@ withPauseApply gr (Just pSel) gv
 stepInputUpdate :: GamePlayStateE a => a -> Action
 stepInputUpdate gps = Step $ InputUpdate $ AnyGamePlayState gps
 
+stepTransition :: GamePlayStateE a => a -> Action
+stepTransition gps = Step $ Transition $ AnyGamePlayState gps
+
 openPauseMenu :: GamePlayStateE a => (Maybe PauseOpt -> a) -> Action
 openPauseMenu stateUp = Step $ InputUpdate $ AnyGamePlayState $ stateUp $ Just minBound
 
-menuInfoIntThink :: GamePlayStateE a => (MenuStateInfo Int -> a) -> (Int -> Action) -> Int -> MenuStateInfo Int -> InputState -> Action
-menuInfoIntThink mkGPS menuAction maxMenu menuInfo inputs
+menuInfoIntThink :: GamePlayStateE a => (MenuStateInfo Int -> a) -> (Int -> Action) -> Action -> Int -> MenuStateInfo Int -> InputState -> Action
+menuInfoIntThink mkGPS menuAction backAction maxMenu menuInfo inputs
     | wasWindowResized inputs = Step ResizeWindow
     | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo $ Just minBound
     | escapeJustPressed inputs = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo Nothing
@@ -260,6 +256,7 @@ menuInfoIntThink mkGPS menuAction maxMenu menuInfo inputs
             (Just DDown, _) | mIdx == maxMenu -> Step NoChange
             (Just DDown, _) -> stepInputUpdate $ mkGPS $ menuMoveDown menuInfo
             _ -> Step NoChange
+    | backJustPressed inputs = backAction
     | otherwise = Step NoChange
     where
         gd = gamedata $ stateInfo menuInfo
@@ -283,8 +280,8 @@ simpleInfoThink mkGPS enterAction sInfo inputs
     where
         pSelM = pauseSelM sInfo
 
-menuInfoThink :: (Enum b, Bounded b, Eq b, GamePlayStateE a) => (MenuStateInfo b -> a) -> (b -> Action) -> MenuStateInfo b -> InputState -> Action
-menuInfoThink mkGPS menuAction menuInfo inputs
+menuInfoThink :: (Enum b, Bounded b, Eq b, GamePlayStateE a) => (MenuStateInfo b -> a) -> (b -> Action) -> Action -> MenuStateInfo b -> InputState -> Action
+menuInfoThink mkGPS menuAction backAction menuInfo inputs
     | wasWindowResized inputs = Step ResizeWindow
     | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo $ Just minBound
     | escapeJustPressed inputs = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo Nothing
@@ -297,6 +294,7 @@ menuInfoThink mkGPS menuAction menuInfo inputs
             (Just dir, Just pSel) -> getPauseMoveAction dir pSel (\po -> AnyGamePlayState $ mkGPS $ menuUpdatePause menuInfo (Just po))
             (Just dir, _) -> moveMenuPos dir mOpt (mkGPS . (menuUpdateSel menuInfo))
             _ -> Step NoChange
+    | backJustPressed inputs = backAction
     | otherwise = Step NoChange
     where
         gd = gamedata $ stateInfo menuInfo
@@ -306,11 +304,11 @@ menuInfoThink mkGPS menuAction menuInfo inputs
 menuInfoUpdate :: (GamePlayStateE a, Enum b) => (MenuStateInfo b -> a) -> MenuStateInfo b -> GView -> Graphics -> (GView -> GView) -> GameState
 menuInfoUpdate mkGPS mi gvO gr gvFn = withPauseUpdate gr (mkGPS mi) pSelM nGv gvO
     where
-        nGv gv = updateDefMenuHighlight (fromEnum (menuSel mi)) White $ gvFn gv
+        nGv gv = updateMenuHighlight (fromEnum (menuSel mi)) White $ gvFn gv
         pSelM = menuGetPause mi
 
 menuInfoApply :: Enum a => MenuStateInfo a -> GView -> Graphics -> (GView -> GView) -> GView
 menuInfoApply msi gv gr gvFn = withPauseApply gr pSelM gv'
     where
-        gv' = updateDefMenuHighlight (fromEnum (menuSel msi)) White $ gvFn gv
+        gv' = updateMenuHighlight (fromEnum (menuSel msi)) White $ gvFn gv
         pSelM = menuGetPause msi
