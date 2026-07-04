@@ -134,7 +134,6 @@ changeCursor ma idx img s = ma { menuItems = updateItems <$> zip [0..] (menuItem
 
 assetObjWidth :: Graphics -> AssetObj -> Int
 assetObjWidth gr (AssetText txt _ sz) = floor $ fromIntegral (T.length txt) * fontWidth gr * fromIntegral sz
-assetObjWidth _  (AssetRect w _ _) = w
 assetObjWidth gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (imageSizeX i) * scale) (M.lookup img (graphicsStaticTextures gr))
 assetObjWidth gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeX i) * scale) (M.lookup img (graphicsAnimTextures gr))
 assetObjWidth gr (AssetStacked (AssetStack StackVertical items _)) = maximum $ assetObjWidth gr . stackItem <$> items
@@ -142,11 +141,12 @@ assetObjWidth gr (AssetStacked (AssetStack StackHorizontal items sp)) = (sum $ (
 assetObjWidth gr (AssetStacked (AssetStack AbsoluteHorizontal items sp)) = maximum $ (\(idx, i) -> stackXOff i + idx * sp + assetObjWidth gr (stackItem i)) <$> zip [0..] items
 assetObjWidth gr (AssetStacked (AssetStack AbsoluteVertical items _)) = maximum $ (\i -> stackXOff i + assetObjWidth gr (stackItem i)) <$> items
 assetObjWidth gr (AssetScroll sc) = maximum $ (\ass -> assetObjWidth gr (object ass)) <$> (M.elems $ M.filter (\ass -> isVisible ass) (scrollAssets sc))
+assetObjWidth _ (AssetRect w _ _) = w
+assetObjWdith _ AssetEmpty = 0
 
 
 assetObjHeight :: Graphics -> AssetObj -> Int
 assetObjHeight gr (AssetText _ _ sz) = ceiling $ fontHeight gr * fromIntegral sz
-assetObjHeight _  (AssetRect _ h _) = h
 assetObjHeight gr (AssetImage img scale) = maybe 0 (\i -> floor $ fromIntegral (imageSizeY i) * scale) (M.lookup img (graphicsStaticTextures gr))
 assetObjHeight gr (AssetAnimation img _ _ scale) = maybe 0 (\i -> floor $ fromIntegral (animSizeY i) * scale) (M.lookup img (graphicsAnimTextures gr))
 assetObjHeight gr (AssetStacked (AssetStack StackVertical items sp))   = (sum $ (\i -> assetObjHeight gr (stackItem i) + sp) <$> items) - sp
@@ -154,6 +154,8 @@ assetObjHeight gr (AssetStacked (AssetStack StackHorizontal items _)) = maximum 
 assetObjHeight gr (AssetStacked (AssetStack AbsoluteHorizontal items _)) = maximum $ (\i -> stackYOff i + assetObjHeight gr (stackItem i)) <$> items
 assetObjHeight gr (AssetStacked (AssetStack AbsoluteVertical items sp)) = maximum $ (\(idx, i) -> stackYOff i + idx * sp + assetObjHeight gr (stackItem i)) <$> zip [0..] items
 assetObjHeight gr (AssetScroll sc) = scrollSeenHeight sc
+assetObjHeight _ (AssetRect _ h _) = h
+assetObjHeight _ AssetEmpty = 0
 
 
 getScrollFullHeight :: Graphics -> AssetScroll -> Int

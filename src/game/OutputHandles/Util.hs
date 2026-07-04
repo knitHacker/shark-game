@@ -12,9 +12,7 @@ module OutputHandles.Util
     , partialText
     ) where
 
-import Foreign.C.Types ( CInt )
 import qualified Data.Text as T
-import qualified Data.Map.Strict as M
 
 import qualified SDL
 

@@ -22,16 +22,13 @@ module GameState.Menu.DataReviewMenu
     , initCompletedResearchReviewState
     ) where
 
-import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as M
-import Data.Maybe (isJust, isNothing, fromMaybe)
+import Data.Maybe (fromMaybe)
 import qualified Data.List as L
 import qualified Data.Text as T
-import qualified Data.Set as S
 
 import Util
 import OutputHandles.Types
-import OutputHandles.Util
 import Configs
 import Shark.Types
 import Shark.Review
@@ -40,7 +37,6 @@ import GameState.Types
 import GameState.Util
 import SaveData
 import Graphics.Types
-import Graphics.TextUtil
 import Graphics.Asset
 
 import InputState

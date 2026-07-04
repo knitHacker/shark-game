@@ -13,7 +13,6 @@ import qualified Data.Text as T
 import qualified Data.Set as S
 import Data.Word (Word32)
 
-import Configs (initConfigs, ConfigsRead(..), GameConfigs)
 import OutputHandles (initOutputHandles, executeDraw, cleanupOutputHandles)
 import OutputHandles.Types (OutputHandles, OutputRead(..), RenderAction(..), ToRender)
 import Graphics (initGraphics)

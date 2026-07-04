@@ -14,21 +14,14 @@ module GameState.Menu.GameMenus
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import qualified Data.Set as S
 import Data.Int (Int64)
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (isJust, listToMaybe)
 
 import Configs
 import SaveData
-import Shark.Trip
 import Shark.Types
 
-import OutputHandles.Types
-    ( Color(..)
-    , OutputHandles(textures)
-    , TextDisplay(TextDisplay)
-    )
-import OutputHandles.Util
+import OutputHandles.Types (Color(..))
 
 import GameState.Types
 import GameState.Util
@@ -37,7 +30,6 @@ import Graphics.TextUtil
 import Graphics.Asset
 
 import InputState
-import Util
 
 import Debug.Trace
 
@@ -238,8 +230,9 @@ introEquip gd cfg gr = (GView (M.fromList assets) mempty $ Just $ nextMenu gr 1,
     where
         eqKeys = gameOwnedEquipment $ gameDataEquipment gd
         eqs = map (\k -> equipment (sharkCfgs cfg) M.! k) eqKeys
-        eqCatch = head $ filter (\e -> equipInfoType e == Caught) eqs
-        eqObs = head $ filter (\e -> equipInfoType e == Observed) eqs
+        eqCatch = listToMaybe $ filter (\e -> equipInfoType e == Caught) eqs
+        eqObs = listToMaybe $ filter (\e -> equipInfoType e == Observed) eqs
+        equipImg = maybe AssetEmpty (\e -> AssetImage (equipImage e) 4.0)
         equipmentText = "With the initial funds you were also able to purchase some basic research equipment \
                         \to get your center up and running. It's not much, but it's a start. \
                         \Hopefully as you make progress in your research you can acquire more advanced gear."
@@ -249,8 +242,8 @@ introEquip gd cfg gr = (GView (M.fromList assets) mempty $ Just $ nextMenu gr 1,
                      , centerAssetX gr (AssetRect 600 300 LightGray) 0 rectStartY 0
                      , mkResizeAsset gr (AssetText "Catch" Blue 3) 1 True resizeCatch
                      , mkResizeAsset gr (AssetText "Observe" Blue 3) 1 True resizeObserve
-                     , mkResizeAsset gr (AssetImage (equipImage eqCatch) 4.0) 1 True resizeCatchImg
-                     , mkResizeAsset gr (AssetImage (equipImage eqObs) 4.0) 1 True resizeObserveImg
+                     , mkResizeAsset gr (equipImg eqCatch) 1 True resizeCatchImg
+                     , mkResizeAsset gr (equipImg eqObs) 1 True resizeObserveImg
                      , wrapTextAsset gr 95 White equipmentText 2 3 0 500 False
                      ]
         resizeCatch asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) - 260, assetY = rectStartY + 10 }

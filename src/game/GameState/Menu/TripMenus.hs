@@ -30,7 +30,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Set as S
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (isJust)
 import Data.Int (Int64)
 
 import Graphics.Types
@@ -131,9 +131,6 @@ data TripEquipPickState = TripEquipPickState
 
 initEquipPickState :: GameData -> Int -> T.Text -> TripEquipPickState
 initEquipPickState gd lIdx lKey = TripEquipPickState lIdx lKey mempty $ MenuInfo 0 $ initSimpleStateInfo gd
-
-equipLen :: GameData -> GameConfigs -> T.Text -> Int
-equipLen gd cfgs loc = length $ tripAvailableEquip (sharkCfgs cfgs) gd loc
 
 getMenuItemColor :: GameData -> GameConfigs -> T.Text -> S.Set (Int, T.Text) -> Int -> Color
 getMenuItemColor gd cfgs loc eSels idx
@@ -379,41 +376,28 @@ noShark gr = [ staticText "No Shark" White 50 20 10 0
 
 
 data TripResultState = TripResultState
-    { resGameData :: GameData
-    , resTrip :: TripState
+    { resTrip :: TripState
     , resPosition :: Int
-    , resPauseOpt :: Maybe PauseOpt
+    , resInfo :: SimpleStateInfo
     }
 
 initTripResultState :: GameData -> TripState -> TripResultState
-initTripResultState gd tp = TripResultState gd tp 0 Nothing
+initTripResultState gd tp = TripResultState tp 0 $ initSimpleStateInfo gd
 
 
 instance GamePlayStateE TripResultState where
-    think gps@(TripResultState gd tp pos pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | isJust pSelM && (enterJustPressed inputs || moveInputJustPressed inputs) =
-            case (inputDirection inputs, enterJustPressed inputs, pSelM) of
-                (_, True, Just pSel) -> getPauseEnterAction pSel gd' $ AnyGamePlayState (gps { resPauseOpt = Nothing })
-                (Just dir, _, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { resPauseOpt = Just po}))
-                _ -> Step NoChange
-        | escapeJustPressed inputs =
-            case pSelM of
-                Nothing -> stepInputUpdate $ (TripResultState gd tp pos (Just minBound))
-                _ -> stepInputUpdate $ (TripResultState gd tp pos Nothing)
-        | enterJustPressed inputs = Step $ TopTransition ResearchCenterMenu gd'
-        | otherwise =
-            case mouseInputs inputs of
-                Nothing -> Step NoChange
-                (Just (MouseInputs sAmt)) -> stepInputUpdate $ TripResultState gd tp (max 0 (pos + 5 * (-sAmt))) pSelM
+    think gps@(TripResultState tp pos si) cfgs inputs =
+        case mouseInputs inputs of
+            Nothing -> simpleInfoThink (TripResultState tp pos) enterPressed si inputs
+            Just (MouseInputs sAmt) -> stepInputUpdate $ TripResultState tp (max 0 (pos + 5 * (-sAmt))) si
         where
+            gd = gamedata si
             gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
+            enterPressed = Step $ TopTransition ResearchCenterMenu gd'
 
-    transition gps@(TripResultState gd tp pos pSelM) cfgs gr = (gview, [])
+    transition gps@(TripResultState tp pos si) cfgs gr = (withPauseApply gr (pauseSelM si) gview, [])
         where
-            gview = GView assets (overlays pSelM) $ Just $ singleMenu gr "Back to Research Center" 50 1
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            gview = GView assets mempty $ Just $ singleMenu gr "Back to Research Center" 50 1
             assets = M.fromList $ zip [0..]
                                       [ Asset (scroll gr) 200 200 0 True $ Just rs
                                       , staticText "Trip Complete!" White 50 50 8 0
@@ -433,9 +417,9 @@ instance GamePlayStateE TripResultState where
             sharkFindsTxt = concatMap findAssets $ zip [0..] (sharkFinds tp)
 
 
-    update gps@(TripResultState gd tp p pSelM) gvO _ gr = withPauseUpdate gr newGPS pSelM updatePos gvO
+    update gps@(TripResultState tp p si) gvO _ gr = withPauseUpdate gr newGPS (pauseSelM si) updatePos gvO
         where
-            newGPS = TripResultState gd tp (min p maxP) pSelM
+            newGPS = TripResultState tp (min p maxP) si
             maxP = maybe 0 (getMaxPosition gr) (getAScroll gvO)
             getAScroll gv =
                 case object (assets gv M.! 0) of

@@ -19,7 +19,6 @@ import SaveData
 
 -- import Control.Monad.Reader (MonadReader, ReaderT, asks)
 import Control.Monad.State.Strict (StateT, MonadState, gets, modify)
-import Control.Monad
 import Control.Monad.IO.Class (MonadIO)
 
 import Data.Word (Word32)
