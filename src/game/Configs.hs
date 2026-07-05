@@ -23,8 +23,7 @@ import System.IO ()
 import Paths_shark_game ()
 import GHC.Generics ( Generic )
 import Data.Aeson ( FromJSON, ToJSON )
-import Data.Aeson.Types ( FromJSON, ToJSON )
-import Data.Yaml ( decodeFileEither, encodeFile, ParseException )
+import Data.Yaml ( decodeFileEither, encodeFile )
 import Data.Either ()
 import Data.Word (Word32)
 import qualified Data.Map.Strict as M
@@ -35,8 +34,6 @@ import Data.Default
 
 import Env.Files    (getGameFullPath, getLocalGamePath)
 import Shark.Types
-import Data.Graph (path)
-import SDL.Font (load)
 
 configFile :: FilePath
 configFile = "data/configs/game.yaml"

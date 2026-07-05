@@ -4,26 +4,10 @@ module Game
     ) where
 
 import OutputHandles.Types
-import OutputHandles
-import Env
-import Env.Types
 import InputState
-import GameState
 import GameState.Types
-import SaveData
 import Configs
 import Graphics.Types
-
-import qualified SDL
-import Control.Monad.IO.Class ()
-import Control.Monad.Reader ( MonadReader(ask) )
-import Data.Time.Clock.System
-    ( SystemTime(systemSeconds, systemNanoseconds)
-    , getSystemTime
-    )
-import Data.Word ( Word32 )
-import Control.Concurrent
-import Control.Arrow
 
 import Debug.Trace
 

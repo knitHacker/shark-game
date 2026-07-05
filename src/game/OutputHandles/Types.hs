@@ -28,10 +28,8 @@ import Foreign.C.Types ( CInt )
 import qualified SDL
 import qualified SDL.Font as Font
 import Control.Monad ()
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import SDL.Font (height)
 
 import Debug.Trace
 

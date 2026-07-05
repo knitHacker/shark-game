@@ -30,8 +30,6 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 
 import OutputHandles.Types
-import Configs
-import InputState
 
 data ImageInfo = ImageInfo
     { imageSizeX :: !Int

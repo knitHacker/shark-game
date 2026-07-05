@@ -170,8 +170,9 @@ drawStack gr d r l x y (StackItem item xOff yOff) =
         AssetAnimation an fr dp s -> addAnimTexture r d l $ getAnimFrame gr an fr dp x (y + yOff) s
         AssetText txt c s -> addText r d l $ TextDisplay txt (fromIntegral (x + xOff)) (fromIntegral (y + yOff)) s c Nothing
         AssetRect w h c -> addRectangle r d l $ DRectangle c (fromIntegral (x + xOff)) (fromIntegral (y + yOff)) (fromIntegral w) (fromIntegral h)
-        AssetScroll scroll -> undefined
+        AssetScroll scroll -> addScroll gr r d l (x + xOff) (y + yOff) scroll
         AssetStacked (AssetStack dir stack sp) -> fst $ addStack dir gr d r l sp (x + xOff) (y + yOff) stack
+        AssetEmpty -> r
 
 -- TODO: Add the scroll bar draw logic
 drawScrollBar :: ToRender -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> ToRender

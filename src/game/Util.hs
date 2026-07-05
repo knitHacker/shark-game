@@ -14,8 +14,7 @@ module Util
     ) where
 
 import GHC.Generics ( Generic )
-import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
-import Data.Aeson.Types ( FromJSON, ToJSON )
+import Data.Aeson ( FromJSON, ToJSON )
 import Data.Unique ( Unique, hashUnique )
 import Control.Monad.IO.Class ()
 

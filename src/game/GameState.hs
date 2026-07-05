@@ -12,27 +12,18 @@ module GameState
 import Control.Monad ()
 import InputState
 import GameState.Types
-import OutputHandles.Types
 import GameState.Menu.GameMenus
 import GameState.Menu.TripMenus
 import GameState.Menu.DataReviewMenu
 import GameState.Menu.LabMenus
 import SaveData
 import Configs
-import Graphics
 import Graphics.Types
-import Graphics.TextUtil
 import Graphics.Asset
 
-import qualified Data.Text as T
-import Data.Int (Int64)
 
-import qualified Data.Map.Strict as M
-import Data.Map.Strict ((!))
-import Control.Monad.IO.Class ( MonadIO(..) )
 
 import Debug.Trace
-import Data.Maybe (catMaybes)
 
 doTransition :: GamePlayStateE a => a -> GameConfigs -> Graphics -> GameState
 doTransition gps cfgs gr = GameState (AnyGamePlayState (updateAnims gps anims)) gv

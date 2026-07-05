@@ -27,7 +27,6 @@ import System.IO ()
 import Paths_shark_game ()
 import GHC.Generics ( Generic )
 import Data.Aeson ( FromJSON, ToJSON, eitherDecodeFileStrict, encodeFile )
-import Data.Aeson.Types ( FromJSON, ToJSON )
 import qualified Data.Text as T
 import qualified Data.Map.Strict as M
 import System.Directory
@@ -35,13 +34,12 @@ import System.FilePath
 
 import Data.Word
 import System.Random.MWC as R
-import Control.Monad
 import Control.Monad.ST.Lazy (runST)
 import Data.Vector.Unboxed
 import qualified Data.List as L
 
 import Configs
-import Env.Files (getGameDirectory, getLocalGamePath)
+import Env.Files (getLocalGamePath)
 import Shark.Types
 
 getRandomPercent :: GameData -> (GameData, Int)

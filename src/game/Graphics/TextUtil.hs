@@ -15,11 +15,9 @@ module Graphics.TextUtil
     ) where
 
 import qualified Data.Text as T
-import qualified Data.List as L
 
 import Graphics.Types
 import OutputHandles.Types
-import Data.Text (Text)
 
 
 percentWidth :: Graphics -> Double -> Int

@@ -40,3 +40,13 @@ jobs:
       with:
         name: shark-game-arch-linux
         path: release/
+
+    - name: Create release archive
+      if: startsWith(github.ref, 'refs/tags/')
+      run: tar -czf shark-game-arch-linux.tar.gz --transform 's,^release,shark-game-arch-linux,' release
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: shark-game-arch-linux.tar.gz

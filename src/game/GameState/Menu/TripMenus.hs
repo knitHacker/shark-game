@@ -30,7 +30,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import qualified Data.Text as T
 import qualified Data.Set as S
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (isJust)
 import Data.Int (Int64)
 
 import Graphics.Types
@@ -40,19 +40,19 @@ import GameState.Util
 
 import Debug.Trace
 
-data TripMapState = TripMapState GameData Int (Maybe PauseOpt)
+data TripMapState = TripMapState (MenuStateInfo Int)
 
 initTripMapState :: GameData -> TripMapState
-initTripMapState gd = TripMapState gd 0 Nothing
+initTripMapState gd = TripMapState $ MenuInfo 0 $ initSimpleStateInfo gd
 
-getLocInfo :: GameData -> GameConfigs -> Int -> [(T.Text, Bool, Bool)]
-getLocInfo gd cfgs idx = locs
+getLocInfo :: GameData -> GameConfigs -> [(T.Text, Bool)]
+getLocInfo gd cfgs = locs
     where
         region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
         myBoat = gameActiveBoat $ gameDataEquipment gd
         boatInfo = boats (sharkCfgs cfgs) ! myBoat
         allLocs = M.assocs (getData region siteLocations)
-        locs = (\(i, (loc, lCfg)) -> (showText lCfg, loc `elem` boatReachableBiomes boatInfo, i == idx)) <$> zip [0..] allLocs
+        locs = (\(loc, lCfg) -> (showText lCfg, loc `elem` boatReachableBiomes boatInfo)) <$> allLocs
 
 
 getLocAtIndex :: GameData -> GameConfigs -> Int -> Maybe (T.Text, Bool, T.Text)
@@ -81,32 +81,10 @@ getBiomeDesc gr gd cfgs idx =
 
 
 instance GamePlayStateE TripMapState where
-    think tms@(TripMapState gd locIdx pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs && isNothing pSelM && locIdx == locNum = Step $ TopTransition ResearchCenterMenu gd
-        | enterJustPressed inputs && isNothing pSelM =
-            case currLoc of
-                (key, True) -> Step $ Transition $ AnyGamePlayState $ initEquipPickState gd locIdx key
-                _ -> Step NoChange
-        | enterJustPressed inputs =
-            case pSelM of
-                Just po -> getPauseEnterAction po gd $ AnyGamePlayState $ TripMapState gd locIdx Nothing
-                _ -> error "Shouldn't get here: map menu"
-        | moveInputJustPressed inputs && isJust pSelM =
-            case (inputDirection inputs, pSelM) of
-                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ \po -> AnyGamePlayState $ TripMapState gd locIdx (Just po)
-                _ -> error "Shouldn't get here: map menu: pause"
-        | moveInputJustPressed inputs =
-            case (inputDirection inputs, locIdx) of
-                (Just DUp, 0) -> Step NoChange
-                (Just DUp, n) -> stepInputUpdate $ TripMapState gd (locIdx - 1) pSelM
-                (Just DDown, n) | n == locNum -> Step NoChange
-                (Just DDown, n) -> stepInputUpdate $ TripMapState gd (locIdx + 1) pSelM
-                _ -> Step NoChange
-        | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ TripMapState gd locIdx $ Just minBound
-        | escapeJustPressed inputs = stepInputUpdate $ TripMapState gd locIdx Nothing
-        | otherwise = Step $ NoChange
+    think tms@(TripMapState msi) cfgs inputs = menuInfoIntThink TripMapState next back locNum msi inputs
         where
+            gd = menuGetData msi
+            locIdx = menuSel msi
             region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
             allLocs = M.assocs (getData region siteLocations)
             locNum = length allLocs
@@ -114,47 +92,45 @@ instance GamePlayStateE TripMapState where
             boatInfo = boats (sharkCfgs cfgs) ! myBoat
             allowedLoc = (\(key, lcfg) -> (key, key `elem` boatReachableBiomes boatInfo)) <$> allLocs
             currLoc = allowedLoc L.!! locIdx
+            back = Step $ TopTransition ResearchCenterMenu gd
+            next idx
+                | idx == locNum = back
+                | otherwise = case currLoc of
+                                (key, True) -> stepTransition $ initEquipPickState gd locIdx key
+                                _ -> Step NoChange
 
-    transition tms@(TripMapState gd locIdx pSelM) cfgs gr = (gview, [])
+    transition tms@(TripMapState msi) cfgs gr = (menuInfoApply msi gview gr id, [])
         where
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
-            gview = GView (M.fromList assets) (overlays pSelM) $ Just menu
+            pSelM = menuGetPause msi
+            gd = menuGetData msi
+            locIdx = menuSel msi
+            gview = GView (M.fromList assets) mempty $ Just menu
             assets = zip [0..]
                          [ getBiomeDesc gr gd cfgs locIdx
                          , staticText "Select Trip" White 40 40 7 0
                          , staticText "Destination" White 80 160 8 0
                          ]
-            menu = DefaultMenu $ MenuAsset 140 300 1 Nothing 8 menuItems
-            locs = getLocInfo gd cfgs locIdx
-            menuItems = (menuItem <$> locs) ++ [lastItem]
-            menuItem (loc, enable, sel) = MenuItem (MText loc) (if enable then Blue else Gray) 3 0 0 True (if sel then Just White else Nothing) Nothing
-            lastItem = MenuItem (MText "Return to Lab") Blue 3 0 0 True (if length locs == locIdx then Just White else Nothing) Nothing
+            menu = ScrollMenu $ mkScrollMenu gr menuItems endItems (const 100) 140 300 8 3 1
+            endItems = [MenuItem (MText "Return to Lab") Blue 3 0 0 True Nothing Nothing]
+            locs = getLocInfo gd cfgs
+            menuItems = menuItem <$> locs
+            menuItem (loc, enable) = ScrollMenuItem (MText loc) (if enable then Blue else Gray) 0 Nothing Nothing
 
-    update gsp@(TripMapState gd locIdx pSelM) gvO cfgs gr = withPauseUpdate gr gsp pSelM nGv gvO
-        where
-            nGv gv =
-                let gv' = updateDefMenuHighlight locIdx White gv
-                in gv' { assets = M.adjust (\_ -> getBiomeDesc gr gd cfgs locIdx) 0 (assets gv) }
+    update gsp@(TripMapState msi) gv cfgs gr = menuInfoUpdate TripMapState msi gv gr id
 
 
 -- assuming I add ability to have more than one boat, need to select boat in new menu
 -- this is done in fleet management currently
 
 data TripEquipPickState = TripEquipPickState
-    { gameData :: GameData
-    , locIdx :: Int
+    { locIdx :: Int
     , locKey :: T.Text
-    , menuIdx :: Int
     , equipSel :: S.Set (Int, T.Text)
-    , pauseOpt :: Maybe PauseOpt
+    , equipMenuInfo :: MenuStateInfo Int
     }
 
 initEquipPickState :: GameData -> Int -> T.Text -> TripEquipPickState
-initEquipPickState gd lIdx lKey = TripEquipPickState gd lIdx lKey 0 mempty Nothing
-
-equipLen :: GameData -> GameConfigs -> T.Text -> Int
-equipLen gd cfgs loc = length $ tripAvailableEquip (sharkCfgs cfgs) gd loc
+initEquipPickState gd lIdx lKey = TripEquipPickState lIdx lKey mempty $ MenuInfo 0 $ initSimpleStateInfo gd
 
 getMenuItemColor :: GameData -> GameConfigs -> T.Text -> S.Set (Int, T.Text) -> Int -> Color
 getMenuItemColor gd cfgs loc eSels idx
@@ -185,46 +161,28 @@ getMenuHighlight gd cfgs loc eSels mIdx idx
 
 
 instance GamePlayStateE TripEquipPickState where
-    think gps@(TripEquipPickState gd locIdx loc mIdx eSel pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> gps { pauseOpt = pSelM' })
-        | escapeJustPressed inputs = stepInputUpdate $ gps { pauseOpt = Nothing }
-        | moveInputJustPressed inputs && isNothing pSelM =
-            case (inputDirection inputs, mIdx) of
-                (Just DUp, 0) -> Step NoChange
-                (Just DUp, i) -> stepInputUpdate $ gps { menuIdx = i - 1 }
-                (Just DDown, i) | i == eqLen + 1 -> Step NoChange
-                (Just DDown, i) -> stepInputUpdate $ gps { menuIdx = i + 1 }
-                _ -> Step NoChange
-        | moveInputJustPressed inputs =
-            case (inputDirection inputs, pSelM) of
-                (Just dir, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { pauseOpt = Just po}))
-                _ -> Step NoChange
-        | enterJustPressed inputs && isJust pSelM =
-            case pSelM of
-                Just pSel -> getPauseEnterAction pSel gd $ AnyGamePlayState (gps { pauseOpt = Nothing })
-                _ -> error "Can't get here:trip equip:1"
-        | enterJustPressed inputs && mIdx < eqLen && S.member (mIdx, currEq) eSel =
-            stepInputUpdate $ gps { equipSel = S.delete (mIdx, currEq) eSel }
-        | enterJustPressed inputs && mIdx < eqLen =
-            stepInputUpdate $ gps { equipSel = S.insert (mIdx, currEq) eSel }
-        | enterJustPressed inputs && mIdx == eqLen && not (null eSel) = Step $ Transition $ AnyGamePlayState $ initTripReviewState gd locIdx loc eSel
-        | enterJustPressed inputs && mIdx > eqLen = Step $ Transition $ AnyGamePlayState $ TripMapState gd locIdx Nothing
-        | otherwise = Step NoChange
+    think gps@(TripEquipPickState locIdx loc eSel msi) cfgs inputs =
+        menuInfoIntThink (\msi' -> gps { equipMenuInfo = msi' }) next back (eqLen + 1) msi inputs
         where
+            gd = menuGetData msi
             region = getEntry (regions (sharkCfgs cfgs)) (gameCurrentRegion gd)
             eq = equipment $ sharkCfgs cfgs
             myEquip = gameOwnedEquipment $ gameDataEquipment gd
             allowedEq = allowedEquipment $ (getData region siteLocations) M.! loc
             shownEq = filter (\e -> e `elem` myEquip) allowedEq
             eqLen = length shownEq
-            currEq = shownEq !! mIdx
+            back = stepTransition $ TripMapState $ MenuInfo locIdx $ SimpleInfo gd Nothing
+            next idx
+                | idx > eqLen = back
+                | idx == eqLen = stepTransition $ initTripReviewState gd locIdx loc eSel
+                | S.member (idx, shownEq !! idx) eSel = stepInputUpdate $ gps { equipSel = S.delete (idx, shownEq !! idx) eSel }
+                | otherwise = stepInputUpdate $ gps { equipSel = S.insert (idx, shownEq !! idx) eSel }
 
-    transition gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) cfgs gr = (gv, [])
+    transition gps@(TripEquipPickState _ loc eSel msi) cfgs gr = (gv, [])
         where
-            gv = GView assets (overlays pSelM) $ Just menu
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            gd = menuGetData msi
+            mIdx = menuSel msi
+            gv = GView assets mempty $ Just menu
             assets = M.fromList $ zip [0..]
                                       [ staticText equipLoadedTxt Green 200 400 3 0
                                       , staticText "Select Trip" White 50 50 8 0
@@ -241,8 +199,11 @@ instance GamePlayStateE TripEquipPickState where
             items = mkMI <$> zip [0..] itemTxts
             mkMI (i, it) = MenuItem (MText it) (getMenuItemColor gd cfgs loc eSel i) 3 0 0 True (getMenuHighlight gd cfgs loc eSel mIdx i) Nothing
 
-    update gps@(TripEquipPickState gd _ loc mIdx eSel pSelM) gvO cfgs gr = withPauseUpdate gr gps pSelM (nGv . updateLoaded) gvO
+    update gps@(TripEquipPickState _ loc eSel msi) gvO cfgs gr = withPauseUpdate gr gps pSelM (nGv . updateLoaded) gvO
         where
+            gd = menuGetData msi
+            mIdx = menuSel msi
+            pSelM = menuGetPause msi
             equipSlots = sum $ (\(_, s) -> equipSize $ (equipment (sharkCfgs cfgs)) M.! s) <$> (S.toList eSel)
             equipLoadedTxt = T.concat ["Equipment Loaded: ", T.pack (show equipSlots), " slots"]
             updateLoaded gv = gv { assets = M.adjust (\a -> a { object = AssetText equipLoadedTxt Green 3 }) 0 (assets gv) }
@@ -254,36 +215,18 @@ data TripReviewOpts = StartTripRv | BackEquipRv | AbortTripRv
                     deriving (Show, Eq, Enum, Ord, Bounded)
 
 data TripReviewState = TripReviewState
-    { reviewGameData :: GameData
-    , reviewLoc :: (Int, T.Text)
+    { reviewLoc :: (Int, T.Text)
     , reviewEquip :: S.Set (Int, T.Text)
-    , reviewMenuIdx :: TripReviewOpts
-    , reviewPauseOpt :: Maybe PauseOpt
+    , reviewMenuInfo :: MenuStateInfo TripReviewOpts
     }
 
 initTripReviewState :: GameData -> Int -> T.Text -> S.Set (Int, T.Text) -> TripReviewState
-initTripReviewState gd locIdx locKey equips = TripReviewState gd (locIdx, locKey) equips minBound Nothing
+initTripReviewState gd locIdx locKey equips = TripReviewState (locIdx, locKey) equips $ initMenuStateInfo gd
 
 instance GamePlayStateE TripReviewState where
-    think gps@(TripReviewState gd (locI, loc) equip mIdx pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | escapeJustPressed inputs && isNothing pSelM = openPauseMenu (\pSelM' -> gps { reviewPauseOpt = pSelM' })
-        | escapeJustPressed inputs = stepInputUpdate $ gps { reviewPauseOpt = Nothing }
-        | isJust pSelM && (enterJustPressed inputs || moveInputJustPressed inputs) =
-            case (inputDirection inputs, enterJustPressed inputs, pSelM) of
-                (Just dir, _, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { reviewPauseOpt = Just po}))
-                (_, True, Just pSel) -> getPauseEnterAction pSel gd $ AnyGamePlayState (gps { reviewPauseOpt = Nothing })
-                _ -> Step NoChange
-        | enterJustPressed inputs =
-            case (mIdx, tripAInfo) of
-                (StartTripRv, Just (atmpt, tp)) -> Step $ Transition $ AnyGamePlayState $ initTripProgressState gd'' atmpt tp $ timestamp inputs
-                (BackEquipRv, _) -> Step $ Transition $ AnyGamePlayState $ initEquipPickState gd locI loc
-                (AbortTripRv, _) -> Step $ TopTransition ResearchCenterMenu gd
-        | otherwise =
-            case keyInputs inputs of
-                (Just (Keyboard _ (Just dir) _ False)) -> moveMenuPos dir mIdx (\newMI -> (gps { reviewMenuIdx = newMI }))
-                _ -> Step NoChange
+    think gps@(TripReviewState (locI, loc) equip msi) cfgs inputs = menuInfoThink (\msi' -> gps { reviewMenuInfo = msi' }) (next tripAInfo) back msi inputs
         where
+            gd = menuGetData msi
             equipKeys = snd <$> S.toList equip
             region = gameCurrentRegion gd
             boat = gameActiveBoat $ gameDataEquipment gd
@@ -295,12 +238,16 @@ instance GamePlayStateE TripReviewState where
             tripAInfo = case tripTries atmpts of
                 [] -> Nothing
                 (h:tl) -> Just (h, atmpts { tripTries = tl})
+            back = Step $ TopTransition ResearchCenterMenu gd
+            next _ AbortTripRv = back
+            next _ BackEquipRv = stepTransition $ initEquipPickState gd locI loc
+            next (Just (atmpt, tp)) StartTripRv = stepTransition $ initTripProgressState gd'' atmpt tp $ timestamp inputs
+            next _ _ = Step NoChange
 
-    transition gps@(TripReviewState gd (_, loc) equip mIdx pSelM) cfgs gr = (gview, [])
+    transition gps@(TripReviewState (_, loc) equip msi) cfgs gr = (menuInfoApply msi gview gr id, [])
         where
-            gview = GView assets (overlays pSelM) $ Just menu
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            gd = menuGetData msi
+            gview = GView assets mempty $ Just menu
             assets = M.fromList $ zip [0..]
                                       [ staticText "Review Trip" White 50 20 8 0
                                       , staticText "Details" White 150 125 10 0
@@ -312,10 +259,9 @@ instance GamePlayStateE TripReviewState where
             fuelCost = boatFuelCost boatInfo
             fuelCostTxt = T.append "Fuel Cost: " (showMoney fuelCost)
             menu = DefaultMenu $ MenuAsset 400 600 1 Nothing 5 items
-            itemHL i = if fromEnum mIdx == i then Just White else Nothing
-            items = [ MenuItem (MText "Start Trip") Blue 3 0 0 True (itemHL 0) Nothing
-                    , MenuItem (MText "Back to equipment") Blue 3 0 0 True (itemHL 1) Nothing
-                    , MenuItem (MText "Abort Trip") Blue 3 0 0 True (itemHL 2) Nothing
+            items = [ MenuItem (MText "Start Trip") Blue 3 0 0 True Nothing Nothing
+                    , MenuItem (MText "Back to equipment") Blue 3 0 0 True Nothing Nothing
+                    , MenuItem (MText "Abort Trip") Blue 3 0 0 True Nothing Nothing
                     ]
             region = gameCurrentRegion gd
             boat = gameActiveBoat $ gameDataEquipment gd
@@ -331,7 +277,7 @@ instance GamePlayStateE TripReviewState where
             stack = AssetStacked $ AssetStack StackVertical stackItems 8
             stackItems = (\(c, txt) -> StackItem (AssetText txt c 3) 0 0) <$> costTxts
 
-    update gps@(TripReviewState gd (_, loc) equip mIdx pSelM) gvO cfgs gr = withPauseUpdate gr gps pSelM (updateDefMenuHighlight (fromEnum mIdx) White) gvO
+    update gps@(TripReviewState (_, loc) equip msi) gv cfgs gr = menuInfoUpdate (\msi' -> gps { reviewMenuInfo = msi' }) msi gv gr id
 
 data TripProgressState = TripProgressState GameData TripAttempt TripState Int64 [AnimationState]
 
@@ -346,7 +292,7 @@ newTrip gd'' tp sfM tl = case sfM of
 instance GamePlayStateE TripProgressState where
     think gps@(TripProgressState gd ta tp startTS as) cfgs inputs
         | wasWindowResized inputs = Step ResizeWindow
-        | timestamp inputs - startTS > 2000 = Step $ Transition $ AnyGamePlayState $ SharkFoundState gd' sfM tp'
+        | timestamp inputs - startTS > 2000 = stepTransition $ SharkFoundState gd' sfM tp'
         | otherwise = Step $ getAnimationStep inputs as
         where
             (gd', sfM, tp') =
@@ -393,8 +339,8 @@ instance GamePlayStateE SharkFoundState where
         | wasWindowResized inputs = Step ResizeWindow
         | enterJustPressed inputs =
             case tripAInfo of
-                (Just (a, tp')) -> Step $ Transition $ AnyGamePlayState $ initTripProgressState gd a tp' $ timestamp inputs
-                Nothing -> Step $ Transition $ AnyGamePlayState $ initTripResultState gd tp
+                (Just (a, tp')) -> stepTransition $ initTripProgressState gd a tp' $ timestamp inputs
+                Nothing -> stepTransition $ initTripResultState gd tp
         | otherwise = Step NoChange
         where
             tripAInfo = case tripTries tp of
@@ -430,41 +376,28 @@ noShark gr = [ staticText "No Shark" White 50 20 10 0
 
 
 data TripResultState = TripResultState
-    { resGameData :: GameData
-    , resTrip :: TripState
+    { resTrip :: TripState
     , resPosition :: Int
-    , resPauseOpt :: Maybe PauseOpt
+    , resInfo :: SimpleStateInfo
     }
 
 initTripResultState :: GameData -> TripState -> TripResultState
-initTripResultState gd tp = TripResultState gd tp 0 Nothing
+initTripResultState gd tp = TripResultState tp 0 $ initSimpleStateInfo gd
 
 
 instance GamePlayStateE TripResultState where
-    think gps@(TripResultState gd tp pos pSelM) cfgs inputs
-        | wasWindowResized inputs = Step ResizeWindow
-        | isJust pSelM && (enterJustPressed inputs || moveInputJustPressed inputs) =
-            case (inputDirection inputs, enterJustPressed inputs, pSelM) of
-                (_, True, Just pSel) -> getPauseEnterAction pSel gd' $ AnyGamePlayState (gps { resPauseOpt = Nothing })
-                (Just dir, _, Just pSel) -> getPauseMoveAction dir pSel $ (\po -> AnyGamePlayState (gps { resPauseOpt = Just po}))
-                _ -> Step NoChange
-        | escapeJustPressed inputs =
-            case pSelM of
-                Nothing -> stepInputUpdate $ (TripResultState gd tp pos (Just minBound))
-                _ -> stepInputUpdate $ (TripResultState gd tp pos Nothing)
-        | enterJustPressed inputs = Step $ TopTransition ResearchCenterMenu gd'
-        | otherwise =
-            case mouseInputs inputs of
-                Nothing -> Step NoChange
-                (Just (MouseInputs sAmt)) -> stepInputUpdate $ TripResultState gd tp (max 0 (pos + 5 * (-sAmt))) pSelM
+    think gps@(TripResultState tp pos si) cfgs inputs =
+        case mouseInputs inputs of
+            Nothing -> simpleInfoThink (TripResultState tp pos) enterPressed si inputs
+            Just (MouseInputs sAmt) -> stepInputUpdate $ TripResultState tp (max 0 (pos + 5 * (-sAmt))) si
         where
+            gd = gamedata si
             gd' = foldl (\g sf -> addShark g (mkGameShark sf)) gd (sharkFinds tp)
+            enterPressed = Step $ TopTransition ResearchCenterMenu gd'
 
-    transition gps@(TripResultState gd tp pos pSelM) cfgs gr = (gview, [])
+    transition gps@(TripResultState tp pos si) cfgs gr = (withPauseApply gr (pauseSelM si) gview, [])
         where
-            gview = GView assets (overlays pSelM) $ Just $ singleMenu gr "Back to Research Center" 50 1
-            overlays Nothing = mempty
-            overlays (Just pSel) = S.singleton $ pauseOverlay gr pSel
+            gview = GView assets mempty $ Just $ singleMenu gr "Back to Research Center" 50 1
             assets = M.fromList $ zip [0..]
                                       [ Asset (scroll gr) 200 200 0 True $ Just rs
                                       , staticText "Trip Complete!" White 50 50 8 0
@@ -484,9 +417,9 @@ instance GamePlayStateE TripResultState where
             sharkFindsTxt = concatMap findAssets $ zip [0..] (sharkFinds tp)
 
 
-    update gps@(TripResultState gd tp p pSelM) gvO _ gr = withPauseUpdate gr newGPS pSelM updatePos gvO
+    update gps@(TripResultState tp p si) gvO _ gr = withPauseUpdate gr newGPS (pauseSelM si) updatePos gvO
         where
-            newGPS = TripResultState gd tp (min p maxP) pSelM
+            newGPS = TripResultState tp (min p maxP) si
             maxP = maybe 0 (getMaxPosition gr) (getAScroll gvO)
             getAScroll gv =
                 case object (assets gv M.! 0) of

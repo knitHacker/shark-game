@@ -14,22 +14,15 @@ module GameState.Types
     , PauseOpt(..)
     ) where
 
-import qualified Data.Map.Strict as M
 import Data.Int ( Int64 )
-import qualified Data.Text as T
-import Data.Maybe (isJust)
 
 
 import OutputHandles.Types
 import Graphics.Types
-import Graphics.Asset
 import Configs
 import InputState
 import SaveData
-import Shark.Types
-import Util
 import Data.Typeable (Typeable, typeOf)
-import Data.IntMap.Merge.Lazy (merge)
 
 
 data GameStep =

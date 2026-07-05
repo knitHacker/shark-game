@@ -14,21 +14,14 @@ module GameState.Menu.GameMenus
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import qualified Data.Set as S
 import Data.Int (Int64)
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (isJust, listToMaybe)
 
 import Configs
 import SaveData
-import Shark.Trip
 import Shark.Types
 
-import OutputHandles.Types
-    ( Color(..)
-    , OutputHandles(textures)
-    , TextDisplay(TextDisplay)
-    )
-import OutputHandles.Util
+import OutputHandles.Types (Color(..))
 
 import GameState.Types
 import GameState.Util
@@ -37,7 +30,6 @@ import Graphics.TextUtil
 import Graphics.Asset
 
 import InputState
-import Util
 
 import Debug.Trace
 
@@ -53,7 +45,7 @@ instance GamePlayStateE SplashState where
         | timestamp inputs - start < 1000 = Step NoChange
         | otherwise =
             case lastSaveM (stateCfgs cfgs) of
-                Nothing -> Step $ Transition $ AnyGamePlayState $ MainMenuState Nothing NewGameMain []
+                Nothing -> stepTransition $ MainMenuState Nothing NewGameMain []
                 Just fp -> LoadSave fp $ \gd -> Transition $ AnyGamePlayState $ MainMenuState (Just gd) ContinueMain []
 
 
@@ -137,7 +129,7 @@ instance GamePlayStateE MainMenuState where
         | wasWindowResized inputs = Step ResizeWindow
         | enterJustPressed inputs =
             case (gdM, mmo) of
-                (Just gd, ContinueMain) -> Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
+                (Just gd, ContinueMain) -> stepTransition $ initResearchCenter gd
                 (_, NewGameMain) -> NewGame (\gd -> Transition (AnyGamePlayState (IntroState gd IntroWelcomePage)))
                 (_, ExitMain) -> Exit Nothing
                 _ -> error "Can't continue non-existant game. What did I do?"
@@ -168,8 +160,8 @@ data IntroState = IntroState GameData IntroPage
 instance GamePlayStateE IntroState where
     think is@(IntroState gd page) _ inputs
         | wasWindowResized inputs = Step ResizeWindow
-        | enterJustPressed inputs && page < IntroEndPage = Step $ Transition $ AnyGamePlayState $ IntroState gd $ succ page -- maybe transition?
-        | enterJustPressed inputs && page == maxBound = Step $ Transition $ AnyGamePlayState $ initResearchCenter gd
+        | enterJustPressed inputs && page < IntroEndPage = stepTransition $ IntroState gd $ succ page -- maybe transition?
+        | enterJustPressed inputs && page == maxBound = stepTransition $ initResearchCenter gd
         | otherwise = Step NoChange
 
     transition is@(IntroState gd IntroWelcomePage) _ gr = introWelcome gd gr
@@ -238,8 +230,9 @@ introEquip gd cfg gr = (GView (M.fromList assets) mempty $ Just $ nextMenu gr 1,
     where
         eqKeys = gameOwnedEquipment $ gameDataEquipment gd
         eqs = map (\k -> equipment (sharkCfgs cfg) M.! k) eqKeys
-        eqCatch = head $ filter (\e -> equipInfoType e == Caught) eqs
-        eqObs = head $ filter (\e -> equipInfoType e == Observed) eqs
+        eqCatch = listToMaybe $ filter (\e -> equipInfoType e == Caught) eqs
+        eqObs = listToMaybe $ filter (\e -> equipInfoType e == Observed) eqs
+        equipImg = maybe AssetEmpty (\e -> AssetImage (equipImage e) 4.0)
         equipmentText = "With the initial funds you were also able to purchase some basic research equipment \
                         \to get your center up and running. It's not much, but it's a start. \
                         \Hopefully as you make progress in your research you can acquire more advanced gear."
@@ -249,8 +242,8 @@ introEquip gd cfg gr = (GView (M.fromList assets) mempty $ Just $ nextMenu gr 1,
                      , centerAssetX gr (AssetRect 600 300 LightGray) 0 rectStartY 0
                      , mkResizeAsset gr (AssetText "Catch" Blue 3) 1 True resizeCatch
                      , mkResizeAsset gr (AssetText "Observe" Blue 3) 1 True resizeObserve
-                     , mkResizeAsset gr (AssetImage (equipImage eqCatch) 4.0) 1 True resizeCatchImg
-                     , mkResizeAsset gr (AssetImage (equipImage eqObs) 4.0) 1 True resizeObserveImg
+                     , mkResizeAsset gr (equipImg eqCatch) 1 True resizeCatchImg
+                     , mkResizeAsset gr (equipImg eqObs) 1 True resizeObserveImg
                      , wrapTextAsset gr 95 White equipmentText 2 3 0 500 False
                      ]
         resizeCatch asset' gr' = asset' { assetX = (graphicsWindowWidth gr' `div` 2) - 260, assetY = rectStartY + 10 }
@@ -366,16 +359,16 @@ applyRCState rcs gv gr = menuInfoApply (rcMenuInfo rcs) gv gr id
 
 instance GamePlayStateE ResearchCenterState where
     think rcs@(ResearchCenterState msi as) _ inputs =
-        case menuInfoThink mkRCS selNext msi inputs of
+        case menuInfoThink mkRCS selNext back msi inputs of
             Step NoChange -> Step $ getAnimationStep inputs as
             act -> act
         where
             gd = gamedata $ stateInfo msi
+            back = Step NoChange
             selNext PlanTripMenu = Step $ TopTransition TripMenus gd
             selNext ReviewDataMenu = Step $ TopTransition ReviewMenus gd
             selNext LabManagementMenu = Step $ TopTransition LabMenus gd
             mkRCS msi' = ResearchCenterState msi' as
-
 
     transition rcs _ gr = (applyRCState rcs baseGV gr, [initFlagAnimState])
         where

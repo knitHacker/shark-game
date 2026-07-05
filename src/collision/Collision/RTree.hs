@@ -23,7 +23,6 @@ import Collision.BoundBox
 import Prelude hiding (lookup)
 import Data.Maybe ( isJust )
 import Data.List (sortOn)
-import Data.Monoid (Monoid)
 
 import Debug.Trace ()
 

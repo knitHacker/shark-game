@@ -1,6 +1,5 @@
 module Main where
 
-import System.Exit (exitSuccess)
 
 import Env (initAppEnvData, runAppEnv)
 import Configs (initConfigs)
@@ -9,9 +8,7 @@ import Game (runGame)
 import Graphics (initGraphics)
 import InputState
 import GameState
-import GameState.Types
 
-import Control.Monad.IO.Class (liftIO)
 
 main :: IO ()
 main = do

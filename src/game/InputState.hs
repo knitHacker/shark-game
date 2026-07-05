@@ -28,7 +28,7 @@ module InputState
 import qualified SDL
 import qualified SDL.Input.GameController as SDL.GameController
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Int (Int64, Int16)
+import Data.Int (Int64)
 import Data.Time.Clock.System
     ( SystemTime(..), getSystemTime )
 

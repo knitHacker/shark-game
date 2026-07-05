@@ -29,7 +29,7 @@ module Shark.Types
     ) where
 
 import GHC.Generics ( Generic )
-import Data.Aeson ( FromJSON(..), ToJSON(..), eitherDecodeFileStrict, encodeFile, Value(..), object, (.:), (.=) )
+import Data.Aeson ( FromJSON(..), ToJSON(..), Value(..), object, (.:), (.=) )
 import Data.Aeson.Types ( Parser )
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T

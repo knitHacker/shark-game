@@ -13,14 +13,11 @@ import Foreign.C.Types ()
 import qualified SDL
 import qualified SDL.Image
 import SDL.Vect ( V2(V2) )
-import SDL                    (($=))
 import qualified SDL.Font as Font
-import Control.Monad (when)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (MonadIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import System.Directory ()
-import Data.Maybe (catMaybes)
 
 import Paths_shark_game ()
 import Configs

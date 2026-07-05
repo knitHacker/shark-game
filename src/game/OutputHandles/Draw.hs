@@ -18,8 +18,7 @@ import SDL.Vect ()
 import SDL                    (($=))
 import qualified SDL.Font as Font
 import Control.Monad ( when )
-import Control.Monad.IO.Class (MonadIO, liftIO)
-import qualified Data.Map.Strict as M
+import Control.Monad.IO.Class (MonadIO)
 import Data.Map.Strict ((!))
 
 import Configs

@@ -7,11 +7,11 @@ module GameState.Util
     , getPauseEnterAction
     , getPauseMoveAction
     , simpleUpdate
-    , updateDefMenuHighlight
-    , updateDefMenuCursor
+    , updateMenuHighlight
     , withPauseUpdate
     , openPauseMenu
     , stepInputUpdate
+    , stepTransition
     , updateDefSomeMenu
     , updateDefaultMenu
     , moveMenuPos
@@ -29,7 +29,7 @@ module GameState.Util
     , simpleInfoPaused
     , menuInfoPaused
     , simpleInfoThink
-    , expandingCenterTable
+    , centerScrollTable
     , withPauseApply
     , menuInfoApply
     ) where
@@ -49,34 +49,35 @@ import OutputHandles.Types
 import SaveData
 
 
-expandingCenterTable :: Graphics -> Resize -> [([(T.Text, Color)], Int)] -> Int -> Int -> Int -> Int -> Int -> Int -> Asset
-expandingCenterTable gr rsFn items xMinStart xEndOff maxSp yStart ySp layer =
-    Asset assObj (startX assObj gr) yStart layer True (Just assRs)
+centerScrollTable :: Graphics -> Resize -> Maybe ([(T.Text, Color)], Int) -> [([(T.Text, Color)], Int)]
+                        -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> (Graphics -> Int) -> Asset
+centerScrollTable gr rsFn headers items xMinStart xEndOff maxSp yStart ySp layer scrPos heightFn =
+    Asset (tableObj gr scrPos) (startX gr) yStart layer True (Just assRs)
     where
-        assObj = spacedCols colsBase gr
-        colsBase = toTable items ySp
-        assRs ass gr' =
-            let newAss = ass { object = spacedCols (object ass) gr' }
-            in rsFn (newAss { assetX = startX (object newAss) gr' }) gr'
-        spacedCols (AssetStacked colsObj) gr' =
-            let colsObj' = AssetStacked $ colsObj { stackSpace = 0 }
-                colNum = length $ stackItems colsObj
-                space = graphicsWindowWidth gr' - xMinStart - xEndOff
-                colWidth = assetObjWidth gr' colsObj'
-                sp = min maxSp $ max 1 $ (space - colWidth) `div` (colNum - 1)
-            in AssetStacked $ colsObj { stackSpace = sp }
-        spacedCols obj _ = obj
-        startX assO gr' =
-            let objWidth = assetObjWidth gr' assO
-                space = graphicsWindowWidth gr' - xMinStart - xEndOff
-            in xMinStart + (space - objWidth) `div` 2
-
-
-toTable :: [([(T.Text, Color)], Int)] -> Int -> AssetObj
-toTable rows sp = AssetStacked (AssetStack StackHorizontal ((\col -> StackItem col 0 0) <$> toStack <$> cols) 1)
-    where
-        cols = L.transpose $ (\(items, fs) -> (\(t, c) -> (t, c, fs)) <$> items) <$> rows
-        toStack ls = AssetStacked (AssetStack StackVertical ((\(t, c, fs) -> StackItem (AssetText t c fs) 0 0) <$> ls) sp)
+        allRows = maybe items (: items) headers
+        colWidths gr' = maximum <$> (L.transpose $ (\(cells, fs) -> (\(t, _) -> textWidth gr' t fs) <$> cells) <$> allRows)
+        space gr' = graphicsWindowWidth gr' - xMinStart - xEndOff
+        spacing gr' =
+            let ws = colWidths gr'
+            in if length ws <= 1 then 1 else min maxSp $ max 1 $ (space gr' - sum ws) `div` (length ws - 1)
+        colOffsets gr' =
+            case colWidths gr' of
+                [] -> []
+                ws -> scanl (\off w -> off + w + spacing gr') 0 (init ws)
+        totalWidth gr' =
+            let ws = colWidths gr'
+            in sum ws + spacing gr' * max 0 (length ws - 1)
+        startX gr' = xMinStart + (space gr' - totalWidth gr') `div` 2
+        mkRow gr' (cells, fs) = AssetStacked $ AssetStack AbsoluteHorizontal (zipWith (\off (t, c) -> StackItem (AssetText t c fs) off 0) (colOffsets gr') cells) 0
+        bodyObj gr' = AssetStacked $ AssetStack StackVertical ((\row -> StackItem (mkRow gr' row) 0 0) <$> items) ySp
+        scrollHeight gr' = case headers of
+            Nothing -> heightFn gr'
+            Just h -> heightFn gr' - (assetObjHeight gr' (mkRow gr' h) + ySp)
+        scrollObj gr' pos = AssetScroll $ ScrollObj (M.singleton 0 (Asset (bodyObj gr') 0 0 0 True Nothing)) pos (scrollHeight gr')
+        tableObj gr' pos = case headers of
+            Nothing -> scrollObj gr' pos
+            Just h -> AssetStacked $ AssetStack StackVertical [StackItem (mkRow gr' h) 0 0, StackItem (scrollObj gr' pos) 0 0] ySp
+        assRs ass gr' = rsFn (ass { object = tableObj gr' 0, assetX = startX gr' }) gr'
 
 
 initSimpleStateInfo :: GameData -> SimpleStateInfo
@@ -138,18 +139,11 @@ updateDefSomeMenu shouldUp upFn gv = gv { menuAsset = DefaultMenu <$> (\ma -> up
                 (Just (DefaultMenu m)) -> Just m
                 _ -> Nothing
 
-updateDefMenuHighlight :: Int -> Color -> GView -> GView
-updateDefMenuHighlight idx c gv = gv { menuAsset = update <$> menuAsset gv }
+updateMenuHighlight :: Int -> Color -> GView -> GView
+updateMenuHighlight idx c gv = gv { menuAsset = update <$> menuAsset gv }
     where
         update (DefaultMenu m) = DefaultMenu $ changeHighlight m idx c
         update (ScrollMenu m) = ScrollMenu $ changeScrollHighlight m idx c
-
-updateDefMenuCursor :: Int -> Image -> Double -> GView -> GView
-updateDefMenuCursor idx img scale gv = gv { menuAsset = DefaultMenu <$> (\ma -> changeCursor ma idx img scale) <$> menu }
-    where
-        menu = case menuAsset gv of
-                (Just (DefaultMenu m)) -> Just m
-                _ -> Nothing
 
 shouldAnimationStep :: InputState -> AnimationState -> Bool
 shouldAnimationStep inputs as@(AnimState lastTs interval _ _) = timestamp inputs - lastTs > fromIntegral interval
@@ -240,11 +234,14 @@ withPauseApply gr (Just pSel) gv
 stepInputUpdate :: GamePlayStateE a => a -> Action
 stepInputUpdate gps = Step $ InputUpdate $ AnyGamePlayState gps
 
+stepTransition :: GamePlayStateE a => a -> Action
+stepTransition gps = Step $ Transition $ AnyGamePlayState gps
+
 openPauseMenu :: GamePlayStateE a => (Maybe PauseOpt -> a) -> Action
 openPauseMenu stateUp = Step $ InputUpdate $ AnyGamePlayState $ stateUp $ Just minBound
 
-menuInfoIntThink :: GamePlayStateE a => (MenuStateInfo Int -> a) -> (Int -> Action) -> Int -> MenuStateInfo Int -> InputState -> Action
-menuInfoIntThink mkGPS menuAction maxMenu menuInfo inputs
+menuInfoIntThink :: GamePlayStateE a => (MenuStateInfo Int -> a) -> (Int -> Action) -> Action -> Int -> MenuStateInfo Int -> InputState -> Action
+menuInfoIntThink mkGPS menuAction backAction maxMenu menuInfo inputs
     | wasWindowResized inputs = Step ResizeWindow
     | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo $ Just minBound
     | escapeJustPressed inputs = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo Nothing
@@ -260,6 +257,7 @@ menuInfoIntThink mkGPS menuAction maxMenu menuInfo inputs
             (Just DDown, _) | mIdx == maxMenu -> Step NoChange
             (Just DDown, _) -> stepInputUpdate $ mkGPS $ menuMoveDown menuInfo
             _ -> Step NoChange
+    | backJustPressed inputs = backAction
     | otherwise = Step NoChange
     where
         gd = gamedata $ stateInfo menuInfo
@@ -283,8 +281,8 @@ simpleInfoThink mkGPS enterAction sInfo inputs
     where
         pSelM = pauseSelM sInfo
 
-menuInfoThink :: (Enum b, Bounded b, Eq b, GamePlayStateE a) => (MenuStateInfo b -> a) -> (b -> Action) -> MenuStateInfo b -> InputState -> Action
-menuInfoThink mkGPS menuAction menuInfo inputs
+menuInfoThink :: (Enum b, Bounded b, Eq b, GamePlayStateE a) => (MenuStateInfo b -> a) -> (b -> Action) -> Action -> MenuStateInfo b -> InputState -> Action
+menuInfoThink mkGPS menuAction backAction menuInfo inputs
     | wasWindowResized inputs = Step ResizeWindow
     | escapeJustPressed inputs && isNothing pSelM = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo $ Just minBound
     | escapeJustPressed inputs = stepInputUpdate $ mkGPS $ menuUpdatePause menuInfo Nothing
@@ -297,6 +295,7 @@ menuInfoThink mkGPS menuAction menuInfo inputs
             (Just dir, Just pSel) -> getPauseMoveAction dir pSel (\po -> AnyGamePlayState $ mkGPS $ menuUpdatePause menuInfo (Just po))
             (Just dir, _) -> moveMenuPos dir mOpt (mkGPS . (menuUpdateSel menuInfo))
             _ -> Step NoChange
+    | backJustPressed inputs = backAction
     | otherwise = Step NoChange
     where
         gd = gamedata $ stateInfo menuInfo
@@ -306,11 +305,11 @@ menuInfoThink mkGPS menuAction menuInfo inputs
 menuInfoUpdate :: (GamePlayStateE a, Enum b) => (MenuStateInfo b -> a) -> MenuStateInfo b -> GView -> Graphics -> (GView -> GView) -> GameState
 menuInfoUpdate mkGPS mi gvO gr gvFn = withPauseUpdate gr (mkGPS mi) pSelM nGv gvO
     where
-        nGv gv = updateDefMenuHighlight (fromEnum (menuSel mi)) White $ gvFn gv
+        nGv gv = updateMenuHighlight (fromEnum (menuSel mi)) White $ gvFn gv
         pSelM = menuGetPause mi
 
 menuInfoApply :: Enum a => MenuStateInfo a -> GView -> Graphics -> (GView -> GView) -> GView
 menuInfoApply msi gv gr gvFn = withPauseApply gr pSelM gv'
     where
-        gv' = updateDefMenuHighlight (fromEnum (menuSel msi)) White $ gvFn gv
+        gv' = updateMenuHighlight (fromEnum (menuSel msi)) White $ gvFn gv
         pSelM = menuGetPause msi

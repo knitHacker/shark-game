@@ -103,3 +103,18 @@ jobs:
           *.dll
           data/
           assets/
+
+    - name: Create release archive
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        mkdir shark-game-windows
+        cp *.exe *.dll shark-game-windows/
+        cp -r data assets shark-game-windows/
+        7z a shark-game-windows.zip shark-game-windows
+
+    - name: Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: shark-game-windows.zip
