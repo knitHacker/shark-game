@@ -114,7 +114,7 @@ changeScrollHighlight ma idx c
     where
         clearStationary = (\mi -> mi { highlightedColor = Nothing }) <$> menuStationaryItems ma
         clearScroll = (\mi -> mi { highlightedScrollColor = Nothing }) <$> menuScrollItems ma
-        maxView = menuScrollStartIdx ma + menuScrollViewable ma
+        maxView = menuScrollStartIdx ma + menuScrollViewable ma - 1
         numScrollItems = length $ menuScrollItems ma
         numEndItems = length $ menuStationaryItems ma
         totalItems = numScrollItems + numEndItems
