@@ -474,10 +474,10 @@ instance GamePlayStateE EquipManagementState where
             scrollYStart gr' = (graphicsWindowHeight gr' `div` 2) - 20
             equipList = gameOwnedEquipment $ gameDataEquipment gd
             equipItems = (!) (equipment $ sharkCfgs cfgs) <$> equipList
-            headerRow = ([("Equipment", White), ("Type", White), ("Slots", White)], 3)
-            equipRows = headerRow : ((\e -> ([(equipText e, LightGray), (equipTypeText (equipInfoType e), LightGray), (slotsTxt e, LightGray)], 3)) <$> equipItems)
+            headers = [("Equipment", White), ("Type", White), ("Slots", White)]
+            equipRows = (\e -> ([(equipText e, LightGray), (equipTypeText (equipInfoType e), LightGray), (slotsTxt e, LightGray)], 3)) <$> equipItems
             slotsTxt e = T.pack (show (equipSize e)) <> if equipSize e == 1 then " slot" else " slots"
-            mkTable gr' = expandingCenterTable gr' (\ass _ -> ass) equipRows 0 0 160 0 15 0
+            mkTable gr' = expandingCenterTable gr' (\ass _ -> ass) headers equipRows 0 0 160 0 15 0
             scrollH gr' = mY gr' - 10 - scrollYStart gr'
             rs as gr' = as { object = AssetScroll $ ScrollObj (M.singleton 0 (mkTable gr')) 0 (scrollH gr'), assetY = scrollYStart gr' }
             hlM cmp = if cmp == mOpt then Just White else Nothing

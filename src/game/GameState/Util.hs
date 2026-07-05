@@ -49,12 +49,16 @@ import OutputHandles.Types
 import SaveData
 
 
-expandingCenterTable :: Graphics -> Resize -> [([(T.Text, Color)], Int)] -> Int -> Int -> Int -> Int -> Int -> Int -> Asset
-expandingCenterTable gr rsFn items xMinStart xEndOff maxSp yStart ySp layer =
+expandingCenterTable :: Graphics -> Resize -> [(T.Text, Color)] -> [([(T.Text, Color)], Int)] -> Int -> Int -> Int -> Int -> Int -> Int -> Asset
+expandingCenterTable gr rsFn headers items xMinStart xEndOff maxSp yStart ySp layer =
     Asset assObj (startX assObj gr) yStart layer True (Just assRs)
     where
+        allRows = case (headers, items) of
+            ([], _) -> items
+            (_, (_, fs) : _) -> (headers, fs) : items
+            _ -> [(headers, 3)]
         assObj = spacedCols colsBase gr
-        colsBase = toTable items ySp
+        colsBase = toTable allRows ySp
         assRs ass gr' =
             let newAss = ass { object = spacedCols (object ass) gr' }
             in rsFn (newAss { assetX = startX (object newAss) gr' }) gr'
