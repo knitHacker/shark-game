@@ -354,17 +354,19 @@ instance GamePlayStateE SubmitResearchState where
                                 else Step NoChange
             next SubmitBackOpt = back
 
-    transition gps@(SubmitResearchState re msi) cfgs gr = (gview, [])
+    transition gps@(SubmitResearchState re msi) cfgs gr = (menuInfoApply msi gview gr id, [])
         where
             gd = gamedata $ stateInfo msi
             gview = GView assets mempty $ Just menu
             reqs = getResearchRequirements (sharkCfgs cfgs) gd re
             canComplete = canCompleteResearch reqs
             grantText   = T.append "Grant awarded when complete: $" $ T.pack $ show $ getData re researchGrant
+            titleStack gr' = wrapTextStack gr' (graphicsWindowWidth gr' - 100) LightGray (getData re researchPaperName) 3 2
+            titleA = Asset (titleStack gr) 50 120 0 True $ Just $ \a gr' -> a { object = titleStack gr' }
             assets = M.fromList $ zip [0..] $
                 [ staticText "Data Review" White 50 20 7 0
-                , staticText (getData re researchPaperName) LightGray 50 120 5 0
-                , staticText grantText Green 100 200 2 0
+                , titleA
+                , staticText grantText Green 100 220 2 0
                 ] ++ reqAssets
             (reqAssets, _) = foldl buildReq ([], 260) reqs
             buildReq (acc, y) (sN, rrs) =
