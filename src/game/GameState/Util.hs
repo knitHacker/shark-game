@@ -29,7 +29,7 @@ module GameState.Util
     , simpleInfoPaused
     , menuInfoPaused
     , simpleInfoThink
-    , expandingCenterTable
+    , centerScrollTable
     , withPauseApply
     , menuInfoApply
     ) where
@@ -49,38 +49,35 @@ import OutputHandles.Types
 import SaveData
 
 
-expandingCenterTable :: Graphics -> Resize -> [(T.Text, Color)] -> [([(T.Text, Color)], Int)] -> Int -> Int -> Int -> Int -> Int -> Int -> Asset
-expandingCenterTable gr rsFn headers items xMinStart xEndOff maxSp yStart ySp layer =
-    Asset assObj (startX assObj gr) yStart layer True (Just assRs)
+centerScrollTable :: Graphics -> Resize -> Maybe ([(T.Text, Color)], Int) -> [([(T.Text, Color)], Int)]
+                        -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> (Graphics -> Int) -> Asset
+centerScrollTable gr rsFn headers items xMinStart xEndOff maxSp yStart ySp layer scrPos heightFn =
+    Asset (tableObj gr scrPos) (startX gr) yStart layer True (Just assRs)
     where
-        allRows = case (headers, items) of
-            ([], _) -> items
-            (_, (_, fs) : _) -> (headers, fs) : items
-            _ -> [(headers, 3)]
-        assObj = spacedCols colsBase gr
-        colsBase = toTable allRows ySp
-        assRs ass gr' =
-            let newAss = ass { object = spacedCols (object ass) gr' }
-            in rsFn (newAss { assetX = startX (object newAss) gr' }) gr'
-        spacedCols (AssetStacked colsObj) gr' =
-            let colsObj' = AssetStacked $ colsObj { stackSpace = 0 }
-                colNum = length $ stackItems colsObj
-                space = graphicsWindowWidth gr' - xMinStart - xEndOff
-                colWidth = assetObjWidth gr' colsObj'
-                sp = min maxSp $ max 1 $ (space - colWidth) `div` (colNum - 1)
-            in AssetStacked $ colsObj { stackSpace = sp }
-        spacedCols obj _ = obj
-        startX assO gr' =
-            let objWidth = assetObjWidth gr' assO
-                space = graphicsWindowWidth gr' - xMinStart - xEndOff
-            in xMinStart + (space - objWidth) `div` 2
-
-
-toTable :: [([(T.Text, Color)], Int)] -> Int -> AssetObj
-toTable rows sp = AssetStacked (AssetStack StackHorizontal ((\col -> StackItem col 0 0) <$> toStack <$> cols) 1)
-    where
-        cols = L.transpose $ (\(items, fs) -> (\(t, c) -> (t, c, fs)) <$> items) <$> rows
-        toStack ls = AssetStacked (AssetStack StackVertical ((\(t, c, fs) -> StackItem (AssetText t c fs) 0 0) <$> ls) sp)
+        allRows = maybe items (: items) headers
+        colWidths gr' = maximum <$> (L.transpose $ (\(cells, fs) -> (\(t, _) -> textWidth gr' t fs) <$> cells) <$> allRows)
+        space gr' = graphicsWindowWidth gr' - xMinStart - xEndOff
+        spacing gr' =
+            let ws = colWidths gr'
+            in if length ws <= 1 then 1 else min maxSp $ max 1 $ (space gr' - sum ws) `div` (length ws - 1)
+        colOffsets gr' =
+            case colWidths gr' of
+                [] -> []
+                ws -> scanl (\off w -> off + w + spacing gr') 0 (init ws)
+        totalWidth gr' =
+            let ws = colWidths gr'
+            in sum ws + spacing gr' * max 0 (length ws - 1)
+        startX gr' = xMinStart + (space gr' - totalWidth gr') `div` 2
+        mkRow gr' (cells, fs) = AssetStacked $ AssetStack AbsoluteHorizontal (zipWith (\off (t, c) -> StackItem (AssetText t c fs) off 0) (colOffsets gr') cells) 0
+        bodyObj gr' = AssetStacked $ AssetStack StackVertical ((\row -> StackItem (mkRow gr' row) 0 0) <$> items) ySp
+        scrollHeight gr' = case headers of
+            Nothing -> heightFn gr'
+            Just h -> heightFn gr' - (assetObjHeight gr' (mkRow gr' h) + ySp)
+        scrollObj gr' pos = AssetScroll $ ScrollObj (M.singleton 0 (Asset (bodyObj gr') 0 0 0 True Nothing)) pos (scrollHeight gr')
+        tableObj gr' pos = case headers of
+            Nothing -> scrollObj gr' pos
+            Just h -> AssetStacked $ AssetStack StackVertical [StackItem (mkRow gr' h) 0 0, StackItem (scrollObj gr' pos) 0 0] ySp
+        assRs ass gr' = rsFn (ass { object = tableObj gr' 0, assetX = startX gr' }) gr'
 
 
 initSimpleStateInfo :: GameData -> SimpleStateInfo

@@ -465,7 +465,7 @@ instance GamePlayStateE EquipManagementState where
             ownTxt = "Owned Equipment"
             ownX gr' = midTextStart gr' ownTxt $ fromIntegral 4
             assets = M.fromList $ zip [0..]
-                                      [ Asset (AssetScroll $ ScrollObj (M.singleton 0 (mkTable gr)) scrPos (scrollH gr)) 10 (scrollYStart gr) 0 True $ Just rs
+                                      [ mkTable gr
                                       , staticText "Equipment" White 20 20 8 0
                                       , staticText "Management" White 175 120 8 0
                                       , Asset (AssetText ownTxt LightGray 4) (ownX gr) ((graphicsWindowHeight gr `div` 2) - 120) 0 True $
@@ -474,12 +474,12 @@ instance GamePlayStateE EquipManagementState where
             scrollYStart gr' = (graphicsWindowHeight gr' `div` 2) - 20
             equipList = gameOwnedEquipment $ gameDataEquipment gd
             equipItems = (!) (equipment $ sharkCfgs cfgs) <$> equipList
-            headers = [("Equipment", White), ("Type", White), ("Slots", White)]
+            headers = Just ([("Equipment", White), ("Type", White), ("Slots", White)], 3)
             equipRows = (\e -> ([(equipText e, LightGray), (equipTypeText (equipInfoType e), LightGray), (slotsTxt e, LightGray)], 3)) <$> equipItems
             slotsTxt e = T.pack (show (equipSize e)) <> if equipSize e == 1 then " slot" else " slots"
-            mkTable gr' = expandingCenterTable gr' (\ass _ -> ass) headers equipRows 0 0 160 0 15 0
+            mkTable gr' = centerScrollTable gr' tableRs headers equipRows 0 0 160 (scrollYStart gr) 15 0 scrPos scrollH
+            tableRs ass gr' = ass { assetY = scrollYStart gr' }
             scrollH gr' = mY gr' - 10 - scrollYStart gr'
-            rs as gr' = as { object = AssetScroll $ ScrollObj (M.singleton 0 (mkTable gr')) 0 (scrollH gr'), assetY = scrollYStart gr' }
             hlM cmp = if cmp == mOpt then Just White else Nothing
             mY gr' = graphicsWindowHeight gr' - 150
             mnRs ass gr' = ass { menuYBase = mY gr' }
@@ -495,11 +495,17 @@ instance GamePlayStateE EquipManagementState where
             newGPS msi' = EquipManagementState msi' newScrPos
             getScroll gv = case object (assets gv M.! emsScrollIdx) of
                 AssetScroll sc -> Just sc
+                AssetStacked (AssetStack _ its _) -> case [sc | StackItem (AssetScroll sc) _ _ <- its] of
+                    (sc : _) -> Just sc
+                    _ -> Nothing
                 _ -> Nothing
             updateScrollPos gv = gv { assets = M.adjust upScroll emsScrollIdx (assets gv) }
-            upScroll as = case object as of
-                AssetScroll sc -> as { object = AssetScroll $ updateScrollPosition gr sc newScrPos }
-                _ -> as
+            upScroll as = as { object = upObj (object as) }
+            upObj (AssetScroll sc) = AssetScroll $ updateScrollPosition gr sc newScrPos
+            upObj (AssetStacked (AssetStack d its sp)) = AssetStacked $ AssetStack d (upItem <$> its) sp
+            upObj obj = obj
+            upItem (StackItem (AssetScroll sc) xOff yOff) = StackItem (AssetScroll $ updateScrollPosition gr sc newScrPos) xOff yOff
+            upItem si = si
 
 
 equipStoreInfo :: GameData -> GameConfigs -> [(T.Text, GameEquipment)]
